@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover" />
+    <title>Emergency Path Finder for Ambulances</title>
+    <meta name="description" content="Decision-support prototype modeling urban road networks as directed weighted graphs with predicted travel times, Dijkstra and A* pathfinding, smart hospital selection, and dynamic re-routing." />
+    <meta property="og:title" content="Emergency Path Finder for Ambulances" />
+    <meta property="og:description" content="Decision-support prototype modeling urban road networks as directed weighted graphs with predicted travel times, Dijkstra and A* pathfinding, smart hospital selection, and dynamic re-routing." />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="theme-color" content="#1F3C6D" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0f172a" media="(prefers-color-scheme: dark)" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Anti-Flash Dark Mode Initializer -->
+    <script>
+      (function() {
+        try {
+          var stored = localStorage.getItem('epf_color_theme');
+          var isDark = stored === 'dark' || (!stored && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+          if (isDark) {
+            document.documentElement.classList.add('dark');
+            document.documentElement.style.colorScheme = 'dark';
+          } else {
+            document.documentElement.classList.remove('dark');
+            document.documentElement.style.colorScheme = 'light';
+          }
+        } catch (e) {}
+      })();
+    </script>
+  </head>
+  <body class="bg-[#EEF3FA] dark:bg-slate-950 text-slate-900 dark:text-slate-100 antialiased font-sans selection:bg-[#D62828] selection:text-white transition-colors duration-150">
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

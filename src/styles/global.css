@@ -1,0 +1,420 @@
+@import "tailwindcss";
+
+/* Design system typography and operational design tokens */
+@theme {
+  --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  --text-2xs: 0.6875rem;
+  --text-2xs--line-height: 1rem;
+  --text-3xs: 0.625rem;
+  --text-3xs--line-height: 0.875rem;
+}
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Accessible defaults and foundational typography */
+@layer base {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  html {
+    min-height: 100%;
+    scroll-padding-top: 5rem;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+
+  body {
+    min-height: 100vh;
+    min-height: 100dvh;
+    font-family: var(--font-sans);
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    margin: 0;
+    padding: 0;
+  }
+
+  button,
+  input,
+  select,
+  textarea {
+    font: inherit;
+  }
+
+  button,
+  a,
+  input,
+  select,
+  textarea,
+  summary {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  button:not(:disabled) {
+    touch-action: manipulation;
+  }
+
+  button:disabled {
+    cursor: not-allowed;
+  }
+
+  :focus-visible {
+    outline: 2px solid rgb(31 60 109 / 0.8);
+    outline-offset: 2px;
+  }
+
+  ::selection {
+    color: #ffffff;
+    background: #D62828;
+  }
+}
+
+@layer components {
+  .app-header {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+
+  .navbar-inner {
+    padding-left: max(1rem, env(safe-area-inset-left, 0px));
+    padding-right: max(1rem, env(safe-area-inset-right, 0px));
+  }
+
+  .mobile-tab-bar {
+    padding-left: max(0.5rem, env(safe-area-inset-left, 0px));
+    padding-right: max(0.5rem, env(safe-area-inset-right, 0px));
+  }
+
+  .page-shell {
+    min-width: 0;
+  }
+
+  .page-shell > * {
+    min-width: 0;
+  }
+
+  .app-main {
+    padding-left: max(1rem, env(safe-area-inset-left, 0px));
+    padding-right: max(1rem, env(safe-area-inset-right, 0px));
+  }
+
+  .page-shell :where(table) {
+    max-width: 100%;
+  }
+
+  .page-shell :where(.overflow-x-auto) {
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+  }
+
+  .page-shell :where(h1, h2, h3) {
+    text-wrap: balance;
+  }
+
+  .page-shell :where(pre) {
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Safe area padding utilities */
+.pb-safe {
+  padding-bottom: max(0.75rem, env(safe-area-inset-bottom, 0px));
+}
+
+.pt-safe {
+  padding-top: max(0.5rem, env(safe-area-inset-top, 0px));
+}
+
+/* Leaflet map custom pin resets */
+.custom-ambulance-pin,
+.custom-hospital-pin,
+.leaflet-div-icon {
+  background: transparent !important;
+  border: none !important;
+}
+
+/* Hospital map callout labels */
+.leaflet-tooltip.custom-hospital-label {
+  background: rgba(255, 255, 255, 0.95) !important;
+  border: 1px solid #cbd5e1 !important;
+  border-radius: 0.375rem !important;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.1) !important;
+  padding: 3px 7px !important;
+  color: #0f172a !important;
+  font-family: var(--font-sans) !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  transition: all 0.15s ease;
+}
+
+.leaflet-tooltip.custom-hospital-label::before {
+  border-top-color: #cbd5e1 !important;
+}
+
+.leaflet-tooltip.custom-hospital-label-recommended {
+  background: #047857 !important;
+  border: 1px solid #6ee7b7 !important;
+  border-radius: 0.375rem !important;
+  box-shadow: 0 4px 14px rgba(4, 120, 87, 0.35) !important;
+  padding: 3px 8px !important;
+  color: #ffffff !important;
+  font-family: var(--font-sans) !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+}
+
+.leaflet-tooltip.custom-hospital-label-recommended::before {
+  border-top-color: #047857 !important;
+}
+
+/* Dark mode overrides for Leaflet Tooltips */
+.dark .leaflet-tooltip.custom-hospital-label {
+  background: rgba(15, 23, 42, 0.95) !important;
+  border-color: #334155 !important;
+  color: #f1f5f9 !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5) !important;
+}
+
+.dark .leaflet-tooltip.custom-hospital-label::before {
+  border-top-color: #334155 !important;
+}
+
+/* Ambulance emergency pulse ring */
+.ambulance-pin-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: grab;
+  touch-action: none;
+}
+
+.ambulance-pin-wrapper:active {
+  cursor: grabbing;
+}
+
+.ambulance-pin-wrapper-locked {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.ambulance-beacon-pulse {
+  position: absolute;
+  bottom: 0px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: rgba(214, 40, 40, 0.45);
+  animation: ambRipple 1.8s ease-out infinite;
+  pointer-events: none;
+  z-index: -1;
+}
+
+.ambulance-beacon-pulse-moving {
+  position: absolute;
+  bottom: 0px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: rgba(22, 163, 74, 0.65);
+  animation: ambRipple 0.9s ease-out infinite;
+  pointer-events: none;
+  z-index: -1;
+}
+
+@keyframes ambRipple {
+  0% {
+    transform: translateX(-50%) scale(0.6);
+    opacity: 0.9;
+  }
+  70% {
+    transform: translateX(-50%) scale(2.2);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(-50%) scale(2.5);
+    opacity: 0;
+  }
+}
+
+/* Custom subtle scrollbars */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Clean tactical Leaflet popups */
+.leaflet-popup-content-wrapper {
+  border-radius: 0.5rem !important;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
+  border: 1px solid #e2e8f0 !important;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.leaflet-popup-content {
+  margin: 10px 12px !important;
+  line-height: 1.4 !important;
+}
+
+.leaflet-container {
+  font-family: var(--font-sans) !important;
+  outline: none;
+}
+
+/* Dark mode Leaflet tile adjustments (tactical night radar style) */
+.dark .leaflet-tile-pane {
+  filter: brightness(0.65) invert(1) contrast(2.6) hue-rotate(200deg) saturate(0.3);
+}
+
+.dark .leaflet-container {
+  background: #090d16 !important;
+}
+
+.dark .leaflet-popup-content-wrapper {
+  background-color: #0f172a !important;
+  color: #f1f5f9 !important;
+  border-color: #1e293b !important;
+}
+
+.dark .leaflet-popup-tip {
+  background-color: #0f172a !important;
+}
+
+.dark .leaflet-control-zoom a {
+  background-color: #0f172a !important;
+  color: #f1f5f9 !important;
+  border-color: #334155 !important;
+}
+
+.dark .leaflet-control-zoom a:hover {
+  background-color: #1e293b !important;
+}
+
+.dark .leaflet-control-attribution {
+  background: rgba(15, 23, 42, 0.85) !important;
+  color: #94a3b8 !important;
+}
+
+.dark .leaflet-control-attribution a {
+  color: #38bdf8 !important;
+}
+
+/* Coarse-pointer touch target normalization */
+@media (pointer: coarse) {
+  button {
+    min-height: 44px;
+  }
+
+  button[aria-label] {
+    min-width: 44px;
+  }
+
+  select,
+  input:not([type="checkbox"]):not([type="radio"]),
+  textarea {
+    min-height: 44px;
+  }
+
+  input[type="checkbox"],
+  input[type="radio"] {
+    width: 1.125rem;
+    height: 1.125rem;
+  }
+}
+
+/* Mobile app shell */
+.app-locked,
+.app-locked body,
+.app-locked #root {
+  height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+@keyframes pageEnter {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.page-enter {
+  animation: pageEnter 0.15s ease-out both;
+}
+
+/* Keep OSM attribution visible above mobile bottom tab bar */
+.epf-map .leaflet-bottom.leaflet-right {
+  bottom: 4.2rem;
+}
+.epf-map .leaflet-control-attribution {
+  font-size: 9px;
+  border-radius: 6px 0 0 6px;
+}
+.dark .epf-map .leaflet-control-attribution {
+  background: rgba(15, 23, 42, 0.85) !important;
+  color: #94a3b8 !important;
+}
+.dark .epf-map .leaflet-control-attribution a {
+  color: #93c5fd !important;
+}
+
+/* Map button tooltips: only show on devices with mouse hover (never stick on touch screens) */
+.map-tip {
+  display: none;
+}
+@media (hover: hover) and (pointer: fine) {
+  .map-tip {
+    display: block;
+    opacity: 0;
+    transform: translate(4px, -50%);
+    transition: opacity 0.12s ease, transform 0.12s ease;
+  }
+  .map-tip-group:hover .map-tip,
+  .map-tip-group:has(:focus-visible) .map-tip {
+    opacity: 1;
+    transform: translate(0, -50%);
+  }
+}
+
+/* Incident badge on map */
+.traffic-badge-wrap {
+  background: transparent !important;
+  border: none !important;
+}
+.traffic-badge {
+  width: 24px;
+  height: 24px;
+  border-radius: 9999px;
+  border: 2px solid #fff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+  color: #fff;
+  font: 700 11px/20px var(--font-mono);
+  text-align: center;
+  cursor: pointer;
+}

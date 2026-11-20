@@ -1,0 +1,31 @@
+# Dependencies
+node_modules/
+
+# Production build
+dist/
+dist-ssr/
+build/
+*.local
+
+# Environment Variables & API Keys (CRITICAL)
+.env
+.env.*
+!.env.example
+
+# Logs & OS/Editor files
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.vscode/*
+!.vscode/extensions.json
+.DS_Store
+Thumbs.db
+
+# Screenshots & Local Scratch Files
+screenshots/*
+!screenshots/preview-desktop.png
+!screenshots/preview-samsung-mobile.png
+scratch/
+scripts/
+*capture*.mjs
+take_screenshots.js
