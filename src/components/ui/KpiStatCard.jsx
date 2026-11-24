@@ -68,7 +68,10 @@ export function KpiStatCard({
               </span>
             )}
           </div>
-          <div className="text-xl sm:text-2xl font-black font-mono tracking-tight text-slate-900 dark:text-slate-100 tabular-nums truncate">
+          <div
+            className="text-lg sm:text-xl font-black font-sans tracking-tight text-slate-900 dark:text-slate-100 tabular-nums truncate"
+            title={typeof value === 'string' ? value : undefined}
+          >
             {value}
           </div>
         </div>
@@ -83,12 +86,12 @@ export function KpiStatCard({
       </div>
 
       {/* Bottom Subtitle & Action (Zero Overlap Guaranteed) */}
-      <div className="mt-3 pt-3 border-t border-slate-100 dark:border-white/[0.06] flex flex-wrap items-center justify-between gap-x-2 gap-y-1 min-w-0 text-2xs font-mono text-slate-500 dark:text-slate-400">
+      <div className="mt-3 pt-2.5 border-t border-slate-100 dark:border-white/[0.06] flex items-center justify-between gap-2 min-w-0 text-2xs font-mono text-slate-500 dark:text-slate-400">
         <span className="truncate min-w-0 flex-1" title={typeof subtitle === 'string' ? subtitle : undefined}>
           {subtitle}
         </span>
         {action && (
-          <div className="flex items-center shrink-0">
+          <div className="flex items-center shrink-0 ml-auto">
             {action}
           </div>
         )}

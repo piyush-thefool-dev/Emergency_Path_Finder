@@ -140,7 +140,7 @@ export function MapScreen() {
           ambulancePos={ambulancePos}
           onAmbulanceMove={setAmbulanceCoordinates}
           snappedSourceNode={snappedSourceNode}
-          hospitals={availableHospitals}
+          hospitals={routing.topHospitals && routing.topHospitals.length > 0 ? routing.topHospitals : availableHospitals.slice(0, 5)}
           activeHospitalId={activeHospital?.id}
           onSelectHospital={setSelectedHospitalId}
           activePathNodeIds={activeHospital?.pathNodeIds || []}
@@ -159,6 +159,8 @@ export function MapScreen() {
           recenterKey={recenterKey}
           onRoadResolved={setRoadTelemetry}
           showGraphNetwork={showGraphNetwork}
+          effectiveRadiusKm={routing.effectiveRadiusKm || routing.searchRadiusKm}
+          isRadiusFallback={routing.isRadiusFallback}
         />
 
         {/* ───────── Top: Destination Telemetry & Category Chips ───────── */}
@@ -293,7 +295,8 @@ export function MapScreen() {
               title={`Search all ${availableHospitals?.length || 280} Pan-India apex hospitals by name, city, or specialty`}
             >
               <Search className="w-3.5 h-3.5 text-[#D62828] shrink-0" />
-              <span className="truncate">Search ({availableHospitals?.length || 280})</span>
+              <span className="truncate">Search Registry</span>
+              <span className="text-[10px] opacity-70 font-normal hidden xs:inline">({routing.effectiveRadiusKm || 5}km auto)</span>
             </button>
 
             {/* Quick Tools Button */}
@@ -453,13 +456,13 @@ export function MapScreen() {
         {/* ───────── Pan-India Hospital Search Modal Overlay (Fixed Fullscreen Overlay) ───────── */}
         {searchModalOpen && typeof document !== 'undefined' && createPortal(
           <div
-            className="fixed inset-0 z-[99999] bg-black/80 backdrop-blur-md flex items-start sm:items-center justify-center p-0 sm:p-4 animate-in fade-in duration-150"
+            className="fixed inset-0 z-[99999] bg-black/85 backdrop-blur-md flex flex-col justify-start items-center p-0 sm:p-4 animate-in fade-in duration-150"
             role="dialog"
             aria-modal="true"
             aria-label="Search Hospitals"
           >
             <div className="bg-white dark:bg-slate-900 w-full h-full sm:h-[85dvh] sm:max-w-lg sm:rounded-2xl border-0 sm:border border-slate-200 dark:border-slate-800 shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150">
-              <div className="px-3.5 py-2.5 sm:p-3.5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between shrink-0 bg-slate-50/90 dark:bg-slate-950/90">
+              <div className="pt-2.5 sm:pt-3 pb-2 px-3.5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between shrink-0 bg-slate-50/90 dark:bg-slate-950/90">
                 <div className="flex items-center gap-2 min-w-0">
                   <button
                     type="button"
@@ -471,7 +474,7 @@ export function MapScreen() {
                   </button>
                   <span className="font-bold text-xs uppercase tracking-wider text-slate-900 dark:text-slate-100 font-mono flex items-center gap-1.5 truncate">
                     <Hospital className="w-3.5 h-3.5 text-[#D62828] shrink-0" />
-                    <span className="truncate">Pan-India Registry ({availableHospitals?.length || 280})</span>
+                    <span className="truncate">Hospital Registry ({availableHospitals?.length || 280})</span>
                   </span>
                 </div>
                 <button

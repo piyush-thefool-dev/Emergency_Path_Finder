@@ -3,10 +3,16 @@
  * Integrated with the public WIB India Hospitals API (wibest.in).
  */
 
-import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { SAMPLE_HOSPITALS } from '../data/sampleHospitals.js';
 import { fetchWibHospitals, WIB_API_CONFIG } from '../services/wibHospitalService.js';
 import { rankHospitalsForEmergency, calculateSeatIntakeFactor } from '../services/hospitalRanking.js';
+import {
+  filterHospitalsByRadius,
+  filterAndRankHospitalsByOsrmEta,
+  DEFAULT_RADIUS_KM,
+  FALLBACK_RADIUS_KM,
+} from '../services/hospitalFilterService.js';
 import { dijkstra } from '../algorithms/dijkstra.js';
 import { astar } from '../algorithms/astar.js';
 import { extractPathDetails } from '../algorithms/pathUtils.js';
@@ -22,6 +28,15 @@ export function useRouting(weightedGraph, isFigure2Mode) {
   const [emergencyCategory, setEmergencyCategory] = useState('TRAUMA');
   const [algorithm, setAlgorithm] = useState('compare'); // 'compare' runs the optimal combo: A* for fast dispatch + Dijkstra for audit verification
   const [selectedHospitalId, setSelectedHospitalId] = useState(null);
+
+  // Automatic built-in cascading radius state (5 km -> 10 km -> 20 km)
+  const [osrmRanking, setOsrmRanking] = useState({
+    topHospitals: [],
+    allValidHospitals: [],
+    isFallback: false,
+    effectiveRadiusKm: 5,
+    isLoading: false,
+  });
 
   // Pan-India & Delhi-NCR hospital reference data with local storage persistence
   const [wibHospitals, setWibHospitals] = useState(() => {
@@ -214,8 +229,41 @@ export function useRouting(weightedGraph, isFigure2Mode) {
     return wibHospitals.length > 0 ? wibHospitals : SAMPLE_HOSPITALS;
   }, [isFigure2Mode, wibHospitals]);
 
-  // Execute constrained hospital ranking
-  const rankingResult = useMemo(() => {
+  // Execute automatic built-in cascading radius (5km -> 10km -> 20km) + OSRM filtering
+  useEffect(() => {
+    let isCancelled = false;
+    const controller = new AbortController();
+
+    if (isFigure2Mode) return;
+
+    filterAndRankHospitalsByOsrmEta(ambulancePos, availableHospitals, {
+      signal: controller.signal,
+    })
+      .then((res) => {
+        if (!isCancelled && res) {
+          setOsrmRanking({
+            topHospitals: res.topHospitals,
+            allValidHospitals: res.allValidHospitals,
+            isFallback: res.isFallback,
+            effectiveRadiusKm: res.effectiveRadiusKm,
+            isLoading: false,
+          });
+        }
+      })
+      .catch((err) => {
+        if (!isCancelled) {
+          console.warn('OSRM ranking update error:', err);
+        }
+      });
+
+    return () => {
+      isCancelled = true;
+      controller.abort();
+    };
+  }, [ambulancePos, availableHospitals, isFigure2Mode]);
+
+  // Execute constrained hospital ranking on graph
+  const rawRankingResult = useMemo(() => {
     if (!snappedSourceNode) {
       return {
         rankedHospitals: [],
@@ -236,14 +284,55 @@ export function useRouting(weightedGraph, isFigure2Mode) {
     );
   }, [availableHospitals, snappedSourceNode, weightedGraph, emergencyCategory, algorithm]);
 
+  // Merge OSRM top 5 ranked hospitals with graph route path details
+  const topRankedHospitals = useMemo(() => {
+    if (isFigure2Mode) {
+      return rawRankingResult.rankedHospitals;
+    }
+    if (osrmRanking.topHospitals.length > 0) {
+      return osrmRanking.topHospitals.map((hosp) => {
+        const graphMatch = rawRankingResult.rankedHospitals.find((r) => r.id === hosp.id);
+        const durationSec = hosp.durationSec || (graphMatch?.travelTimeSec ?? 360);
+        const roadDistanceM = hosp.roadDistanceM || (graphMatch?.distanceM ?? 3000);
+        return {
+          ...hosp,
+          travelTimeSec: durationSec,
+          travelTimeMin: Number((durationSec / 60).toFixed(1)),
+          durationMin: Number((durationSec / 60).toFixed(1)),
+          distanceM: roadDistanceM,
+          roadDistanceKm: Number((roadDistanceM / 1000).toFixed(1)),
+          pathNodeIds: graphMatch?.pathNodeIds || hosp.pathNodeIds || [],
+          pathEdges: graphMatch?.pathEdges || hosp.pathEdges || [],
+          seatPenaltySec: graphMatch?.seatPenaltySec ?? 0,
+          seatReadinessLevel: graphMatch?.seatReadinessLevel ?? 'OPTIMAL',
+          seatReadinessLabel: graphMatch?.seatReadinessLabel ?? 'Ready Intake',
+        };
+      });
+    }
+    return rawRankingResult.rankedHospitals.slice(0, 5).map((h) => ({
+      ...h,
+      durationMin: Number((h.travelTimeSec / 60).toFixed(1)),
+      roadDistanceKm: Number((h.distanceM / 1000).toFixed(1)),
+    }));
+  }, [isFigure2Mode, rawRankingResult.rankedHospitals, osrmRanking.topHospitals]);
+
+  const rankingResult = useMemo(() => {
+    return {
+      ...rawRankingResult,
+      rankedHospitals: topRankedHospitals,
+      bestRecommendation: topRankedHospitals[0] || rawRankingResult.bestRecommendation,
+      alternateCandidates: topRankedHospitals.slice(1),
+    };
+  }, [rawRankingResult, topRankedHospitals]);
+
   // Target hospital: either user-selected alternate or the algorithm's top recommendation
   const activeHospital = useMemo(() => {
     if (selectedHospitalId) {
-      // 1. Check if the selected hospital is in rankedHospitals
-      const match = rankingResult.rankedHospitals.find((h) => h.id === selectedHospitalId);
+      // 1. Check if the selected hospital is in topRankedHospitals
+      const match = topRankedHospitals.find((h) => h.id === selectedHospitalId);
       if (match) return match;
 
-      // 2. If it was filtered out by CAD specialty constraint, compute its route directly
+      // 2. If it was outside the top 5, compute its route directly from availableHospitals
       const rawHosp = availableHospitals.find((h) => h.id === selectedHospitalId);
       if (rawHosp && snappedSourceNode && weightedGraph) {
         let targetNodeId = rawHosp.nodeId;
@@ -270,11 +359,18 @@ export function useRouting(weightedGraph, isFigure2Mode) {
           Number(((routeResult.totalCost || 0) + seatFactor.seatPenaltySec).toFixed(1))
         );
 
+        const travelTimeSec = routeResult.totalCost || 0;
+        const durationMin = Number((travelTimeSec / 60).toFixed(1));
+        const roadDistanceKm = Number((totalDistanceM / 1000).toFixed(1));
+
         return {
           ...rawHosp,
-          travelTimeSec: routeResult.totalCost || 0,
-          travelTimeMin: Number(((routeResult.totalCost || 0) / 60).toFixed(1)),
+          travelTimeSec,
+          travelTimeMin: durationMin,
+          durationMin,
           distanceM: totalDistanceM || 0,
+          roadDistanceM: totalDistanceM || 0,
+          roadDistanceKm,
           pathNodeIds: routeResult.path || [],
           pathEdges: pathEdges || [],
           nodesExpanded: routeResult.nodesExpanded || 0,
@@ -292,7 +388,7 @@ export function useRouting(weightedGraph, isFigure2Mode) {
       }
     }
     return rankingResult.bestRecommendation;
-  }, [selectedHospitalId, rankingResult, availableHospitals, snappedSourceNode, weightedGraph, algorithm]);
+  }, [selectedHospitalId, topRankedHospitals, rankingResult, availableHospitals, snappedSourceNode, weightedGraph, algorithm, emergencyCategory]);
 
   // In compare mode, compute exact side-by-side run for Dijkstra and A* to activeHospital
   const comparisonData = useMemo(() => {
@@ -354,6 +450,9 @@ export function useRouting(weightedGraph, isFigure2Mode) {
     activeHospital,
     comparisonData,
     availableHospitals,
+    topHospitals: topRankedHospitals,
+    effectiveRadiusKm: osrmRanking.effectiveRadiusKm || 5,
+    isRadiusFallback: osrmRanking.isFallback,
     wibApiStatus,
     refreshWibData,
     isSyncingWib,

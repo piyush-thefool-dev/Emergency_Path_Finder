@@ -266,7 +266,7 @@ export function ResultCard({
         <div>
           <span className="text-[10px] text-slate-500 uppercase block font-semibold">Corridor Length</span>
           <span className="font-bold text-slate-900 dark:text-slate-100 text-xs tabular-nums">
-            {isFigure2 ? 'N/A (Schematic)' : formatDistance(hospital.distanceM)}
+            {isFigure2 ? 'N/A (Schematic)' : hospital.roadDistanceKm ? `${hospital.roadDistanceKm} km road` : formatDistance(hospital.distanceM)}
           </span>
         </div>
         <div>
@@ -422,7 +422,7 @@ export function ResultCard({
                           {alt.name}
                         </span>
                         <span className="text-[10px] font-mono text-slate-500 dark:text-slate-400 mt-0.5 block">
-                          ETA: {formatDuration(alt.travelTimeSec)} · {formatDistance(alt.distanceM)}
+                          ETA: {alt.durationMin != null ? `${alt.durationMin} min` : formatDuration(alt.travelTimeSec)} · {alt.roadDistanceKm != null ? `${alt.roadDistanceKm} km road` : formatDistance(alt.distanceM)}
                           {deltaMinutes > 0 && (
                             <span className="text-amber-600 dark:text-amber-400 ml-1 font-semibold">
                               (+{deltaMinutes} min)

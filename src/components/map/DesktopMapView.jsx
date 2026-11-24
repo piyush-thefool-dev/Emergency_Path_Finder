@@ -133,6 +133,8 @@ export function MapView({
   onTogglePinLock,
   onRoadResolved = null,
   algorithm = 'astar',
+  effectiveRadiusKm = 5,
+  isRadiusFallback = false,
 }) {
   const [legendOpen, setLegendOpen] = useState(false);
   const [helpModalOpen, setHelpModalOpen] = useState(false);
@@ -235,6 +237,21 @@ export function MapView({
           />
         )}
 
+        {/* Dynamic semi-transparent search radius circle (5km, 10km, or 20km) */}
+        {ambulancePos && effectiveRadiusKm && (
+          <Circle
+            center={[ambulancePos.lat, ambulancePos.lon]}
+            radius={effectiveRadiusKm * 1000}
+            pathOptions={{
+              color: isRadiusFallback ? '#F59E0B' : '#0284C7',
+              fillColor: isRadiusFallback ? '#FBBF24' : '#38BDF8',
+              fillOpacity: 0.06,
+              weight: 1.5,
+              dashArray: '6, 6',
+            }}
+          />
+        )}
+
         {ambulancePos && (
           <AmbulanceMarker
             position={ambulancePos}
@@ -251,15 +268,26 @@ export function MapView({
 
       {/* Top Floating Bar: Unified non-overlapping flex row (Search Bar on Left, Map Utilities on Right) */}
       <div className="absolute top-2.5 left-14 right-2.5 z-30 flex items-center justify-between gap-2 pointer-events-none">
-        {/* Left: Clean 21st.dev Command Search Bar */}
-        <div className="pointer-events-auto flex-1 max-w-sm sm:max-w-md md:max-w-lg min-w-0">
-          <HospitalSearchBar
-            hospitals={hospitals}
-            selectedHospitalId={activeHospitalId}
-            activeHospital={targetHospital}
-            onSelectHospital={onSelectHospital}
-            ambulancePos={ambulancePos}
-          />
+        {/* Left: Clean 21st.dev Command Search Bar & Auto Corridor Status Badge */}
+        <div className="pointer-events-auto flex items-center gap-2 flex-1 max-w-xl min-w-0">
+          <div className="flex-1 min-w-[200px]">
+            <HospitalSearchBar
+              hospitals={hospitals}
+              selectedHospitalId={activeHospitalId}
+              activeHospital={targetHospital}
+              onSelectHospital={onSelectHospital}
+              ambulancePos={ambulancePos}
+            />
+          </div>
+          {effectiveRadiusKm && (
+            <div
+              className="hidden md:flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border border-slate-200/80 dark:border-white/[0.08] shadow-xs text-xs font-mono font-bold text-slate-700 dark:text-slate-300 shrink-0 select-none"
+              title={`Automatic corridor filtering: showing hospitals within ${effectiveRadiusKm} km`}
+            >
+              <span className={`w-2 h-2 rounded-full ${isRadiusFallback ? 'bg-amber-500' : 'bg-emerald-500'} animate-pulse`}></span>
+              <span>{effectiveRadiusKm} km auto</span>
+            </div>
+          )}
         </div>
 
         {/* Right: Map Utility Controls (Expand & Interactive Guide) */}

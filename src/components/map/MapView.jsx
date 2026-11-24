@@ -142,6 +142,8 @@ export function MapView({
   recenterKey = 0,
   onRoadResolved = null,
   showGraphNetwork = false,
+  effectiveRadiusKm = 10,
+  isRadiusFallback = false,
 }) {
   const defaultCenter = useMemo(
     () => (isFigure2Mode ? [28.475, 77.51] : [28.4625, 77.493]),
@@ -198,12 +200,27 @@ export function MapView({
         showGraphEdges={showGraphNetwork}
       />
 
-      {/* Hospital Destination Pins */}
+      {/* Hospital Destination Pins (Capped to top 5) */}
       <HospitalMarkers
         hospitals={hospitals}
         activeHospitalId={activeHospitalId}
         onSelectHospital={onSelectHospital}
       />
+
+      {/* Dynamic Search Radius Corridor (5km / 10km / 20km) */}
+      {ambulancePos && effectiveRadiusKm && (
+        <Circle
+          center={[ambulancePos.lat, ambulancePos.lon]}
+          radius={effectiveRadiusKm * 1000}
+          pathOptions={{
+            color: isRadiusFallback ? '#F59E0B' : '#0284C7',
+            fillColor: isRadiusFallback ? '#FBBF24' : '#38BDF8',
+            fillOpacity: 0.06,
+            weight: 1.5,
+            dashArray: '6, 6',
+          }}
+        />
+      )}
 
       {/* GPS Accuracy Radius Bubble */}
       {ambulancePos && gpsAccuracy && gpsAccuracy > 0 && (

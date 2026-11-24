@@ -60,7 +60,8 @@ export function Dashboard() {
   const {
     ambulancePos, setAmbulanceCoordinates, snappedSourceNode, emergencyCategory, setEmergencyCategory,
     algorithm, selectedHospitalId, setSelectedHospitalId, rankingResult, activeHospital,
-    comparisonData, availableHospitals, wibApiStatus, refreshWibData, isSyncingWib,
+    comparisonData, availableHospitals, topHospitals,
+    effectiveRadiusKm, isRadiusFallback, wibApiStatus, refreshWibData, isSyncingWib,
     saveCustomHospitals, resetCustomHospitals,
   } = routing;
   const {
@@ -87,7 +88,13 @@ export function Dashboard() {
         <KpiStatCard
           title="Optimal Facility"
           value={activeHospital?.shortName || activeHospital?.name || 'Searching...'}
-          subtitle={activeDistance > 0 ? `${formatDistance(activeDistance)} · Priority Corridor` : 'Pan-India Grid'}
+          subtitle={
+            activeHospital?.roadDistanceKm
+              ? `${activeHospital.roadDistanceKm} km road · Corridor`
+              : activeDistance > 0
+              ? `${formatDistance(activeDistance)} · Corridor`
+              : 'Pan-India Grid'
+          }
           icon={Hospital}
           tint="red"
           trend={activeHospital?.nabhAccredited ? 'NABH' : 'LEVEL-1'}
@@ -108,11 +115,11 @@ export function Dashboard() {
         {/* KPI 2: Dynamic ETA Window */}
         <KpiStatCard
           title="Projected ETA"
-          value={activeEta}
+          value={activeHospital?.durationMin ? `${activeHospital.durationMin} min` : activeEta}
           subtitle={signalPriority ? 'Signal Preempted' : 'Friction Calibrated'}
           icon={Clock}
           tint="emerald"
-          trend={algorithm === 'compare' ? 'A* / DIJKSTRA' : `${algorithm.toUpperCase()} OPTIMAL`}
+          trend={algorithm === 'compare' ? 'DUAL OPTIMAL' : `${algorithm.toUpperCase()} OPTIMAL`}
           trendPositive={true}
         />
 
@@ -263,7 +270,7 @@ export function Dashboard() {
               ambulancePos={ambulancePos}
               onAmbulanceMove={setAmbulanceCoordinates}
               snappedSourceNode={snappedSourceNode}
-              hospitals={availableHospitals}
+              hospitals={topHospitals && topHospitals.length > 0 ? topHospitals : availableHospitals.slice(0, 5)}
               activeHospitalId={activeHospital?.id}
               onSelectHospital={setSelectedHospitalId}
               activePathNodeIds={activeHospital?.pathNodeIds || []}
@@ -280,6 +287,8 @@ export function Dashboard() {
               onTogglePinLock={setCanDragAmbulance}
               onRoadResolved={setRoadTelemetry}
               algorithm={algorithm}
+              effectiveRadiusKm={effectiveRadiusKm}
+              isRadiusFallback={isRadiusFallback}
             />
           </div>
 

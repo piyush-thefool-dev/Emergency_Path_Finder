@@ -14,12 +14,10 @@ import L from 'leaflet';
 import { Phone, PhoneCall } from 'lucide-react';
 
 export function HospitalMarkers({ hospitals = [], activeHospitalId, onSelectHospital }) {
-  // Prominently highlight and label all nearby hospitals in the active map corridor
+  // Cap markers to top 5 to keep the emergency corridor clean and readable
   const map = useMap();
   const [zoom, setZoom] = useState(() => map.getZoom());
   useMapEvents({ zoomend: () => setZoom(map.getZoom()) });
-  // Always display all hospital callout badges across all of India at any zoom level
-  const showAllLabels = true;
 
   // Custom SVG DivIcon factory for hospitals
   const createHospitalIcon = (isTarget) => {
@@ -102,6 +100,16 @@ export function HospitalMarkers({ hospitals = [], activeHospitalId, onSelectHosp
         const isTarget = hosp.id === activeHospitalId;
         const icon = createHospitalIcon(isTarget);
         const displayName = hosp.shortName || hosp.name;
+        const durationMin = hosp.durationMin != null
+          ? hosp.durationMin
+          : hosp.travelTimeSec != null
+          ? Number((hosp.travelTimeSec / 60).toFixed(1))
+          : null;
+        const roadDistanceKm = hosp.roadDistanceKm != null
+          ? hosp.roadDistanceKm
+          : hosp.distanceM != null
+          ? Number((hosp.distanceM / 1000).toFixed(1))
+          : null;
 
         return (
           <Marker
@@ -113,10 +121,9 @@ export function HospitalMarkers({ hospitals = [], activeHospitalId, onSelectHosp
               click: () => onSelectHospital && onSelectHospital(hosp.id),
             }}
           >
-            {/* Permanent on-map callout label ensuring all hospitals are highlighted all the time */}
-            {(isTarget || showAllLabels) && (
+            {/* On-map callout label: permanent on active recommendation, hover on alternates to eliminate label collisions */}
             <Tooltip
-              permanent={true}
+              permanent={isTarget}
               direction="top"
               offset={[0, isTarget ? -52 : -46]}
               className={isTarget ? 'custom-hospital-label-recommended' : 'custom-hospital-label'}
@@ -126,20 +133,24 @@ export function HospitalMarkers({ hospitals = [], activeHospitalId, onSelectHosp
                   {isTarget && '★ '}
                   {displayName}
                 </span>
-                {isTarget ? (
-                  <span className="text-3xs font-mono font-bold bg-white/20 px-1 rounded text-white">
-                    RECOMMENDED
+                {durationMin != null && (
+                  <span className={`text-3xs font-mono font-bold px-1 rounded ${
+                    isTarget ? 'bg-white/20 text-white' : 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300'
+                  }`}>
+                    ⚡ {durationMin}m
                   </span>
-                ) : (
-                  <span className="text-3xs font-mono text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800/90 px-1 rounded border border-transparent dark:border-slate-700">
-                    {hosp.bedAvailability?.status || 'Active'}
+                )}
+                {roadDistanceKm != null && (
+                  <span className={`text-3xs font-mono px-1 rounded ${
+                    isTarget ? 'bg-white/10 text-white/90' : 'text-slate-500 dark:text-slate-400'
+                  }`}>
+                    📍 {roadDistanceKm}km
                   </span>
                 )}
               </div>
             </Tooltip>
-            )}
 
-                {/* Click Popup with Clinical & Telemetry Details */}
+            {/* Click Popup with Clinical & Telemetry Details */}
             <Popup autoPan={true} autoPanPaddingTopLeft={[24, 150]} autoPanPaddingBottomRight={[24, 100]}>
               <div className="text-xs p-1 font-sans space-y-2 max-w-xs text-slate-900 dark:text-slate-100">
                 <div className="flex items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-800 pb-1.5">
@@ -187,6 +198,24 @@ export function HospitalMarkers({ hospitals = [], activeHospitalId, onSelectHosp
                     </button>
                   )}
                 </div>
+
+                {/* Dual OSRM Telemetry Banner: Driving ETA (mins) & Road Distance (km) */}
+                {(durationMin != null || roadDistanceKm != null) && (
+                  <div className="grid grid-cols-2 gap-1.5 bg-blue-50/70 dark:bg-blue-950/40 border border-blue-200/80 dark:border-blue-800/60 rounded-lg p-1.5 text-center">
+                    <div>
+                      <span className="text-3xs uppercase font-mono text-slate-500 dark:text-slate-400 block font-semibold">Driving ETA</span>
+                      <span className="text-xs font-black font-mono text-emerald-600 dark:text-emerald-400">
+                        {durationMin != null ? `${durationMin} mins` : 'N/A'}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-3xs uppercase font-mono text-slate-500 dark:text-slate-400 block font-semibold">Road Distance</span>
+                      <span className="text-xs font-black font-mono text-slate-800 dark:text-slate-200">
+                        {roadDistanceKm != null ? `${roadDistanceKm} km` : 'N/A'}
+                      </span>
+                    </div>
+                  </div>
+                )}
 
                 {/* Clinical bed capacity readout */}
                 <div className="bg-slate-50 dark:bg-slate-900/80 border border-slate-200/80 dark:border-slate-800 rounded-lg p-2 space-y-1.5">

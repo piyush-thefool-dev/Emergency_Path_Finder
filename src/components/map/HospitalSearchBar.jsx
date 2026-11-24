@@ -191,7 +191,7 @@ export function HospitalSearchBar({
   const totalHospitals = hospitals.length || 280;
   const showList = embedded || isOpen;
   const hasAmbulancePos = ambulancePos?.lat != null && ambulancePos?.lon != null;
-  const inputRightPadding = selectedHospitalId && !query ? 'pr-28' : query ? 'pr-10' : 'pr-14';
+  const inputRightPadding = selectedHospitalId ? 'pr-44' : query ? 'pr-32' : 'pr-28';
 
   return (
     <div
@@ -199,7 +199,13 @@ export function HospitalSearchBar({
       className={`${embedded ? 'flex flex-col h-full min-h-0' : 'relative'} font-mono ${className}`}
     >
       {/* Search Input Bar (21st.dev / Google Maps Clean Normal Style) */}
-      <div className="relative flex items-center shrink-0">
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          if (!isOpen) setIsOpen(true);
+        }}
+        className="relative flex items-center shrink-0"
+      >
         <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 pointer-events-none flex items-center">
           <Search className="w-4 h-4" />
         </div>
@@ -219,8 +225,8 @@ export function HospitalSearchBar({
           className={`w-full pl-10 ${inputRightPadding} py-2 sm:py-2.5 rounded-xl border text-xs sm:text-sm font-sans transition-all backdrop-blur-md shadow-xs bg-slate-50/90 dark:bg-slate-900/90 border-slate-200/90 dark:border-white/[0.08] text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-hidden focus:border-slate-400 dark:focus:border-slate-500 focus:ring-2 focus:ring-slate-400/20 dark:focus:ring-white/10`}
         />
 
-        <div className="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
-          {query ? (
+        <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
+          {query && (
             <button
               type="button"
               onClick={() => {
@@ -233,22 +239,34 @@ export function HospitalSearchBar({
             >
               <X className="w-3.5 h-3.5" />
             </button>
-          ) : selectedHospitalId ? (
+          )}
+
+          {selectedHospitalId && !query && (
             <button
               type="button"
               onClick={handleClear}
-              className="px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/30 hover:bg-amber-500/20 transition-colors cursor-pointer"
+              className="px-2 py-1 rounded-lg text-[10px] font-mono font-bold bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/30 hover:bg-amber-500/20 transition-colors cursor-pointer"
               title="Reset manual destination override back to automated CAD recommendation"
             >
               Auto CAD
             </button>
-          ) : (
-            <kbd className="hidden sm:inline-flex items-center px-1.5 py-0.5 text-[10px] font-mono text-slate-400 dark:text-slate-500 bg-slate-200/40 dark:bg-slate-800/60 border border-slate-300/40 dark:border-slate-700/60 rounded">
-              ⌘K
-            </kbd>
           )}
+
+          {/* Explicit Search Button (Visible on PC and mobile everywhere) */}
+          <button
+            type="submit"
+            onClick={() => {
+              if (!isOpen) setIsOpen(true);
+              inputRef.current?.focus();
+            }}
+            className="flex items-center gap-1 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg text-xs font-sans font-bold bg-[#1F3C6D] dark:bg-red-600 text-white hover:bg-blue-800 dark:hover:bg-red-700 transition-all cursor-pointer shadow-xs active:scale-95 shrink-0"
+            title="Search hospitals"
+          >
+            <Search className="w-3.5 h-3.5" />
+            <span className="hidden xs:inline">Search</span>
+          </button>
         </div>
-      </div>
+      </form>
 
       {/* Hospital List / Dropdown Menu */}
       {showList && (
