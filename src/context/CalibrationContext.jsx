@@ -19,13 +19,13 @@ const CalibrationContext = createContext(null);
 export const INITIAL_CALIBRATION_STATE = {
   // 1. Study Area & OSM Extract Metadata (Dashboard & syntheticCityGraph.js)
   osmResolved: true,
-  studyAreaPolygon: 'Greater Noida Knowledge Park I–III, Pari Chowk & Alpha–Delta Corridor (28.448°N–28.522°N, 77.475°E–77.555°E)',
-  osmExtractDate: 'OSM Overpass / OSMnx Road Graph v1.4 (Extracted 2026-11-03 UTC)',
+  studyAreaPolygon: 'Pan-India Metropolitan & National Highway Corridor Grid (8.0°N–36.0°N, 68.0°E–94.0°E) + Delhi-NCR Urban Topology',
+  osmExtractDate: 'OSM Overpass / OSMnx Road Graph v2.0 (Pan-India & Delhi-NCR Extracted 2026-11 UTC)',
 
   // 2. Traffic & Weather Feed Provenance (Dashboard & speedModel.js)
   trafficResolved: true,
   trafficProvider: 'TomTom Traffic Flow API + Dynamic Time-of-Day Spatial Congestion Model v(e)',
-  weatherProvider: 'Open-Meteo Greater Noida NCR Telemetry Feed (28.4795°N, 77.5090°E)',
+  weatherProvider: 'Open-Meteo National Weather Station Network & Delhi-NCR Telemetry Feed',
 
   // 3. Hospital Directory & Bed Availability (directory metadata is not bed telemetry)
   hospitalResolved: true,
@@ -54,7 +54,7 @@ export const INITIAL_CALIBRATION_STATE = {
 export function CalibrationProvider({ children }) {
   const [calibration, setCalibration] = useState(INITIAL_CALIBRATION_STATE);
 
-  // Run a local in-browser benchmark on the bundled Greater Noida graph
+  // Run a local in-browser benchmark on the bundled Pan-India & Delhi-NCR graph
   const runLiveBenchmarkCalibration = useCallback(() => {
     const raw = getDefaultGraph();
     const weighted = computeGraphWeights(raw, {

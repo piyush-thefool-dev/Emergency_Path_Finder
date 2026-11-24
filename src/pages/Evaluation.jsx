@@ -175,7 +175,7 @@ export function Evaluation() {
                   <span className="font-bold text-slate-800 dark:text-slate-200">{calibration.shortestDistanceActualTime || '14.2 min (852 s)'}</span>
                 </td>
                 <td className="py-2.5 px-3 text-slate-500">Geographic shortest path</td>
-                <td className="py-2.5 px-3 text-slate-500">Measured on Greater Noida network</td>
+                <td className="py-2.5 px-3 text-slate-500">Measured on Pan-India & Delhi-NCR network</td>
               </tr>
               <tr>
                 <td className="py-2.5 px-3 font-semibold text-slate-800 dark:text-slate-200">Free-flow route actual time</td>

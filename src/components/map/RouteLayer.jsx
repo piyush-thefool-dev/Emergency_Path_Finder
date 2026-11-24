@@ -232,6 +232,45 @@ export function RouteLayer({
               <Tooltip sticky>No road route avoiding the closure was found - verify manually.</Tooltip>
             )}
           </Polyline>
+
+          {/* 2b. Visual Snap Connector from GPS / Ambulance to Nearest Road Network Node */}
+          {routeStart && activePathNodeIds.length > 0 && nodeMap.get(activePathNodeIds[0]) && (
+            <Polyline
+              positions={[
+                [routeStart.lat, routeStart.lon],
+                [nodeMap.get(activePathNodeIds[0]).lat, nodeMap.get(activePathNodeIds[0]).lon],
+              ]}
+              pathOptions={{
+                color: '#10B981',
+                weight: 3,
+                dashArray: '4, 6',
+                opacity: 0.95,
+                lineCap: 'round',
+              }}
+            />
+          )}
+
+          {/* 2c. Visual Final Access Connector from Last Network Node to Hospital Destination */}
+          {routeEnd &&
+            activePathNodeIds.length > 0 &&
+            nodeMap.get(activePathNodeIds[activePathNodeIds.length - 1]) && (
+              <Polyline
+                positions={[
+                  [
+                    nodeMap.get(activePathNodeIds[activePathNodeIds.length - 1]).lat,
+                    nodeMap.get(activePathNodeIds[activePathNodeIds.length - 1]).lon,
+                  ],
+                  [routeEnd.lat, routeEnd.lon],
+                ]}
+                pathOptions={{
+                  color: '#16A34A',
+                  weight: 3,
+                  dashArray: '3, 5',
+                  opacity: 0.9,
+                  lineCap: 'round',
+                }}
+              />
+            )}
         </>
       )}
 
@@ -335,15 +374,18 @@ export function RouteLayer({
         );
       })()}
 
-      {/* 3. Graph Intersections & Junction Nodes */}
-      {showAllNodes ? (
-        // Full Network Mode: Displays every road intersection and junction in the graph
+      {/* 3. Graph Intersections & Junction Nodes (Strictly rendered ONLY when Nodes toggle is ON) */}
+      {showAllNodes &&
         nodes.map((node) => {
           const isRouteNode = activePathNodeIds.includes(node.id);
+          const isSnappedOrigin = activePathNodeIds.length > 0 && activePathNodeIds[0] === node.id;
           let color = '#3B82F6'; // Default Cobalt Blue
           let radius = 4;
 
-          if (isRouteNode) {
+          if (isSnappedOrigin) {
+            color = '#10B981'; // Emerald Snapped Origin Junction
+            radius = 7;
+          } else if (isRouteNode) {
             color = '#D62828'; // Active route: Crimson
             radius = 6;
           } else if (node.type === 'expressway' || node.type === 'expressway_ramp' || node.type === 'highway') {
@@ -382,7 +424,11 @@ export function RouteLayer({
                   <span className="text-slate-500 dark:text-slate-400 block text-[9px]">
                     {node.lat.toFixed(4)}°N, {node.lon.toFixed(4)}°E · Type: {node.type || 'junction'}
                   </span>
-                  {isRouteNode && (
+                  {isSnappedOrigin ? (
+                    <span className="inline-block mt-1 px-1.5 py-0.5 rounded bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 font-bold text-[9px] border border-emerald-300 dark:border-emerald-800">
+                      📍 NEAREST SNAPPED INTERSECTION (GPS ENTRY)
+                    </span>
+                  ) : isRouteNode && (
                     <span className="inline-block mt-1 px-1.5 py-0.5 rounded bg-red-100 dark:bg-red-950/80 text-red-700 dark:text-red-300 font-bold text-[9px] border border-red-300 dark:border-red-800">
                       ★ ACTIVE DISPATCH CORRIDOR
                     </span>
@@ -391,36 +437,7 @@ export function RouteLayer({
               </Tooltip>
             </CircleMarker>
           );
-        })
-      ) : (
-        // Default Clean Mode: Only show small junction dots along the active calculated route
-        nodes
-          .filter(
-            (node) =>
-              activePathNodeIds.includes(node.id) &&
-              node.type !== 'hospital' &&
-              node.type !== 'source'
-          )
-          .map((node) => (
-            <CircleMarker
-              key={node.id}
-              center={[node.lat, node.lon]}
-              radius={4.5}
-              pathOptions={{
-                fillColor: '#D62828',
-                fillOpacity: 0.95,
-                color: '#FFFFFF',
-                weight: 1.5,
-              }}
-            >
-              <Tooltip>
-                <span className="text-3xs font-mono">
-                  <strong>{node.id}</strong>: {node.name || node.label}
-                </span>
-              </Tooltip>
-            </CircleMarker>
-          ))
-      )}
+        })}
     </>
   );
 }

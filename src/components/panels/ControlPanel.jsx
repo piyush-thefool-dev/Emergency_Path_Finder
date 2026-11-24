@@ -65,7 +65,7 @@ export function ControlPanel({
             <span>Road Network Topology</span>
           </span>
           <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded bg-emerald-500/10 text-[#16A34A] dark:text-emerald-400 border border-emerald-500/30">
-            GREATER NOIDA GRID
+            PAN-INDIA & NCR GRID
           </span>
         </div>
 
@@ -76,10 +76,10 @@ export function ControlPanel({
             </div>
             <div className="min-w-0">
               <div className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">
-                Greater Noida High-Fidelity OSM Grid
+                Pan-India & Delhi-NCR High-Fidelity OSM Grid
               </div>
               <div className="text-[10px] font-mono text-slate-500 dark:text-slate-400">
-                Directed weighted graph G=(V,E,w) · Always active
+                Directed weighted graph G=(V,E,w) · 259 Nodes · 666 Edges
               </div>
             </div>
           </div>

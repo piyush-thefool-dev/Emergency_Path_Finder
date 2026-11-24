@@ -32,7 +32,7 @@ export function DataFreshness({
           <span className="block mt-0.5">
             {directoryResponded
               ? 'WIB India Hospitals and data.gov.in official registry active.'
-              : 'Calibrated Delhi-NCR regional apex hospital directory active.'}
+              : 'Calibrated Pan-India & Delhi-NCR regional apex hospital directory active.'}
           </span>
         </div>
         <div>

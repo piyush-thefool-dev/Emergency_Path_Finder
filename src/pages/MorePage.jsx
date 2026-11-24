@@ -79,7 +79,7 @@ export function MorePage() {
         {/* Advisory Attribution */}
         <div className="p-3 rounded-lg bg-slate-50 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800 text-[11px] text-slate-500 leading-relaxed">
           <p>
-            Tactical Emergency Path Finder · Computer-Aided Dispatch (CAD) System · Greater Noida Road Grid. Map data © OpenStreetMap contributors under Open Database Licence (ODbL).
+            Tactical Emergency Path Finder · Computer-Aided Dispatch (CAD) System · Pan-India & Delhi-NCR Road Grid. Map data © OpenStreetMap contributors under Open Database Licence (ODbL).
           </p>
         </div>
       </div>

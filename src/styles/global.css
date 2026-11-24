@@ -346,11 +346,11 @@
 
 /* Coarse-pointer touch target normalization */
 @media (pointer: coarse) {
-  button {
+  button:not([data-compact]):not([class*="h-"]) {
     min-height: 44px;
   }
 
-  button[aria-label] {
+  button[aria-label]:not([data-compact]):not([class*="w-"]) {
     min-width: 44px;
   }
 

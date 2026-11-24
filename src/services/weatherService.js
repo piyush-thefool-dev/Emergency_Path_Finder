@@ -114,8 +114,10 @@ export function mapWmoCodeToWeather(code, visibilityMetres = 10000) {
  *   source: string
  * }>}
  */
-export async function fetchLiveWeather() {
-  const url = `${OPEN_METEO_CONFIG.endpoint}?latitude=${OPEN_METEO_CONFIG.latitude}&longitude=${OPEN_METEO_CONFIG.longitude}&current=temperature_2m,relative_humidity_2m,precipitation,rain,weather_code,wind_speed_10m,visibility`;
+export async function fetchLiveWeather(lat = OPEN_METEO_CONFIG.latitude, lon = OPEN_METEO_CONFIG.longitude) {
+  const targetLat = typeof lat === 'number' ? lat : OPEN_METEO_CONFIG.latitude;
+  const targetLon = typeof lon === 'number' ? lon : OPEN_METEO_CONFIG.longitude;
+  const url = `${OPEN_METEO_CONFIG.endpoint}?latitude=${targetLat}&longitude=${targetLon}&current=temperature_2m,relative_humidity_2m,precipitation,rain,weather_code,wind_speed_10m,visibility`;
 
   const res = await fetch(url, {
     method: 'GET',
@@ -146,6 +148,6 @@ export async function fetchLiveWeather() {
     description: weatherMapping.description,
     frictionFactor: weatherMapping.frictionFactor,
     timestamp: current.time || new Date().toISOString(),
-    source: 'Open-Meteo Live API (Greater Noida Station 28.4795°N, 77.5090°E)',
+    source: `Open-Meteo Live API (${targetLat.toFixed(2)}°N, ${targetLon.toFixed(2)}°E)`,
   };
 }

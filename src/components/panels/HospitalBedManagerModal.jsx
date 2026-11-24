@@ -14,6 +14,7 @@ import {
   Minus,
   Save,
   ShieldCheck,
+  Search,
 } from 'lucide-react';
 
 export function HospitalBedManagerModal({
@@ -38,6 +39,7 @@ export function HospitalBedManagerModal({
   });
 
   const [savedNotice, setSavedNotice] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     if (!isOpen) return undefined;
@@ -178,15 +180,22 @@ export function HospitalBedManagerModal({
           </button>
         </div>
 
-        {/* Info Banner */}
+        {/* Search & Reset Bar */}
         <div className="bg-slate-50 dark:bg-slate-900/90 border-b border-slate-200/80 dark:border-slate-800 px-4 py-2 text-xs font-mono text-slate-600 dark:text-slate-400 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-          <span className="text-[11px]">
-            Adjust clinical bed capacity and specialty status. Changes immediately update destination triage rankings and alternate scores.
-          </span>
+          <div className="relative flex-1 max-w-sm">
+            <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input
+              type="text"
+              placeholder={`Search ${editedList.length} hospitals by name or city...`}
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full text-xs pl-8 pr-3 py-1 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-hidden focus:border-red-500"
+            />
+          </div>
           <button
             type="button"
             onClick={handleReset}
-            className="text-[11px] text-[#D62828] dark:text-red-400 font-bold flex items-center gap-1 hover:underline cursor-pointer shrink-0"
+            className="text-[11px] text-[#D62828] dark:text-red-400 font-bold flex items-center gap-1 hover:underline cursor-pointer shrink-0 self-end sm:self-auto"
           >
             <RotateCcw className="w-3 h-3" />
             <span>Reset Defaults</span>
@@ -195,7 +204,18 @@ export function HospitalBedManagerModal({
 
         {/* Scrollable list */}
         <form onSubmit={handleSave} className={`flex-1 overflow-y-auto p-3 sm:p-4 space-y-3 no-scrollbar ${asPage ? 'pb-0 sm:pb-0' : ''}`}>
-          {editedList.map((hosp, idx) => {
+          {editedList
+            .map((hosp, idx) => ({ hosp, idx }))
+            .filter(({ hosp }) => {
+              if (!searchTerm.trim()) return true;
+              const q = searchTerm.toLowerCase();
+              return (
+                hosp.name?.toLowerCase().includes(q) ||
+                hosp.address?.toLowerCase().includes(q) ||
+                hosp.shortName?.toLowerCase().includes(q)
+              );
+            })
+            .map(({ hosp, idx }) => {
             const beds = hosp.bedAvailability || {};
 
             return (

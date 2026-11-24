@@ -46,7 +46,7 @@ export function Benchmark() {
             Algorithmic Performance Benchmark: Dijkstra vs A*
           </h2>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-            Empirical traversal audit on the identical Greater Noida street topology and edge-weight model.
+            Empirical traversal audit on the identical Pan-India & Delhi-NCR street topology and edge-weight model.
           </p>
         </div>
 

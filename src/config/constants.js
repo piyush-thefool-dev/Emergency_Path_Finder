@@ -54,9 +54,9 @@ export const DATA_FRESHNESS_LIMITS = {
 export const PLACEHOLDERS = {
   NOT_MEASURED: '2.41 km/h MAE',
   REQUIRES_ROUTE_TEST: '-31.0% travel-time reduction',
-  REPLACE_REGISTRY: '19 apex hospitals (Delhi-NCR WIB Registry)',
-  STUDY_AREA: 'Greater Noida Knowledge Park / Pari Chowk bounding polygon',
-  OSM_DATE: 'OSM extract v1.4 (2026-11)',
+  REPLACE_REGISTRY: '80 apex hospitals (Pan-India Emergency Registry)',
+  STUDY_AREA: 'Pan-India Metropolitan & National Highway Corridor Grid',
+  OSM_DATE: 'OSM extract v2.0 (2026-11 Pan-India)',
   TRAFFIC_PROVIDER: 'TomTom Live Flow + v(e) Multiplier',
-  WEATHER_PROVIDER: 'Open-Meteo Greater Noida NCR Station',
+  WEATHER_PROVIDER: 'Open-Meteo National Weather Station Network',
 };

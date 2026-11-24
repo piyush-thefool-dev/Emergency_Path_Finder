@@ -18,7 +18,8 @@ export function HospitalMarkers({ hospitals = [], activeHospitalId, onSelectHosp
   const map = useMap();
   const [zoom, setZoom] = useState(() => map.getZoom());
   useMapEvents({ zoomend: () => setZoom(map.getZoom()) });
-  const showAllLabels = zoom >= 13 || map.getSize().x > 600; // Always label nearby hospitals at standard dispatch zoom
+  // Always display all hospital callout badges across all of India at any zoom level
+  const showAllLabels = true;
 
   // Custom SVG DivIcon factory for hospitals
   const createHospitalIcon = (isTarget) => {

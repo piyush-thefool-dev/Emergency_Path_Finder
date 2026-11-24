@@ -102,7 +102,7 @@ async function checkOverpass() {
       // try next mirror
     }
   }
-  return { state: 'ok', detail: 'Bundled Delhi-NCR High-Fidelity Graph (Active)' };
+  return { state: 'ok', detail: 'Bundled Pan-India & Delhi-NCR High-Fidelity Graph (Active)' };
 }
 
 async function checkWeather() {

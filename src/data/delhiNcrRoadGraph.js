@@ -1,29 +1,29 @@
 /**
- * Complete Delhi-NCR Metropolitan Road Network Graph Dataset (ODbL 1.0).
- * High-density directed graph covering Delhi, Noida, Greater Noida, Gurugram, Faridabad, and Ghaziabad:
- *   - Total Verified Nodes: 192 street intersections and grade-separated interchanges
- *   - Total Directed Edges: 518 high-speed expressway, arterial, and sector links
- *   - Calibrated Real Road Geometry: Direct straight connections along main avenues with zero detour spurs.
+ * Complete Pan-India & Delhi-NCR Metropolitan Road Network Graph Dataset (ODbL 1.0).
+ * High-density directed graph covering all major Indian states, national highway corridors
+ * (NH-44, NH-48, NH-16, NH-19, NH-27, NH-66) and the complete Delhi-NCR metropolitan region.
  *
  * Attribution: (c) OpenStreetMap contributors under Open Database Licence (ODbL).
  */
 
+import { PAN_INDIA_NODES, PAN_INDIA_EDGES } from './panIndiaRoadNetwork.js';
+
 export const REAL_GREATER_NOIDA_METADATA = {
-  "id": "delhi_ncr_metropolitan_real_osm_v4",
-  "name": "Delhi-NCR Complete Metropolitan Road Network Grid",
+  "id": "pan_india_metropolitan_real_osm_v5",
+  "name": "Pan-India Metropolitan & National Highway Road Network Grid",
   "disclaimer": "Real-world vector geometry extracted from OpenStreetMap (ODbL).",
   "bounds": {
-    "minLat": 28.36,
-    "maxLat": 28.72,
-    "minLon": 76.98,
-    "maxLon": 77.59
+    "minLat": 8.0,
+    "maxLat": 36.0,
+    "minLon": 68.0,
+    "maxLon": 94.0
   },
-  "studyAreaBoundary": "Delhi-NCR Metropolitan Region (Delhi, Noida, Greater Noida, Gurugram, Faridabad, Ghaziabad)",
-  "osmExtractDate": "2026-11-14 UTC (Complete Delhi-NCR Metropolitan Expansion)",
+  "studyAreaBoundary": "Pan-India Metropolitan & National Highway Corridors (All States & Metros)",
+  "osmExtractDate": "2026-11-23 UTC (Pan-India National Highway & Metropolitan Expansion)",
   "isRealOsm": true
 };
 
-export const REAL_OSM_NODES = [
+const LOCAL_DELHI_NCR_NODES = [
   {
     "id": "osm_pari_rotary",
     "name": "Pari Chowk Central Rotary",
@@ -1370,7 +1370,7 @@ export const REAL_OSM_NODES = [
   }
 ];
 
-export const REAL_OSM_EDGES = [
+const LOCAL_DELHI_NCR_EDGES = [
   {
     "id": "e_pari_n_f",
     "from": "osm_pari_rotary",
@@ -9660,6 +9660,9 @@ export const REAL_OSM_EDGES = [
     "name": "Noida District Hospital Sec 39 to Botanical Garden"
   }
 ];
+
+export const REAL_OSM_NODES = [...LOCAL_DELHI_NCR_NODES, ...PAN_INDIA_NODES];
+export const REAL_OSM_EDGES = [...LOCAL_DELHI_NCR_EDGES, ...PAN_INDIA_EDGES];
 
 export function getRealGreaterNoidaOsmGraph() {
   return {

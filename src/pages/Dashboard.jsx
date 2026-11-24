@@ -166,6 +166,7 @@ export function Dashboard() {
               canDragPin={canDragAmbulance}
               onTogglePinLock={setCanDragAmbulance}
               onRoadResolved={setRoadTelemetry}
+              algorithm={algorithm}
             />
           </div>
 
@@ -177,7 +178,7 @@ export function Dashboard() {
                 <span>Road Network Topology & Telemetry State</span>
               </span>
               <span className="text-[10px] text-slate-400">
-                Study Area: Greater Noida (ODbL 1.0)
+                Study Area: Pan-India & Delhi-NCR (ODbL 1.0)
               </span>
             </div>
 
@@ -188,7 +189,7 @@ export function Dashboard() {
                 </span>
                 <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-semibold bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30">
                   <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
-                  Real OSM Directed Graph (Greater Noida)
+                  Real OSM Directed Graph (Pan-India & Delhi-NCR)
                 </span>
               </div>
 
@@ -232,7 +233,7 @@ export function Dashboard() {
                 </div>
                 <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-semibold bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-800">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                  {availableHospitals.length} Regional Facilities Calibrated
+                  {availableHospitals.length} Apex Facilities (Pan-India & Delhi-NCR)
                 </span>
               </div>
             </div>

@@ -9,6 +9,7 @@ import AmbulanceMarker from './AmbulanceMarker.jsx';
 import HospitalMarkers from './HospitalMarkers.jsx';
 import RouteLayer from './RouteLayer.jsx';
 import MapHelpModal from './MapHelpModal.jsx';
+import HospitalSearchBar from './HospitalSearchBar.jsx';
 import {
   Ambulance,
   Hospital,
@@ -73,7 +74,7 @@ function CameraActionHandler({ trigger, ambulancePos, targetHospital }) {
   const map = useMap();
 
   useEffect(() => {
-    if (!trigger) return;
+    if (!trigger && !targetHospital) return;
     if (ambulancePos && targetHospital) {
       try {
         map.fitBounds(
@@ -81,15 +82,17 @@ function CameraActionHandler({ trigger, ambulancePos, targetHospital }) {
             [ambulancePos.lat, ambulancePos.lon],
             [targetHospital.lat, targetHospital.lon],
           ],
-          { padding: [50, 50], maxZoom: 15 }
+          { padding: [55, 55], maxZoom: 15 }
         );
       } catch {
-        map.setView([ambulancePos.lat, ambulancePos.lon], 14);
+        map.setView([targetHospital.lat, targetHospital.lon], 14);
       }
+    } else if (targetHospital) {
+      map.setView([targetHospital.lat, targetHospital.lon], 14);
     } else if (ambulancePos) {
       map.setView([ambulancePos.lat, ambulancePos.lon], 14);
     }
-  }, [trigger, map, ambulancePos, targetHospital]);
+  }, [trigger, targetHospital?.id, map, ambulancePos, targetHospital]);
 
   return null;
 }
@@ -129,13 +132,14 @@ export function MapView({
   canDragPin = false,
   onTogglePinLock,
   onRoadResolved = null,
+  algorithm = 'astar',
 }) {
   const [legendOpen, setLegendOpen] = useState(false);
   const [helpModalOpen, setHelpModalOpen] = useState(false);
-  const [showQuickHint, setShowQuickHint] = useState(true);
+  const [showQuickHint, setShowQuickHint] = useState(false);
   const [isMapExpanded, setIsMapExpanded] = useState(false);
-  // Graph network overlay: displays all road intersection nodes and directed edges (OFF by default)
-  const [showGraphNetwork, setShowGraphNetwork] = useState(false);
+  // Graph network overlay: displays all road intersection nodes and directed edges (ON by default for Pan-India & NCR inspection)
+  const [showGraphNetwork, setShowGraphNetwork] = useState(true);
   const [recenterTrigger, setRecenterTrigger] = useState(0);
   const handleRecenter = () => setRecenterTrigger((t) => t + 1);
 
@@ -144,9 +148,22 @@ export function MapView({
     [hospitals, activeHospitalId]
   );
 
-  const defaultCenter = useMemo(() => (isFigure2Mode ? [28.475, 77.51] : [28.482, 77.51]), [isFigure2Mode]);
+  const defaultCenter = useMemo(() => {
+    if (ambulancePos?.lat && ambulancePos?.lon) {
+      return [ambulancePos.lat, ambulancePos.lon];
+    }
+    return isFigure2Mode ? [28.475, 77.51] : [28.482, 77.51];
+  }, [ambulancePos, isFigure2Mode]);
   const defaultZoom = isFigure2Mode ? 14 : 13;
-  const bounds = useMemo(() => (nodes.length > 0 ? nodes.map((n) => [n.lat, n.lon]) : null), [nodes]);
+  const bounds = useMemo(() => {
+    if (ambulancePos && targetHospital) {
+      return [
+        [ambulancePos.lat, ambulancePos.lon],
+        [targetHospital.lat, targetHospital.lon],
+      ];
+    }
+    return null;
+  }, [ambulancePos, targetHospital]);
 
   return (
     <div
@@ -232,6 +249,17 @@ export function MapView({
         )}
       </MapContainer>
 
+      {/* Top-Left Search Bar (Positioned gracefully next to Leaflet zoom controls) */}
+      <div className="absolute top-2.5 left-14 z-20 max-w-[calc(100%-250px)] sm:max-w-xs md:max-w-sm">
+        <HospitalSearchBar
+          hospitals={hospitals}
+          selectedHospitalId={activeHospitalId}
+          activeHospital={targetHospital}
+          onSelectHospital={onSelectHospital}
+          ambulancePos={ambulancePos}
+        />
+      </div>
+
       {/* Top-Right Quick Map Action Bar */}
       <div className="absolute top-2.5 right-2.5 sm:top-3 sm:right-3 z-20 flex items-center gap-1 sm:gap-1.5 flex-wrap justify-end">
         {onTogglePinLock && (
@@ -270,11 +298,11 @@ export function MapView({
               ? 'bg-[#1F3C6D] text-white border-blue-900 shadow-md ring-1 ring-blue-400'
               : 'bg-white/95 dark:bg-slate-900/95 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800'
           }`}
-          title={showGraphNetwork ? 'Hide graph network & nodes' : 'Show road graph network & intersection nodes (default: OFF)'}
+          title={showGraphNetwork ? 'Hide graph network & nodes' : 'Show road graph network & intersection nodes (default: ON)'}
           aria-pressed={showGraphNetwork}
         >
           <Network className="w-3.5 h-3.5 text-[#D62828]" />
-          <span>Nodes: {showGraphNetwork ? 'ON' : 'OFF'}</span>
+          <span>Nodes: {showGraphNetwork ? `ON (${nodes.length})` : 'OFF'}</span>
         </button>
 
         <button

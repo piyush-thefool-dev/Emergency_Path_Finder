@@ -55,7 +55,7 @@ export function Navbar() {
               </span>
             </div>
             <span className="text-[11px] text-slate-500 dark:text-slate-400 font-mono tracking-tight leading-none hidden xl:block">
-              Delhi Technical Campus · Greater Noida Road Grid
+              Delhi Technical Campus · Pan-India & Delhi-NCR Road Grid
             </span>
           </div>
         </NavLink>

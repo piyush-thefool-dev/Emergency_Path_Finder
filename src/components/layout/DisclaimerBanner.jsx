@@ -49,7 +49,7 @@ export function DisclaimerBanner({ compact = false }) {
               expanded ? 'block' : 'hidden sm:block'
             }`}
           >
-            Real-time traffic-calibrated emergency routing and hospital triage system for Greater Noida & Delhi-NCR. Traversal paths and arrival windows are dynamically computed over the live OpenStreetMap road network.
+            Real-time traffic-calibrated emergency routing and hospital triage system for Pan-India & Delhi-NCR. Traversal paths and arrival windows are dynamically computed over the live OpenStreetMap road network.
           </p>
         </div>
       </div>

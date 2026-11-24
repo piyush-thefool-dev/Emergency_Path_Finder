@@ -27,11 +27,14 @@ import {
   PhoneCall,
   Network,
   X,
+  Search,
+  Hospital,
 } from 'lucide-react';
 import MapView from './MapView.jsx';
 import MapLegend from './MapLegend.jsx';
 import MapHelpModal from './MapHelpModal.jsx';
 import TrafficSheet from './TrafficSheet.jsx';
+import HospitalSearchBar from './HospitalSearchBar.jsx';
 import ApiStatusPanel, { STATE_STYLE } from '../panels/ApiStatusPanel.jsx';
 import { useDispatch } from '../../context/DispatchContext.jsx';
 import { useTheme } from '../../context/ThemeContext.jsx';
@@ -82,8 +85,9 @@ export function MapScreen() {
   const [helpOpen, setHelpOpen] = useState(false);
   const [trafficOpen, setTrafficOpen] = useState(false);
   const [focusPoint, setFocusPoint] = useState(null);
-  // Graph network overlay: displays all road intersection nodes and directed edges (OFF by default)
-  const [showGraphNetwork, setShowGraphNetwork] = useState(false);
+  const [searchModalOpen, setSearchModalOpen] = useState(false);
+  // Graph network overlay: displays all road intersection nodes and directed edges (ON by default for Pan-India & NCR inspection)
+  const [showGraphNetwork, setShowGraphNetwork] = useState(true);
 
   const { weightedGraph, incidents, addIncident, removeIncident, clearIncidents, reporter, setReporter } = graph;
   const {
@@ -163,8 +167,28 @@ export function MapScreen() {
               {activeHospital ? <Navigation2 className="w-4 h-4 fill-current" /> : <AlertTriangle className="w-4 h-4" />}
             </span>
             <span className="min-w-0 flex-1">
-              <span className="block text-[10px] font-mono font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                {activeHospital ? `Optimal Receiving · ${category?.shortLabel || ''}` : 'No hospital reachable'}
+              <span className="block text-[10px] font-mono font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+                <span>
+                  {activeHospital
+                    ? routing.selectedHospitalId
+                      ? `★ Manual Target · ${category?.shortLabel || ''}`
+                      : `Optimal Receiving · ${category?.shortLabel || ''}`
+                    : 'No hospital reachable'}
+                </span>
+                {routing.selectedHospitalId && (
+                  <span
+                    role="button"
+                    tabIndex={0}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      routing.setSelectedHospitalId(null);
+                    }}
+                    className="px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-500/30 text-[9px] hover:bg-amber-500/30 cursor-pointer font-bold"
+                    title="Reset to automated CAD recommendation"
+                  >
+                    Auto
+                  </span>
+                )}
               </span>
               <span className="block text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100 truncate leading-tight">
                 {activeHospital ? activeHospital.shortName || activeHospital.name : 'Select another category'}
@@ -244,6 +268,17 @@ export function MapScreen() {
                   <span>Activate GPS</span>
                 </>
               )}
+            </button>
+
+            {/* Quick Hospital Search Button */}
+            <button
+              type="button"
+              onClick={() => setSearchModalOpen(true)}
+              className="pointer-events-auto flex-1 h-8 px-2.5 rounded-lg text-xs font-mono font-bold flex items-center justify-center gap-1.5 border shadow-xs cursor-pointer active:scale-95 transition-all bg-white/95 dark:bg-slate-900/95 text-slate-800 dark:text-slate-200 border-slate-200/90 dark:border-slate-800 truncate hover:border-slate-300 dark:hover:border-slate-700"
+              title={`Search all ${availableHospitals?.length || 80} Pan-India apex hospitals by name, city, or specialty`}
+            >
+              <Search className="w-3.5 h-3.5 text-[#D62828] shrink-0" />
+              <span className="truncate">Search ({availableHospitals?.length || 80})</span>
             </button>
 
             {/* Quick Tools Button */}
@@ -388,6 +423,45 @@ export function MapScreen() {
           onClearIncidents={clearIncidents}
           onFocusPoint={(pt) => setFocusPoint({ ...pt, key: Date.now() })}
         />
+
+        {/* ───────── Pan-India Hospital Search Modal Overlay ───────── */}
+        {searchModalOpen && (
+          <div
+            className="fixed inset-0 z-[750] bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Search Hospitals"
+          >
+            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xl w-full max-w-lg max-h-[85dvh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+              <div className="p-3 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between shrink-0 bg-slate-50 dark:bg-slate-950/60">
+                <span className="font-bold text-xs uppercase tracking-wider text-slate-800 dark:text-slate-200 font-mono flex items-center gap-2">
+                  <Hospital className="w-4 h-4 text-[#D62828]" />
+                  Pan-India Hospital Registry Search
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setSearchModalOpen(false)}
+                  className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+                  aria-label="Close search"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+              <div className="p-3 flex-1 overflow-y-auto">
+                <HospitalSearchBar
+                  hospitals={availableHospitals}
+                  selectedHospitalId={routing.selectedHospitalId}
+                  activeHospital={activeHospital}
+                  onSelectHospital={(id) => {
+                    routing.setSelectedHospitalId(id);
+                    setSearchModalOpen(false);
+                  }}
+                  ambulancePos={ambulancePos}
+                />
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* ───────── Location Permission / GPS Error Alert Modal ───────── */}
         {live.gpsError && (
