@@ -273,6 +273,14 @@
 }
 
 /* Clean tactical Leaflet popups */
+.leaflet-popup {
+  z-index: 600 !important;
+}
+
+.leaflet-pane.leaflet-popup-pane {
+  z-index: 600 !important;
+}
+
 .leaflet-popup-content-wrapper {
   border-radius: 0.5rem !important;
   box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;

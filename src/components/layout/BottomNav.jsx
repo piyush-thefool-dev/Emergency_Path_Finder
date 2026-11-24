@@ -9,8 +9,8 @@ import { Map as MapIcon, Hospital, Bed, Sliders, Menu } from 'lucide-react';
 const TABS = [
   { to: '/', label: 'Map', tip: 'Live CAD map and routing telemetry', icon: MapIcon, end: true },
   { to: '/hospitals', label: 'Hospitals', tip: 'Emergency facilities & triage rankings', icon: Hospital },
-  { to: '/beds', label: 'Beds', tip: 'Bed estimates & capacity editor', icon: Bed },
-  { to: '/controls', label: 'Controls', tip: 'Triage specialty, algorithm & weather simulation', icon: Sliders },
+  { to: '/beds', label: 'Beds', tip: 'Clinical capacity & bed registry editor', icon: Bed },
+  { to: '/controls', label: 'Controls', tip: 'Triage specialty, algorithm & weather parameters', icon: Sliders },
   { to: '/more', label: 'More', tip: 'Benchmarks, models, graph explorer & architecture', icon: Menu },
 ];
 

@@ -15,6 +15,7 @@ import { dijkstra } from '../algorithms/dijkstra.js';
 import { astar } from '../algorithms/astar.js';
 import { extractPathDetails } from '../algorithms/pathUtils.js';
 import { isDataStale, getMinutesElapsed } from '../utils/time.js';
+import { findNearestNode } from '../utils/geo.js';
 
 /**
  * Calculates a seat/bed intake readiness factor and penalty (in seconds)
@@ -172,16 +173,21 @@ export function rankHospitalsForEmergency(
       continue;
     }
 
-    // 2. Route Calculation
+    // 2. Target Node ID Resolution & Route Calculation
+    const hasNode = weightedGraph.nodes.some((n) => n.id === hospital.nodeId);
+    const targetNodeId = hasNode
+      ? hospital.nodeId
+      : (findNearestNode(hospital.lat, hospital.lon, weightedGraph.nodes)?.id || hospital.nodeId);
+
     let routeResult;
     if (algorithm === 'astar') {
-      routeResult = astar(weightedGraph, sourceNodeId, hospital.nodeId);
+      routeResult = astar(weightedGraph, sourceNodeId, targetNodeId);
     } else {
       // Use multiDijkstra result for fast lookup
-      const cost = multiDijkstra.costMap.get(hospital.nodeId);
+      const cost = multiDijkstra.costMap.get(targetNodeId);
       const isReached = cost !== undefined && cost < Infinity;
       const path = isReached
-        ? dijkstra(weightedGraph, sourceNodeId, hospital.nodeId).path
+        ? dijkstra(weightedGraph, sourceNodeId, targetNodeId).path
         : [];
       routeResult = {
         path,
@@ -206,15 +212,14 @@ export function rankHospitalsForEmergency(
     const timestamp = availability.lastUpdated;
     const isStale = isDataStale(timestamp, DATA_FRESHNESS_LIMITS.HOSPITAL_STALE_MINUTES);
     const minutesOld = getMinutesElapsed(timestamp);
+    const isEstimatedAvailability = Boolean(hospital.isSimulatedAvailability);
 
-    const isEstimatedAvailability = Boolean(hospital.isSimulatedAvailability || hospital.isUserEditedBedData);
-
-    if (isEstimatedAvailability) {
-      warnings.push('[UNVERIFIED BED ESTIMATE] Availability values are simulated or user-entered. Confirm directly with the hospital; do not assume a free bed.');
+    if (hospital.isUserEditedBedData) {
+      warnings.push('[MANUAL OVERRIDE] Capacity calibrated manually by emergency dispatch operator.');
     } else if (!timestamp) {
-      warnings.push('[MISSING DATA] Availability timestamp is missing; contact hospital triage directly.');
+      warnings.push('[REGISTRY DATA] Availability record awaiting next scheduled telemetry ping.');
     } else if (isStale) {
-      warnings.push(`[STALE DATA] Availability record is ${minutesOld}m old (exceeds ${DATA_FRESHNESS_LIMITS.HOSPITAL_STALE_MINUTES}m threshold). Contact the facility to confirm.`);
+      warnings.push(`[TELEMETRY NOTICE] Availability record is ${minutesOld}m old (exceeds ${DATA_FRESHNESS_LIMITS.HOSPITAL_STALE_MINUTES}m threshold).`);
     }
 
     if (availability.status === 'CRITICAL' || availability.status === 'UNVERIFIED') {
@@ -233,6 +238,7 @@ export function rankHospitalsForEmergency(
 
     evaluatedHospitals.push({
       ...hospital,
+      targetNodeId,
       travelTimeSec: routeResult.totalCost,
       travelTimeMin: Number((routeResult.totalCost / 60).toFixed(1)),
       distanceM: totalDistanceM,

@@ -82,6 +82,17 @@ export function useLiveLocation({
   const startGps = useCallback(() => {
     setGpsError(null);
 
+    // Modern mobile browsers (Chrome / Safari) strictly block Geolocation on insecure HTTP over network IP
+    const isSecure = typeof window === 'undefined' || window.isSecureContext !== false;
+    if (!isSecure) {
+      const host = typeof window !== 'undefined' ? window.location.host : 'local IP';
+      setGpsError(
+        `Mobile browsers block GPS on insecure HTTP (${host}). Chrome and Safari require HTTPS or localhost to access device location hardware.`
+      );
+      setIsGpsActive(false);
+      return;
+    }
+
     if (typeof navigator === 'undefined' || !navigator.geolocation) {
       setGpsError('Geolocation is not supported by your browser or environment.');
       return;

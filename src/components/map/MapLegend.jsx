@@ -72,7 +72,7 @@ const ITEMS = [
 
 export function MapLegend({ onClose }) {
   return (
-    <div className="w-64 rounded-xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-slate-200 dark:border-slate-800 shadow-md p-3 page-enter font-mono text-xs">
+    <div className="w-[min(20rem,calc(100vw-2.5rem))] rounded-2xl bg-white/98 dark:bg-slate-900/98 backdrop-blur-md border border-slate-200 dark:border-slate-800 shadow-2xl p-4 font-mono text-xs">
       <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800 mb-2">
         <span className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-slate-100">
           Map Symbology

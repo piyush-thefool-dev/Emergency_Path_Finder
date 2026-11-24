@@ -64,7 +64,7 @@ export function IncidentTool({
       </div>
 
       <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed font-mono">
-        Simulate real-time road conditions. When an incident is logged, edge weight t(e) inflates, triggering immediate graph recalculation.
+        Report real-time road conditions. When an incident is logged, edge weight t(e) inflates, triggering immediate dynamic corridor recalculation.
       </p>
 
       {onChangeReporter && (
@@ -149,7 +149,7 @@ export function IncidentTool({
           className="w-full py-2 rounded-lg border border-slate-200 dark:border-slate-700/80 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-200 text-xs font-mono font-bold flex items-center justify-center gap-2 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
         >
           <LocateFixed className="w-3.5 h-3.5 text-[#D62828]" />
-          Inject at Current Ambulance Coordinate
+          Report at Current Ambulance Coordinate
         </button>
       )}
 

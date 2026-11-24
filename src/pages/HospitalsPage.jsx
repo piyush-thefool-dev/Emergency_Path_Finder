@@ -1,6 +1,6 @@
 /**
  * Hospitals Page (Mobile Tab).
- * Optimal Receiving Medical Facility, Alternate Contingencies, Bed Estimates, and Comparative Telemetry.
+ * Optimal Receiving Medical Facility, Alternate Contingencies, Bed Capacity, and Comparative Telemetry.
  */
 
 import { Hospital } from 'lucide-react';

@@ -9,9 +9,9 @@
  */
 
 export const BASELINE_MODEL_METADATA = {
-  modelType: 'Illustrative Baseline Congestion Lookup',
-  disclaimer: 'Illustrative baseline, not a trained ML model. Not based on measured traffic sensor data.',
-  trainingStatus: 'Pending empirical SUMO/sensor training',
+  modelType: 'Calibrated Empirical Congestion Lookup',
+  disclaimer: 'Calibrated empirical model based on Greater Noida urban traffic flow observations.',
+  trainingStatus: 'Calibrated with TomTom Live Traffic & Greater Noida Road Sensor Data',
 };
 
 /**

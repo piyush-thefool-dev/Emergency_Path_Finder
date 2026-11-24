@@ -25,6 +25,9 @@ import {
   Minimize2,
   Radio,
   Network,
+  Locate,
+  Lock,
+  Unlock,
 } from 'lucide-react';
 
 /**
@@ -59,6 +62,34 @@ function MapRecenter({ center, zoom, bounds }) {
       map.setView(center, zoom);
     }
   }, [map, center, zoom, bounds]);
+
+  return null;
+}
+
+/**
+ * Camera controller triggered on manual recenter action.
+ */
+function CameraActionHandler({ trigger, ambulancePos, targetHospital }) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (!trigger) return;
+    if (ambulancePos && targetHospital) {
+      try {
+        map.fitBounds(
+          [
+            [ambulancePos.lat, ambulancePos.lon],
+            [targetHospital.lat, targetHospital.lon],
+          ],
+          { padding: [50, 50], maxZoom: 15 }
+        );
+      } catch {
+        map.setView([ambulancePos.lat, ambulancePos.lon], 14);
+      }
+    } else if (ambulancePos) {
+      map.setView([ambulancePos.lat, ambulancePos.lon], 14);
+    }
+  }, [trigger, map, ambulancePos, targetHospital]);
 
   return null;
 }
@@ -105,6 +136,13 @@ export function MapView({
   const [isMapExpanded, setIsMapExpanded] = useState(false);
   // Graph network overlay: displays all road intersection nodes and directed edges (OFF by default)
   const [showGraphNetwork, setShowGraphNetwork] = useState(false);
+  const [recenterTrigger, setRecenterTrigger] = useState(0);
+  const handleRecenter = () => setRecenterTrigger((t) => t + 1);
+
+  const targetHospital = useMemo(
+    () => hospitals.find((h) => h.id === activeHospitalId) || null,
+    [hospitals, activeHospitalId]
+  );
 
   const defaultCenter = useMemo(() => (isFigure2Mode ? [28.475, 77.51] : [28.482, 77.51]), [isFigure2Mode]);
   const defaultZoom = isFigure2Mode ? 14 : 13;
@@ -136,6 +174,12 @@ export function MapView({
         />
 
         <MapRecenter center={defaultCenter} zoom={defaultZoom} bounds={bounds} />
+
+        <CameraActionHandler
+          trigger={recenterTrigger}
+          ambulancePos={ambulancePos}
+          targetHospital={targetHospital}
+        />
 
         <RouteLayer
           nodes={nodes}
@@ -189,7 +233,35 @@ export function MapView({
       </MapContainer>
 
       {/* Top-Right Quick Map Action Bar */}
-      <div className="absolute top-2.5 right-2.5 sm:top-3 sm:right-3 z-20 flex items-center gap-1 sm:gap-1.5">
+      <div className="absolute top-2.5 right-2.5 sm:top-3 sm:right-3 z-20 flex items-center gap-1 sm:gap-1.5 flex-wrap justify-end">
+        {onTogglePinLock && (
+          <button
+            type="button"
+            onClick={() => onTogglePinLock(!canDragPin)}
+            className={`flex items-center gap-1 px-2 sm:px-2.5 py-1.5 rounded-lg backdrop-blur-md border shadow-xs text-xs font-mono font-bold transition-all cursor-pointer min-h-[34px] active:scale-95 ${
+              canDragPin
+                ? 'bg-amber-500/20 text-amber-700 dark:text-amber-300 border-amber-500/40 ring-1 ring-amber-400'
+                : 'bg-white/95 dark:bg-slate-900/95 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800'
+            }`}
+            title={canDragPin ? 'Ambulance pin is unlocked (drag on map to reposition). Click to lock.' : 'Ambulance pin is locked. Click to unlock.'}
+            aria-pressed={canDragPin}
+          >
+            {canDragPin ? <Unlock className="w-3.5 h-3.5 text-amber-500" /> : <Lock className="w-3.5 h-3.5 text-slate-400" />}
+            <span className="hidden md:inline">{canDragPin ? 'Pin: Free' : 'Pin: Locked'}</span>
+          </button>
+        )}
+
+        <button
+          type="button"
+          onClick={handleRecenter}
+          className="flex items-center gap-1 px-2 sm:px-2.5 py-1.5 rounded-lg bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-slate-200 dark:border-slate-800 shadow-xs text-xs font-mono font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer min-h-[34px] active:scale-95"
+          title="Recenter camera on ambulance and route corridor"
+          aria-label="Recenter camera on ambulance and route corridor"
+        >
+          <Locate className="w-3.5 h-3.5 text-[#D62828]" />
+          <span className="hidden md:inline">Recenter</span>
+        </button>
+
         <button
           type="button"
           onClick={() => setShowGraphNetwork((prev) => !prev)}
@@ -230,13 +302,13 @@ export function MapView({
 
       {/* Top Telemetry & Interactive Tip Ribbon - Positioned vertically below top buttons (never overlaps) */}
       {showQuickHint && (
-        <div className="absolute top-13 left-14 right-2.5 sm:right-auto sm:max-w-md z-20 flex min-w-0 items-center justify-between gap-2 px-2.5 py-1 rounded-lg bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-slate-200/90 dark:border-slate-800 shadow-xs text-[11px] font-mono text-slate-800 dark:text-slate-200 animate-in fade-in duration-200">
+        <div className="absolute top-[48px] left-14 right-2.5 sm:right-auto sm:max-w-md z-20 flex min-w-0 items-center justify-between gap-2 px-2.5 py-1 rounded-lg bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-slate-200/90 dark:border-slate-800 shadow-xs text-[11px] font-mono text-slate-800 dark:text-slate-200 animate-in fade-in duration-200">
           <div className="flex items-center gap-1.5 truncate min-w-0">
             <span className="w-1.5 h-1.5 rounded-full bg-[#D62828] animate-pulse shrink-0"></span>
             <span className="truncate">
               {canDragPin
-                ? 'AMBULANCE UNLOCKED: Drag pin to reposition'
-                : 'PIN LOCKED: Toggle "Lock Pin" to reposition'}
+                ? 'PIN UNLOCKED: Drag pin to move'
+                : 'PIN LOCKED: Toggle "Lock Pin" in telemetry'}
             </span>
           </div>
           <div className="flex items-center gap-1.5 shrink-0">

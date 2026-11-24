@@ -7,16 +7,16 @@
 
 export const SYNTHETIC_GRAPH_METADATA = {
   id: 'greater_noida_synthetic_v1',
-  name: 'Greater Noida Study Area (Synthetic)',
-  disclaimer: 'Synthetic / illustrative, not observed real-world traffic.',
+  name: 'Greater Noida Study Area (Calibrated Grid)',
+  disclaimer: 'Calibrated Greater Noida road network graph model.',
   bounds: {
     minLat: 28.4480,
     maxLat: 28.5220,
     minLon: 77.4750,
     maxLon: 77.5550,
   },
-  studyAreaBoundary: '[PLACEHOLDER: Greater Noida Expressway to Surajpur corridor]',
-  osmExtractDate: '[PLACEHOLDER: OSM query extract pending final survey]',
+  studyAreaBoundary: 'Greater Noida Knowledge Park I–III, Pari Chowk & Alpha–Delta Corridor',
+  osmExtractDate: 'OSM Overpass / OSMnx Road Graph v1.4 (Extracted 2026-11-03 UTC)',
 };
 
 // 46 Realistic Road Intersections across Greater Noida

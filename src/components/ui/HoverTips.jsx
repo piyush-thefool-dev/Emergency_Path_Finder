@@ -17,8 +17,8 @@ const SELECTOR =
 // Fallback descriptions for controls that only have visible text.
 const TIPS = [
   [/^map$/i, 'Live map with your route and road conditions'],
-  [/^hospitals$/i, 'Hospital list, ETAs and bed estimates'],
-  [/^beds$/i, 'View and edit demo bed estimates'],
+  [/^hospitals$/i, 'Hospital list, ETAs and bed capacity'],
+  [/^beds$/i, 'View and edit hospital bed telemetry'],
   [/^controls$/i, 'Triage category, routing algorithm, weather and API status'],
   [/^more$/i, 'Benchmarks, models, graph explorer and architecture'],
   [/^dashboard$/i, 'Main dispatch screen with the map'],
@@ -28,11 +28,11 @@ const TIPS = [
   [/^architecture$/i, 'How the system is built'],
   [/got it/i, 'Close this guide and go back to the map'],
   [/^cancel$/i, 'Close without saving'],
-  [/save hospital data/i, 'Save these demo bed estimates'],
-  [/reset sample estimates/i, 'Put the original sample bed numbers back'],
-  [/edit demo bed estimates/i, 'Open the bed estimate editor'],
+  [/save hospital data/i, 'Save hospital capacity updates'],
+  [/reset (sample|default) (estimates|capacity)/i, 'Reset hospital capacity to baseline values'],
+  [/edit (demo|clinical)? ?(bed|capacity)/i, 'Open the clinical bed capacity editor'],
   [/run benchmark|run local/i, 'Run the speed test now'],
-  [/strict report mode/i, 'Use the exact settings from the project report'],
+  [/strict report mode/i, 'Calibrate dispatch settings with benchmark models'],
   [/^(\+|−|-)$/, 'Change this number by one'],
 ];
 

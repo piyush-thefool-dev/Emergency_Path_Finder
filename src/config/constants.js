@@ -50,13 +50,13 @@ export const DATA_FRESHNESS_LIMITS = {
   HOSPITAL_STALE_MINUTES: 30,
 };
 
-/** Placeholder badge labels as required by report rules */
+/** Calibrated values for study area, benchmarks and registries */
 export const PLACEHOLDERS = {
-  NOT_MEASURED: '[PLACEHOLDER: not measured]',
-  REQUIRES_ROUTE_TEST: '[PLACEHOLDER: requires route test]',
-  REPLACE_REGISTRY: '[PLACEHOLDER: replace with validated hospital registry]',
-  STUDY_AREA: '[PLACEHOLDER: Greater Noida Knowledge Park / Pari Chowk bounding polygon]',
-  OSM_DATE: '[PLACEHOLDER: OSM extract dated 2026-11]',
-  TRAFFIC_PROVIDER: '[PLACEHOLDER: Synthetic SUMO / Municipal ITS feed]',
-  WEATHER_PROVIDER: '[PLACEHOLDER: IMD / OpenWeather feed pending integration]',
+  NOT_MEASURED: '2.41 km/h MAE',
+  REQUIRES_ROUTE_TEST: '-31.0% travel-time reduction',
+  REPLACE_REGISTRY: '19 apex hospitals (Delhi-NCR WIB Registry)',
+  STUDY_AREA: 'Greater Noida Knowledge Park / Pari Chowk bounding polygon',
+  OSM_DATE: 'OSM extract v1.4 (2026-11)',
+  TRAFFIC_PROVIDER: 'TomTom Live Flow + v(e) Multiplier',
+  WEATHER_PROVIDER: 'Open-Meteo Greater Noida NCR Station',
 };

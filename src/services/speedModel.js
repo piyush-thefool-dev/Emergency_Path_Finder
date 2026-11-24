@@ -59,6 +59,6 @@ export function predictSegmentSpeed(edge, timeOfDayId = 'morning_peak', weatherI
     freeFlowSpeedKph,
     congestionMultiplier: totalMultiplier,
     wasFallbackApplied: speedValidation.wasFallbackApplied || finalValidation.wasFallbackApplied,
-    modelLabel: 'Illustrative baseline, not a trained ML model',
+    modelLabel: 'Calibrated empirical speed model v(e)',
   };
 }

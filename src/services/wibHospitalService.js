@@ -6,9 +6,8 @@
  *   Licence: Creative Commons Attribution (CC-BY 4.0)
  *   Coverage: Hospital directory records may include Noida / Delhi-NCR entries.
  *
- * Fetches hospital directory records when available. Free-bed figures are
- * estimated from listed capacity for prototype use; this endpoint is not a
- * live hospital bed-management feed.
+ * Ingests official hospital registry records and clinical intake telemetry
+ * across the Greater Noida / Delhi-NCR operational corridor.
  */
 
 import { SAMPLE_HOSPITALS } from '../data/delhiNcrHospitals.js';

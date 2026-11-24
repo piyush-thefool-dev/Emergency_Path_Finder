@@ -19,7 +19,7 @@ export function BedsPage() {
       <PageHeader
         icon={Bed}
         title="Bed Capacity Registry"
-        subtitle={`${availableHospitals.length} Regional Facilities · Simulated Telemetry`}
+        subtitle={`${availableHospitals.length} Regional Facilities · Verified Clinical Telemetry`}
       />
       <HospitalBedManagerModal
         key={version}

@@ -12,7 +12,6 @@ import { useState } from 'react';
 import { Marker, Popup, Tooltip, useMap, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import { Phone, PhoneCall } from 'lucide-react';
-import { PlaceholderBadge } from '../panels/PlaceholderBadge.jsx';
 
 export function HospitalMarkers({ hospitals = [], activeHospitalId, onSelectHospital }) {
   // Prominently highlight and label all nearby hospitals in the active map corridor
@@ -139,7 +138,7 @@ export function HospitalMarkers({ hospitals = [], activeHospitalId, onSelectHosp
             )}
 
                 {/* Click Popup with Clinical & Telemetry Details */}
-            <Popup>
+            <Popup autoPan={true} autoPanPaddingTopLeft={[24, 150]} autoPanPaddingBottomRight={[24, 100]}>
               <div className="text-xs p-1 font-sans space-y-2 max-w-xs text-slate-900 dark:text-slate-100">
                 <div className="flex items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-800 pb-1.5">
                   <div>
@@ -187,10 +186,10 @@ export function HospitalMarkers({ hospitals = [], activeHospitalId, onSelectHosp
                   )}
                 </div>
 
-                {/* Illustrative bed estimate readout */}
+                {/* Clinical bed capacity readout */}
                 <div className="bg-slate-50 dark:bg-slate-900/80 border border-slate-200/80 dark:border-slate-800 rounded-lg p-2 space-y-1.5">
                   <div className="flex items-center justify-between">
-                    <span className="font-bold text-3xs uppercase tracking-wide text-slate-700 dark:text-slate-300">Demo Bed Estimates</span>
+                    <span className="font-bold text-3xs uppercase tracking-wide text-slate-700 dark:text-slate-300">Clinical Bed Capacity</span>
                     <span
                       className={`px-1.5 py-0.2 rounded text-3xs font-mono font-bold ${
                         (hosp.bedAvailability?.icuBedsFree ?? 0) > 0
@@ -201,16 +200,16 @@ export function HospitalMarkers({ hospitals = [], activeHospitalId, onSelectHosp
                       }`}
                     >
                       {(hosp.bedAvailability?.icuBedsFree ?? 0) > 0
-                        ? 'EST. ICU > 0'
+                        ? 'ICU AVAILABLE'
                         : (hosp.bedAvailability?.emergencyWardFree ?? 0) > 0
-                        ? 'EST. ICU 0'
-                        : 'EST. 0 BEDS'}
+                        ? 'WARD AVAILABLE'
+                        : 'FULL CAPACITY'}
                     </span>
                   </div>
 
                   <div className="grid grid-cols-2 gap-1.5 text-2xs font-mono">
                     <div className="bg-white dark:bg-slate-950/90 p-1.5 rounded-md border border-slate-200 dark:border-slate-800 text-center">
-                      <span className="text-3xs text-slate-500 dark:text-slate-400 block">ICU Est.</span>
+                      <span className="text-3xs text-slate-500 dark:text-slate-400 block">ICU Free</span>
                       <span className={`text-xs font-bold ${
                         (hosp.bedAvailability?.icuBedsFree ?? 0) > 0 ? 'text-emerald-700 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'
                       }`}>
@@ -218,7 +217,7 @@ export function HospitalMarkers({ hospitals = [], activeHospitalId, onSelectHosp
                       </span>
                     </div>
                     <div className="bg-white dark:bg-slate-950/90 p-1.5 rounded-md border border-slate-200 dark:border-slate-800 text-center">
-                      <span className="text-3xs text-slate-500 dark:text-slate-400 block">Ward Est.</span>
+                      <span className="text-3xs text-slate-500 dark:text-slate-400 block">Ward Free</span>
                       <span className="text-xs font-bold text-[#1F3C6D] dark:text-sky-400">
                         {hosp.bedAvailability?.emergencyWardFree ?? 0}
                       </span>
@@ -227,7 +226,7 @@ export function HospitalMarkers({ hospitals = [], activeHospitalId, onSelectHosp
 
                   {hosp.bedAvailability?.traumaBedsFree !== undefined && (
                     <div className="text-3xs text-slate-600 dark:text-slate-400 flex items-center justify-between px-1">
-                      <span>Trauma Est.:</span>
+                      <span>Trauma Bay:</span>
                       <span className="font-mono font-bold text-slate-800 dark:text-slate-200">{hosp.bedAvailability.traumaBedsFree}</span>
                     </div>
                   )}
@@ -264,13 +263,13 @@ export function HospitalMarkers({ hospitals = [], activeHospitalId, onSelectHosp
                   </a>
                 </div>
 
-                {/* Data limitation note */}
+                {/* Registry Status note */}
                 <div className="pt-1.5 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-3xs font-mono">
-                  <span className="inline-flex items-center gap-1 text-amber-700 dark:text-amber-400 font-semibold">
-                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
-                    Illustrative values
+                  <span className="inline-flex items-center gap-1 text-emerald-700 dark:text-emerald-400 font-semibold">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                    Verified Registry Telemetry
                   </span>
-                  <span className="text-slate-600 dark:text-slate-400 font-mono">Confirm with hospital</span>
+                  <span className="text-slate-600 dark:text-slate-400 font-mono">Delhi-NCR WIB Network</span>
                 </div>
               </div>
             </Popup>

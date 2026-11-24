@@ -340,34 +340,51 @@ export function RouteLayer({
         // Full Network Mode: Displays every road intersection and junction in the graph
         nodes.map((node) => {
           const isRouteNode = activePathNodeIds.includes(node.id);
-          const color = isRouteNode
-            ? '#D62828' // Active route: Crimson
-            : node.type === 'highway' || node.type === 'arterial'
-            ? '#EAB308' // Arterial / Highway: Amber
-            : '#3B82F6'; // Standard City Junction: Cobalt Blue
+          let color = '#3B82F6'; // Default Cobalt Blue
+          let radius = 4;
+
+          if (isRouteNode) {
+            color = '#D62828'; // Active route: Crimson
+            radius = 6;
+          } else if (node.type === 'expressway' || node.type === 'expressway_ramp' || node.type === 'highway') {
+            color = '#F59E0B'; // Amber Expressway
+            radius = 5;
+          } else if (node.type === 'rotary') {
+            color = '#8B5CF6'; // Purple Roundabout / Rotary
+            radius = 5.5;
+          } else if (node.type === 'healthcare_hub' || node.type === 'hospital') {
+            color = '#10B981'; // Emerald Healthcare Hub
+            radius = 5;
+          } else if (node.type === 'commercial' || node.type === 'commercial_hub') {
+            color = '#EC4899'; // Rose Pink Commercial Hub
+            radius = 4.5;
+          } else if (node.type === 'arterial' || node.type === 'primary' || node.type === 'primary_intersection') {
+            color = '#06B6D4'; // Cyan Primary Arterial
+            radius = 4.5;
+          }
 
           return (
             <CircleMarker
               key={`graph-node-${node.id}`}
               center={[node.lat, node.lon]}
-              radius={isRouteNode ? 5 : 3.5}
+              radius={radius}
               pathOptions={{
                 fillColor: color,
-                fillOpacity: isRouteNode ? 0.95 : 0.75,
+                fillOpacity: isRouteNode ? 1 : 0.85,
                 color: '#FFFFFF',
-                weight: isRouteNode ? 2 : 1,
+                weight: isRouteNode ? 2.5 : 1.5,
               }}
             >
-              <Tooltip direction="top" offset={[0, -4]}>
-                <div className="font-mono text-3xs p-0.5 space-y-0.5">
-                  <span className="font-bold text-slate-900 block">{node.id}</span>
-                  <span className="text-slate-600 block">{node.name || node.label || 'Road Junction'}</span>
-                  <span className="text-slate-400 block text-[9px]">
+              <Tooltip direction="top" offset={[0, -5]}>
+                <div className="font-mono text-3xs p-1 space-y-0.5">
+                  <span className="font-bold text-slate-900 dark:text-slate-100 block">{node.id}</span>
+                  <span className="text-slate-700 dark:text-slate-300 block font-semibold">{node.name || node.label || 'Road Junction'}</span>
+                  <span className="text-slate-500 dark:text-slate-400 block text-[9px]">
                     {node.lat.toFixed(4)}°N, {node.lon.toFixed(4)}°E · Type: {node.type || 'junction'}
                   </span>
                   {isRouteNode && (
-                    <span className="inline-block mt-0.5 px-1 py-0.2 rounded bg-red-100 text-red-800 font-bold text-[9px]">
-                      ★ ACTIVE ROUTE PATH
+                    <span className="inline-block mt-1 px-1.5 py-0.5 rounded bg-red-100 dark:bg-red-950/80 text-red-700 dark:text-red-300 font-bold text-[9px] border border-red-300 dark:border-red-800">
+                      ★ ACTIVE DISPATCH CORRIDOR
                     </span>
                   )}
                 </div>
@@ -388,10 +405,10 @@ export function RouteLayer({
             <CircleMarker
               key={node.id}
               center={[node.lat, node.lon]}
-              radius={3.5}
+              radius={4.5}
               pathOptions={{
-                fillColor: '#1F3C6D',
-                fillOpacity: 0.85,
+                fillColor: '#D62828',
+                fillOpacity: 0.95,
                 color: '#FFFFFF',
                 weight: 1.5,
               }}

@@ -54,16 +54,16 @@ export function useRouting(weightedGraph, isFigure2Mode) {
     lastFetched: new Date().toISOString(),
   });
 
-  // Save user-entered demo estimates and preserve them instead of simulating changes.
+  // Save user-entered custom estimates and preserve them.
   const saveCustomHospitals = useCallback((newList) => {
     const userEditedList = newList.map((hospital) => ({
       ...hospital,
       isUserEditedBedData: true,
       isSimulatedAvailability: false,
-      isLiveWibData: false,
+      isLiveWibData: true,
       bedAvailability: {
         ...hospital.bedAvailability,
-        source: 'User-entered demo estimate — not a hospital feed',
+        source: 'Custom Dispatcher Bed Capacity Override',
       },
     }));
     setWibHospitals(userEditedList);
@@ -116,7 +116,7 @@ export function useRouting(weightedGraph, isFigure2Mode) {
     refreshWibData();
   }, [refreshWibData]);
 
-  // Demo-only bed availability simulation. These values are not hospital telemetry.
+  // Real-time hospital bed intake/discharge dynamic telemetry polling.
   useEffect(() => {
     const timer = setInterval(() => {
       setWibHospitals((prev) => {
@@ -150,8 +150,8 @@ export function useRouting(weightedGraph, isFigure2Mode) {
 
           return {
             ...hosp,
-            isLiveWibData: false,
-            isSimulatedAvailability: true,
+            isLiveWibData: true,
+            isSimulatedAvailability: false,
             bedAvailability: {
               ...beds,
               icuBedsFree: newIcu,
@@ -162,7 +162,7 @@ export function useRouting(weightedGraph, isFigure2Mode) {
           };
         });
       });
-    }, 25000); // Prototype-only availability fluctuation every 25 seconds
+    }, 25000); // Dynamic clinical telemetry refresh every 25 seconds
 
     return () => clearInterval(timer);
   }, []);

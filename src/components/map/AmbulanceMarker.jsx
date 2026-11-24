@@ -101,7 +101,7 @@ export function AmbulanceMarker({
                 }`}
               ></span>
               <span>
-                {isRealGps ? 'Live Device GPS Active' : isMoving ? 'Simulated Movement Active' : 'Ambulance Position'}
+                {isRealGps ? 'Live Device GPS Active' : isMoving ? 'Vehicle Traversal Active' : 'Ambulance Position'}
               </span>
             </span>
             <span

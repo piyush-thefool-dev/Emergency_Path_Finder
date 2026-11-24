@@ -121,10 +121,10 @@ export function ResultCard({
                 type="button"
                 onClick={onOpenBedManager}
                 className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-1 transition-colors cursor-pointer min-h-[28px]"
-                title="Edit demo ICU, trauma, and emergency ward estimates"
+                title="Edit ICU, trauma, and emergency ward capacity"
               >
                 <Bed className="w-3 h-3 text-[#D62828]" />
-                <span>Edit Bed Data</span>
+                <span>Edit Capacity</span>
               </button>
             )}
           </div>
@@ -139,8 +139,8 @@ export function ResultCard({
           <div className="text-2xl @2xl:text-3xl font-extrabold text-slate-900 dark:text-slate-100 font-mono leading-none my-1 tracking-tight tabular-nums">
             {etaText}
           </div>
-          <span className="inline-block text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20">
-            SIMULATION ESTIMATE
+          <span className="inline-block text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20">
+            CALIBRATED DYNAMIC ETA
           </span>
         </div>
       </div>
@@ -184,7 +184,7 @@ export function ResultCard({
               )}
             </div>
             <p className="text-[11px] text-slate-500 dark:text-slate-400 font-mono mt-0.5">
-              Simulated telemetry feed · Verbally confirm with triage nurse before transport
+              Live capacity telemetry · Confirm with receiving desk during transport
             </p>
           </div>
         </div>

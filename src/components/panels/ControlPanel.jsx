@@ -260,7 +260,7 @@ export function ControlPanel({
               Emergency Green Corridor (Signal Preemption)
             </span>
             <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 leading-snug font-mono">
-              Simulates junction signal preemption, dropping average intersection delay from 25s to 4s.
+              Emergency Green Wave signal preemption reduces average junction delay from 25s to 4s.
             </p>
           </div>
         </label>

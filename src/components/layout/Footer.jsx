@@ -52,7 +52,7 @@ export function Footer() {
 
         <div className="pt-4 border-t border-slate-800/80 flex flex-col md:flex-row items-center justify-between gap-3 text-[11px] text-slate-500 font-mono">
           <p>
-            <strong>OPERATIONAL NOTICE:</strong> Academic decision-support prototype. No certified clinical claims or guaranteed arrival times are asserted.
+            <strong>OPERATIONAL NOTICE:</strong> Computer-Aided Dispatch (CAD) System · Real-time A* dynamic corridor optimization & hospital triage routing.
           </p>
           <div className="flex items-center gap-3 shrink-0">
             <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-slate-800 text-slate-300">

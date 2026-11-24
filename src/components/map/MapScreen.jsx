@@ -146,16 +146,17 @@ export function MapScreen() {
         />
 
         {/* ───────── Top: Destination Telemetry & Category Chips ───────── */}
-        <div className="absolute top-0 inset-x-0 z-[500] pointer-events-none pt-safe px-3">
+        <div className="absolute top-0 inset-x-0 z-[500] pointer-events-none pt-safe px-3 space-y-1.5">
+          {/* Row 1: Hospital Details Card (100% full width) */}
           <button
             type="button"
             onClick={() => navigate('/hospitals')}
             title="Open hospital details, ETA and alternatives"
-            className="pointer-events-auto w-full text-left flex items-center gap-3 rounded-xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-slate-200/90 dark:border-slate-800 shadow-sm pl-2.5 pr-3 py-2 cursor-pointer active:scale-[0.99] transition-transform"
+            className="pointer-events-auto w-full text-left flex items-center gap-2 sm:gap-3 rounded-xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-slate-200/90 dark:border-slate-800 shadow-sm pl-2.5 pr-2.5 py-1.5 sm:py-2 cursor-pointer active:scale-[0.99] transition-transform"
             aria-label="Open hospital details"
           >
             <span
-              className={`w-9 h-9 rounded-lg flex items-center justify-center text-white shrink-0 ${
+              className={`w-8 h-8 sm:w-9 sm:h-9 rounded-lg flex items-center justify-center text-white shrink-0 ${
                 activeHospital ? 'bg-emerald-600' : 'bg-amber-500'
               }`}
             >
@@ -171,7 +172,7 @@ export function MapScreen() {
             </span>
             {activeHospital && (
               <span className="text-right shrink-0">
-                <span className="block text-base sm:text-lg font-black font-mono text-emerald-600 dark:text-emerald-400 leading-none">
+                <span className="block text-sm sm:text-base font-black font-mono text-emerald-600 dark:text-emerald-400 leading-none">
                   {formatEtaShort(roadTelemetry?.durationSec || activeHospital.travelTimeSec)}
                 </span>
                 <span className="block text-[10px] font-mono text-slate-500 dark:text-slate-400 mt-0.5">
@@ -182,20 +183,20 @@ export function MapScreen() {
             <a
               href={`tel:${(activeHospital?.phone || '108').replace(/[^0-9+]/g, '')}`}
               onClick={(e) => e.stopPropagation()}
-              className="w-8 h-8 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white flex items-center justify-center shrink-0 shadow-xs active:scale-95 transition-all cursor-pointer no-underline"
+              className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white flex items-center justify-center shrink-0 shadow-xs active:scale-95 transition-all cursor-pointer no-underline"
               title={
                 activeHospital?.phone
                   ? `Call ${activeHospital.shortName || activeHospital.name} emergency desk: ${activeHospital.phone}`
                   : 'Call 108 Emergency Ambulance (Toll-Free)'
               }
             >
-              <Phone className="w-4 h-4" />
+              <Phone className="w-3.5 h-3.5" />
             </a>
             <ChevronRight className="w-4 h-4 text-slate-400 shrink-0" />
           </button>
 
-          {/* Triage Chips */}
-          <div className="pointer-events-auto mt-2 -mx-3 px-3 flex gap-1.5 overflow-x-auto no-scrollbar pb-1">
+          {/* Row 2: Triage Priority Categories (4 Equal Columns - NO SLIDING / NO SCROLL) */}
+          <div className="pointer-events-auto grid grid-cols-4 gap-1.5 w-full">
             {Object.values(EMERGENCY_CATEGORIES).map((c) => {
               const selected = c.id === emergencyCategory;
               return (
@@ -204,7 +205,7 @@ export function MapScreen() {
                   type="button"
                   onClick={() => setEmergencyCategory(c.id)}
                   title={`Route to a hospital with ${c.requiredSpecialty}`}
-                  className={`shrink-0 px-3 h-8 rounded-lg text-xs font-mono font-bold border shadow-xs backdrop-blur-md cursor-pointer active:scale-95 transition-all ${
+                  className={`w-full py-1.5 px-0.5 sm:px-2 rounded-lg text-xs font-mono font-bold border shadow-xs backdrop-blur-md cursor-pointer active:scale-95 transition-all text-center truncate ${
                     selected
                       ? 'text-white border-transparent'
                       : 'bg-white/95 dark:bg-slate-900/95 text-slate-700 dark:text-slate-200 border-slate-200/80 dark:border-slate-800'
@@ -218,14 +219,14 @@ export function MapScreen() {
             })}
           </div>
 
-          {/* Location Toggle (Device GPS) */}
-          <div className="pointer-events-auto mt-1 flex font-mono text-xs">
+          {/* Row 3: GPS Activation on Left, Tools Menu Button on Right (Zero Overlap) */}
+          <div className="flex items-center justify-between gap-2">
             <button
               type="button"
               onClick={handleGpsToggle}
               aria-pressed={live.isGpsActive}
               title={live.isGpsActive ? 'Stop using device location' : 'Use device GPS'}
-              className={`shrink-0 h-8 pl-2.5 pr-3 rounded-lg font-bold flex items-center gap-1.5 border shadow-xs cursor-pointer active:scale-95 transition-all ${
+              className={`pointer-events-auto shrink-0 h-8 px-2.5 sm:px-3 rounded-lg text-xs font-mono font-bold flex items-center gap-1.5 border shadow-xs cursor-pointer active:scale-95 transition-all ${
                 live.isGpsActive
                   ? 'bg-emerald-600 border-emerald-500 text-white'
                   : 'bg-[#D62828] border-red-600 text-white'
@@ -234,103 +235,87 @@ export function MapScreen() {
               {live.isGpsActive ? (
                 <>
                   <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
-                  Live GPS On
-                  {live.gpsAccuracy != null && <span className="font-normal opacity-90">· ±{Math.round(live.gpsAccuracy)}m</span>}
+                  <span>GPS Active</span>
+                  {live.gpsAccuracy != null && <span className="font-normal opacity-90 text-[10px]">· ±{Math.round(live.gpsAccuracy)}m</span>}
                 </>
               ) : (
                 <>
                   <MapPin className="w-3.5 h-3.5" />
-                  Activate GPS
+                  <span>Activate GPS</span>
                 </>
               )}
             </button>
-          </div>
-        </div>
 
-        {/* ───────── Right Tools Action Bar ───────── */}
-        <div className="absolute right-3 top-[9rem] sm:top-36 z-[500] flex flex-col items-end gap-2 pointer-events-none [&>*]:pointer-events-auto">
-          <div className="relative">
-            <RoundButton
-              label="Tools: Symbology, API, Guide"
-              onClick={() => setPanel((p) => (p ? null : 'tools'))}
-              active={panel !== null}
-            >
-              <LayoutGrid className="w-4 h-4" />
-            </RoundButton>
-            <span
-              aria-hidden="true"
-              className={`absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border border-white dark:border-slate-900 ${
-                STATE_STYLE[apiHealth.summary.overall === 'ok' ? 'ok' : apiHealth.summary.overall].dot
-              }`}
-            />
-          </div>
-
-          {panel === 'tools' && (
-            <div className="w-56 rounded-xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-slate-200 dark:border-slate-800 shadow-md p-1.5 page-enter font-mono text-xs">
-              {[
-                {
-                  key: 'theme',
-                  icon: isDark ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-slate-700" />,
-                  text: isDark ? 'Light Mode' : 'Dark Mode',
-                  onClick: () => {
-                    toggleTheme();
-                    setPanel(null);
-                  },
-                },
-                {
-                  key: 'legend',
-                  icon: <Layers className="w-4 h-4 text-[#D62828]" />,
-                  text: 'Map Symbology',
-                  onClick: () => setPanel('legend'),
-                },
-                {
-                  key: 'api',
-                  icon: <Activity className="w-4 h-4 text-sky-500" />,
-                  text: 'Telemetry Feeds',
-                  onClick: () => setPanel('api'),
-                  badge: `${apiHealth.summary.ok}/${apiHealth.summary.total - apiHealth.summary.off}`,
-                },
-                {
-                  key: 'help',
-                  icon: <HelpCircle className="w-4 h-4 text-amber-500" />,
-                  text: 'CAD Guide',
-                  onClick: () => {
-                    setHelpOpen(true);
-                    setPanel(null);
-                  },
-                },
-              ].map((row) => (
-                <button
-                  key={row.key}
-                  type="button"
-                  onClick={row.onClick}
-                  className="w-full min-h-[38px] px-2.5 rounded-lg flex items-center gap-2.5 font-semibold text-slate-800 dark:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer text-left transition-colors"
-                >
-                  <span className="w-4 flex justify-center shrink-0">{row.icon}</span>
-                  <span className="flex-1 truncate">{row.text}</span>
-                  {row.badge && (
-                    <span className="text-[10px] text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-1 rounded">
-                      {row.badge}
-                    </span>
-                  )}
-                </button>
-              ))}
-            </div>
-          )}
-
-          {panel === 'legend' && <MapLegend onClose={() => setPanel(null)} />}
-          {panel === 'api' && (
-            <div className="w-[min(19rem,calc(100vw-4rem))] max-h-[55dvh] overflow-y-auto rounded-xl bg-white/97 dark:bg-slate-900/97 backdrop-blur-md border border-slate-200 dark:border-slate-800 shadow-md p-3 page-enter">
-              <ApiStatusPanel health={apiHealth} bare />
-              <button
-                type="button"
-                onClick={() => setPanel(null)}
-                className="mt-2 w-full py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 text-xs font-mono font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+            {/* Quick Tools Button */}
+            <div className="pointer-events-auto relative shrink-0">
+              <RoundButton
+                label="Tools: Symbology, API, Guide"
+                onClick={() => setPanel((p) => (p ? null : 'tools'))}
+                active={panel !== null}
               >
-                Close
-              </button>
+                <LayoutGrid className="w-4 h-4" />
+              </RoundButton>
+              <span
+                aria-hidden="true"
+                className={`absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border border-white dark:border-slate-900 ${
+                  STATE_STYLE[apiHealth.summary.overall === 'ok' ? 'ok' : apiHealth.summary.overall].dot
+                }`}
+              />
+
+              {panel === 'tools' && (
+                <div className="absolute right-0 top-11 z-[600] w-56 rounded-xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-slate-200 dark:border-slate-800 shadow-md p-1.5 page-enter font-mono text-xs">
+                  {[
+                    {
+                      key: 'theme',
+                      icon: isDark ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-slate-700" />,
+                      text: isDark ? 'Light Mode' : 'Dark Mode',
+                      onClick: () => {
+                        toggleTheme();
+                        setPanel(null);
+                      },
+                    },
+                    {
+                      key: 'legend',
+                      icon: <Layers className="w-4 h-4 text-[#D62828]" />,
+                      text: 'Map Symbology',
+                      onClick: () => setPanel('legend'),
+                    },
+                    {
+                      key: 'api',
+                      icon: <Activity className="w-4 h-4 text-sky-500" />,
+                      text: 'Telemetry Feeds',
+                      onClick: () => setPanel('api'),
+                      badge: `${apiHealth.summary.ok}/${apiHealth.summary.total - apiHealth.summary.off}`,
+                    },
+                    {
+                      key: 'help',
+                      icon: <HelpCircle className="w-4 h-4 text-amber-500" />,
+                      text: 'CAD Guide',
+                      onClick: () => {
+                        setHelpOpen(true);
+                        setPanel(null);
+                      },
+                    },
+                  ].map((row) => (
+                    <button
+                      key={row.key}
+                      type="button"
+                      onClick={row.onClick}
+                      className="w-full min-h-[38px] px-2.5 rounded-lg flex items-center gap-2.5 font-semibold text-slate-800 dark:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer text-left transition-colors"
+                    >
+                      <span className="w-4 flex justify-center shrink-0">{row.icon}</span>
+                      <span className="flex-1 truncate">{row.text}</span>
+                      {row.badge && (
+                        <span className="text-[10px] text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-1 rounded">
+                          {row.badge}
+                        </span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
-          )}
+          </div>
         </div>
 
         {/* ───────── Bottom-Right: Locate & Pin Controls ───────── */}
@@ -436,13 +421,26 @@ export function MapScreen() {
                 </div>
               </div>
 
-              <div className="mt-3.5 p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/60 text-[11px] text-slate-600 dark:text-slate-300 leading-normal space-y-1">
-                <p className="font-semibold text-slate-800 dark:text-slate-200">How to fix:</p>
-                <ul className="list-disc list-inside space-y-0.5 text-[11px] text-slate-500 dark:text-slate-400">
-                  <li>Tap the lock/settings icon near your browser address bar.</li>
-                  <li>Set <strong>Location</strong> permissions to <strong>Allow</strong>.</li>
-                  <li>Note: Mobile browsers block GPS over insecure HTTP (use localhost or HTTPS).</li>
-                </ul>
+              <div className="mt-3.5 p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/60 text-[11px] text-slate-600 dark:text-slate-300 leading-normal space-y-2">
+                <p className="font-semibold text-slate-800 dark:text-slate-200">Why access was blocked:</p>
+                <p className="text-slate-600 dark:text-slate-400">
+                  Chrome on Android blocks GPS hardware on plain <strong>HTTP</strong> network IPs (notice the <strong>⚠️ Not Secure</strong> badge in your address bar). W3C security rules strictly require a secure context (HTTPS or localhost).
+                </p>
+                <div className="pt-1.5 border-t border-slate-200 dark:border-slate-700/80 space-y-1">
+                  <p className="font-semibold text-slate-800 dark:text-slate-200">Quick Fix in Chrome on your phone (30s):</p>
+                  <ol className="list-decimal list-inside space-y-1 text-slate-600 dark:text-slate-400">
+                    <li>In Chrome URL bar, open: <code className="text-[#D62828] dark:text-red-400 font-mono text-[10px]">chrome://flags/#unsafely-treat-insecure-origin-as-secure</code></li>
+                    <li>Set the flag to <strong>Enabled</strong>.</li>
+                    <li>In the text box below it, enter: <code className="text-emerald-600 dark:text-emerald-400 font-mono text-[10px]">{typeof window !== 'undefined' ? `${window.location.protocol}//${window.location.host}` : 'http://<your-ip>:3000'}</code></li>
+                    <li>Tap <strong>Relaunch</strong> Chrome at the bottom.</li>
+                  </ol>
+                </div>
+                <div className="pt-1.5 border-t border-slate-200 dark:border-slate-700/80 space-y-0.5">
+                  <p className="font-semibold text-slate-800 dark:text-slate-200">Alternative (via USB Port Forwarding):</p>
+                  <p className="text-slate-600 dark:text-slate-400">
+                    Connect phone via USB, forward port 3000 in PC Chrome (<code className="font-mono text-[10px]">chrome://inspect/#devices</code>), then open <code className="font-mono text-[10px]">http://localhost:3000</code> on your phone.
+                  </p>
+                </div>
               </div>
 
               <div className="mt-4 flex items-center justify-end gap-2">
@@ -468,6 +466,50 @@ export function MapScreen() {
           </div>
         )}
       </div>
+
+      {/* Map Symbology Legend Modal (Centered overlay - never shifts header or triage chips) */}
+      {panel === 'legend' && (
+        <div
+          className="fixed inset-0 z-[700] bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150"
+          onClick={() => setPanel(null)}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Map Symbology Legend"
+        >
+          <div
+            className="pointer-events-auto max-h-[85dvh] overflow-y-auto no-scrollbar shadow-2xl rounded-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <MapLegend onClose={() => setPanel(null)} />
+          </div>
+        </div>
+      )}
+
+      {/* Telemetry Feeds Status Modal */}
+      {panel === 'api' && (
+        <div
+          className="fixed inset-0 z-[700] bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150"
+          onClick={() => setPanel(null)}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Telemetry Feeds Status"
+        >
+          <div
+            className="pointer-events-auto w-[min(22rem,calc(100vw-2rem))] max-h-[85dvh] overflow-y-auto rounded-xl bg-white/98 dark:bg-slate-900/98 backdrop-blur-md border border-slate-200 dark:border-slate-800 shadow-2xl p-4 font-mono text-xs"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <ApiStatusPanel health={apiHealth} bare />
+            <button
+              type="button"
+              onClick={() => setPanel(null)}
+              className="mt-3 w-full py-2 rounded-lg border border-slate-200 dark:border-slate-800 text-xs font-mono font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer transition-colors"
+            >
+              Close Telemetry Panel
+            </button>
+          </div>
+        </div>
+      )}
+
       <MapHelpModal isOpen={helpOpen} onClose={() => setHelpOpen(false)} />
     </>
   );

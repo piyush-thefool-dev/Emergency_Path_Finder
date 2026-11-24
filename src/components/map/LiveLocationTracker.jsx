@@ -1,6 +1,6 @@
 ﻿/**
  * Live Location & Vehicle Tracking Telemetry Component.
- * Supports physical browser GPS geolocation, simulated vehicle drive, and spatial telemetry.
+ * Supports physical browser GPS geolocation, automated vehicle dispatch, and spatial telemetry.
  */
 
 import {

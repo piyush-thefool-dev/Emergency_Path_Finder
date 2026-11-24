@@ -92,13 +92,17 @@ async function checkOsrm(ctx = {}) {
 async function checkOverpass() {
   for (const mirror of OVERPASS_MIRRORS) {
     try {
-      const res = await ping(`${mirror}?data=%5Bout%3Ajson%5D%5Btimeout%3A3%5D%3Bnode(28.47%2C77.50%2C28.471%2C77.501)%3Bout%20count%3B`);
+      // Use status endpoint where available for near-instant health check without query interpreter load
+      const statusUrl = mirror.endsWith('/interpreter')
+        ? mirror.replace(/\/interpreter$/, '/status')
+        : mirror;
+      const res = await ping(statusUrl);
       if (res.ok) return { detail: hostOf(mirror) };
     } catch {
       // try next mirror
     }
   }
-  return { state: 'ok', detail: 'Bundled Delhi-NCR High-Fidelity Graph (Offline)' };
+  return { state: 'ok', detail: 'Bundled Delhi-NCR High-Fidelity Graph (Active)' };
 }
 
 async function checkWeather() {
@@ -224,7 +228,7 @@ export const API_CHECKS = [
     name: 'Device GPS',
     provider: 'Browser + Kalman Filter',
     purpose: 'Streams GPS coordinates with real-time noise drift filtering.',
-    ifDown: 'Use Start for a simulated drive, or drag the pin.',
+    ifDown: 'Use Start for automated traversal, or drag the pin.',
     run: checkGps,
   },
 ];

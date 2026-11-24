@@ -25,7 +25,7 @@ export function Architecture() {
       num: '03',
       title: 'Travel-Time Model',
       icon: Cpu,
-      desc: 'Friction modeling and regression baseline estimate road speed v(e) and traversal time t(e) = L/v + delay penalties.',
+      desc: 'Friction modeling and regression baseline compute road speed v(e) and traversal time t(e) = L/v + delay penalties.',
       output: 'Non-negative edge weights w(e) in seconds',
     },
     {

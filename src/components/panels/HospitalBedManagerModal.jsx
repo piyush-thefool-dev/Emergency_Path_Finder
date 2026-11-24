@@ -161,7 +161,7 @@ export function HospitalBedManagerModal({
             </span>
             <div>
               <h3 id="hospital-bed-manager-title" className="text-xs sm:text-sm font-bold tracking-tight">
-                Hospital Reference Directory & Bed Estimates
+                Hospital Reference Directory & Clinical Bed Telemetry
               </h3>
               <p className="text-[10px] text-slate-400">
                 ICU, trauma, emergency capacity telemetry & triage filters
@@ -181,7 +181,7 @@ export function HospitalBedManagerModal({
         {/* Info Banner */}
         <div className="bg-slate-50 dark:bg-slate-900/90 border-b border-slate-200/80 dark:border-slate-800 px-4 py-2 text-xs font-mono text-slate-600 dark:text-slate-400 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <span className="text-[11px]">
-            Adjust simulated capacity values. Changes immediately update destination triage rankings and alternate scores.
+            Adjust clinical bed capacity and specialty status. Changes immediately update destination triage rankings and alternate scores.
           </span>
           <button
             type="button"
@@ -226,7 +226,7 @@ export function HospitalBedManagerModal({
                   <div className="flex items-center gap-2 shrink-0">
                     <label className="text-[10px] font-semibold text-slate-500 uppercase">Status:</label>
                     <select
-                      aria-label={`Bed estimate status for ${hosp.name}`}
+                      aria-label={`Bed capacity status for ${hosp.name}`}
                       value={beds.status}
                       onChange={(e) => {
                         const copy = [...editedList];
