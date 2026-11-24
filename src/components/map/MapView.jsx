@@ -14,9 +14,16 @@ import AmbulanceMarker from './AmbulanceMarker.jsx';
 import HospitalMarkers from './HospitalMarkers.jsx';
 import RouteLayer from './RouteLayer.jsx';
 
-// Space reserved for the floating UI so the route is never hidden behind it.
-const FIT_PADDING_TOP_LEFT = [28, 235];
-const FIT_PADDING_BOTTOM_RIGHT = [28, 210];
+// Responsive camera framing padding avoiding coordinate clipping on narrow mobile viewports
+function getResponsiveFitPadding() {
+  if (typeof window === 'undefined') {
+    return { topLeft: [40, 24], bottomRight: [40, 24] };
+  }
+  const isMobile = window.innerWidth < 768;
+  return isMobile
+    ? { topLeft: [75, 20], bottomRight: [85, 20] }
+    : { topLeft: [45, 60], bottomRight: [45, 60] };
+}
 
 /**
  * Keeps the camera sensible:
@@ -50,11 +57,12 @@ function CameraController({ ambulancePos, destination, recenterKey, followVehicl
     const points = [[ambLat, ambLon]];
     if (destLat != null && destLon != null) points.push([destLat, destLon]);
 
+    const { topLeft, bottomRight } = getResponsiveFitPadding();
     try {
       if (points.length > 1) {
         map.fitBounds(points, {
-          paddingTopLeft: FIT_PADDING_TOP_LEFT,
-          paddingBottomRight: FIT_PADDING_BOTTOM_RIGHT,
+          paddingTopLeft: topLeft,
+          paddingBottomRight: bottomRight,
           maxZoom: 15,
           animate: true,
         });

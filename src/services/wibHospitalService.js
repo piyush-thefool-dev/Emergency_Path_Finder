@@ -143,7 +143,7 @@ export const REGIONAL_ANCHORS = [
 
 /**
  * Transforms raw WIB API hospital records into road-network mapped hospital objects.
- * Preserves all 80 apex trauma facilities across Pan-India and Delhi-NCR.
+ * Preserves all 155 apex trauma facilities across Pan-India and Delhi-NCR.
  *
  * @param {Array<Object>} rawList
  * @returns {Array<Object>}

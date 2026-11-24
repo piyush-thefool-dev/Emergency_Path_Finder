@@ -105,9 +105,10 @@ export function HospitalMarkers({ hospitals = [], activeHospitalId, onSelectHosp
 
         return (
           <Marker
-            key={hosp.id}
+            key={`${hosp.id}-${isTarget ? 'target' : 'regular'}`}
             position={[hosp.lat, hosp.lon]}
             icon={icon}
+            zIndexOffset={isTarget ? 1500 : 100}
             eventHandlers={{
               click: () => onSelectHospital && onSelectHospital(hosp.id),
             }}

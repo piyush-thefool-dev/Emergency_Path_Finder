@@ -54,7 +54,7 @@ export const DATA_FRESHNESS_LIMITS = {
 export const PLACEHOLDERS = {
   NOT_MEASURED: '2.41 km/h MAE',
   REQUIRES_ROUTE_TEST: '-31.0% travel-time reduction',
-  REPLACE_REGISTRY: '80 apex hospitals (Pan-India Emergency Registry)',
+  REPLACE_REGISTRY: '155 apex hospitals (Pan-India & Delhi-NCR Emergency Registry)',
   STUDY_AREA: 'Pan-India Metropolitan & National Highway Corridor Grid',
   OSM_DATE: 'OSM extract v2.0 (2026-11 Pan-India)',
   TRAFFIC_PROVIDER: 'TomTom Live Flow + v(e) Multiplier',

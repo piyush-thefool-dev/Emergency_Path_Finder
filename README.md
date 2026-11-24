@@ -50,10 +50,6 @@ An intelligent, real-time emergency dispatch and navigation decision-support eng
 
 ```
 Emergency_Path_Finder/
-├── docs/                           # Technical Specifications & API Documentation
-│   ├── API_CATALOG.md              # Master external API inventory & fallbacks
-│   ├── API_RESEARCH_AND_FALLBACKS.md # Extended research across 25+ telemetry providers
-│   └── DESIGN_GUIDE.md             # Tactical UI/UX design specifications & palette
 ├── screenshots/                    # System interface previews
 │   ├── preview-desktop.png         # PC Desktop Dispatch Console (1440x900)
 │   └── preview-samsung-mobile.png  # Samsung Galaxy Mobile CAD View (412x915)

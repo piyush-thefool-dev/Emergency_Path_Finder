@@ -86,10 +86,12 @@ export function AmbulanceMarker({
 
   return (
     <Marker
+      key={`ambulance-${isRealGps ? 'gps' : 'manual'}-${canDragPin ? 'unlocked' : 'locked'}`}
       position={[position.lat, position.lon]}
       icon={ambulanceIcon}
       draggable={canDragPin && !isMoving}
       eventHandlers={eventHandlers}
+      zIndexOffset={2000}
     >
       <Popup>
         <div className="text-xs p-1 font-sans space-y-2 text-slate-900 dark:text-slate-100">

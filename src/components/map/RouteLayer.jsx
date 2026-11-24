@@ -232,45 +232,6 @@ export function RouteLayer({
               <Tooltip sticky>No road route avoiding the closure was found - verify manually.</Tooltip>
             )}
           </Polyline>
-
-          {/* 2b. Visual Snap Connector from GPS / Ambulance to Nearest Road Network Node */}
-          {routeStart && activePathNodeIds.length > 0 && nodeMap.get(activePathNodeIds[0]) && (
-            <Polyline
-              positions={[
-                [routeStart.lat, routeStart.lon],
-                [nodeMap.get(activePathNodeIds[0]).lat, nodeMap.get(activePathNodeIds[0]).lon],
-              ]}
-              pathOptions={{
-                color: '#10B981',
-                weight: 3,
-                dashArray: '4, 6',
-                opacity: 0.95,
-                lineCap: 'round',
-              }}
-            />
-          )}
-
-          {/* 2c. Visual Final Access Connector from Last Network Node to Hospital Destination */}
-          {routeEnd &&
-            activePathNodeIds.length > 0 &&
-            nodeMap.get(activePathNodeIds[activePathNodeIds.length - 1]) && (
-              <Polyline
-                positions={[
-                  [
-                    nodeMap.get(activePathNodeIds[activePathNodeIds.length - 1]).lat,
-                    nodeMap.get(activePathNodeIds[activePathNodeIds.length - 1]).lon,
-                  ],
-                  [routeEnd.lat, routeEnd.lon],
-                ]}
-                pathOptions={{
-                  color: '#16A34A',
-                  weight: 3,
-                  dashArray: '3, 5',
-                  opacity: 0.9,
-                  lineCap: 'round',
-                }}
-              />
-            )}
         </>
       )}
 

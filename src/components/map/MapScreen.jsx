@@ -275,10 +275,10 @@ export function MapScreen() {
               type="button"
               onClick={() => setSearchModalOpen(true)}
               className="pointer-events-auto flex-1 h-8 px-2.5 rounded-lg text-xs font-mono font-bold flex items-center justify-center gap-1.5 border shadow-xs cursor-pointer active:scale-95 transition-all bg-white/95 dark:bg-slate-900/95 text-slate-800 dark:text-slate-200 border-slate-200/90 dark:border-slate-800 truncate hover:border-slate-300 dark:hover:border-slate-700"
-              title={`Search all ${availableHospitals?.length || 80} Pan-India apex hospitals by name, city, or specialty`}
+              title={`Search all ${availableHospitals?.length || 155} Pan-India apex hospitals by name, city, or specialty`}
             >
               <Search className="w-3.5 h-3.5 text-[#D62828] shrink-0" />
-              <span className="truncate">Search ({availableHospitals?.length || 80})</span>
+              <span className="truncate">Search ({availableHospitals?.length || 155})</span>
             </button>
 
             {/* Quick Tools Button */}
@@ -374,15 +374,26 @@ export function MapScreen() {
           >
             <Network className="w-4 h-4 text-[#D62828] dark:text-red-400" />
           </RoundButton>
-          {!isMoving && (
-            <RoundButton
-              label={canDragAmbulance ? 'Lock ambulance pin' : 'Unlock pin to move ambulance'}
-              onClick={() => setCanDragAmbulance(!canDragAmbulance)}
-              active={canDragAmbulance}
-            >
-              <Pin className="w-4 h-4" />
-            </RoundButton>
-          )}
+          <RoundButton
+            label={
+              live.isGpsActive
+                ? 'Device GPS active: click to switch to manual pin repositioning'
+                : canDragAmbulance
+                ? 'Lock ambulance pin position'
+                : 'Unlock pin to drag or reposition ambulance'
+            }
+            onClick={() => {
+              if (live.isGpsActive) {
+                live.stopGps();
+                setCanDragAmbulance(true);
+              } else {
+                setCanDragAmbulance(!canDragAmbulance);
+              }
+            }}
+            active={canDragAmbulance}
+          >
+            <Pin className="w-4 h-4" />
+          </RoundButton>
           <RoundButton label="Recenter on ambulance & route" onClick={handleLocate}>
             <Locate className="w-4 h-4 text-[#D62828] dark:text-red-400" />
           </RoundButton>
@@ -432,11 +443,11 @@ export function MapScreen() {
             aria-modal="true"
             aria-label="Search Hospitals"
           >
-            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xl w-full max-w-lg max-h-[85dvh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xl w-full max-w-lg h-[85dvh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150">
               <div className="p-3 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between shrink-0 bg-slate-50 dark:bg-slate-950/60">
                 <span className="font-bold text-xs uppercase tracking-wider text-slate-800 dark:text-slate-200 font-mono flex items-center gap-2">
                   <Hospital className="w-4 h-4 text-[#D62828]" />
-                  Pan-India Hospital Registry Search
+                  Pan-India & Delhi-NCR Hospital Registry Search ({availableHospitals?.length || 155})
                 </span>
                 <button
                   type="button"
@@ -447,7 +458,7 @@ export function MapScreen() {
                   <X className="w-4 h-4" />
                 </button>
               </div>
-              <div className="p-3 flex-1 overflow-y-auto">
+              <div className="p-3 flex-1 min-h-0 flex flex-col">
                 <HospitalSearchBar
                   hospitals={availableHospitals}
                   selectedHospitalId={routing.selectedHospitalId}
@@ -457,6 +468,8 @@ export function MapScreen() {
                     setSearchModalOpen(false);
                   }}
                   ambulancePos={ambulancePos}
+                  embedded={true}
+                  autoFocus={true}
                 />
               </div>
             </div>

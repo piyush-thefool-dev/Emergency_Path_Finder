@@ -16,6 +16,7 @@ import {
   ShieldCheck,
   Search,
 } from 'lucide-react';
+import { getSearchRelevance } from '../../utils/hospitalSearch.js';
 
 export function HospitalBedManagerModal({
   isOpen,
@@ -205,15 +206,13 @@ export function HospitalBedManagerModal({
         {/* Scrollable list */}
         <form onSubmit={handleSave} className={`flex-1 overflow-y-auto p-3 sm:p-4 space-y-3 no-scrollbar ${asPage ? 'pb-0 sm:pb-0' : ''}`}>
           {editedList
-            .map((hosp, idx) => ({ hosp, idx }))
-            .filter(({ hosp }) => {
-              if (!searchTerm.trim()) return true;
-              const q = searchTerm.toLowerCase();
-              return (
-                hosp.name?.toLowerCase().includes(q) ||
-                hosp.address?.toLowerCase().includes(q) ||
-                hosp.shortName?.toLowerCase().includes(q)
-              );
+            .map((hosp, idx) => ({ hosp, idx, rel: getSearchRelevance(hosp, searchTerm) }))
+            .filter(({ rel }) => rel > 0)
+            .sort((a, b) => {
+              if (searchTerm.trim() && b.rel !== a.rel) {
+                return b.rel - a.rel;
+              }
+              return 0;
             })
             .map(({ hosp, idx }) => {
             const beds = hosp.bedAvailability || {};

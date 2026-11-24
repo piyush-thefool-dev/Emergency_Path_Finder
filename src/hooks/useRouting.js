@@ -23,7 +23,7 @@ export function useRouting(weightedGraph, isFigure2Mode) {
   const [algorithm, setAlgorithm] = useState('compare'); // 'compare' runs the optimal combo: A* for fast dispatch + Dijkstra for audit verification
   const [selectedHospitalId, setSelectedHospitalId] = useState(null);
 
-  // Greater Noida hospital reference data with local storage persistence
+  // Pan-India & Delhi-NCR hospital reference data with local storage persistence
   const [wibHospitals, setWibHospitals] = useState(() => {
     if (typeof localStorage !== 'undefined') {
       try {
@@ -31,12 +31,24 @@ export function useRouting(weightedGraph, isFigure2Mode) {
         if (stored) {
           const parsed = JSON.parse(stored);
           if (Array.isArray(parsed) && parsed.length > 0) {
-            return parsed.map((hospital) => ({
-              ...hospital,
-              isUserEditedBedData: true,
-              isSimulatedAvailability: false,
-              isLiveWibData: false,
-            }));
+            // Always ensure the complete 155-hospital registry is loaded, merging any user bed edits
+            const customMap = new Map(parsed.map((h) => [h.id, h]));
+            return SAMPLE_HOSPITALS.map((base) => {
+              const custom = customMap.get(base.id);
+              if (custom && custom.isUserEditedBedData) {
+                return {
+                  ...base,
+                  bedAvailability: {
+                    ...base.bedAvailability,
+                    ...(custom.bedAvailability || {}),
+                  },
+                  isUserEditedBedData: true,
+                  isSimulatedAvailability: false,
+                  isLiveWibData: false,
+                };
+              }
+              return base;
+            });
           }
         }
       } catch (e) {
