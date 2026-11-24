@@ -9,6 +9,9 @@ const __dirname = path.dirname(__filename);
 
 export default defineConfig(() => {
       return {
+            define: {
+                  'process.env': {},
+            },
             plugins: [react(), tailwindcss()],
             resolve: {
                   alias: {
