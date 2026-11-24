@@ -42,10 +42,9 @@ export function Navbar() {
   }, []);
 
   const navLinkClass = ({ isActive }) =>
-    `text-xs font-sans font-semibold px-3 py-1.5 rounded-xl transition-all whitespace-nowrap shrink-0 flex items-center gap-1.5 ${
-      isActive
-        ? 'bg-[#1F3C6D] text-white dark:bg-red-600 dark:text-white shadow-xs font-bold'
-        : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100/80 dark:hover:bg-white/[0.06]'
+    `text-xs font-sans font-semibold px-3 py-1.5 rounded-xl transition-all whitespace-nowrap shrink-0 flex items-center gap-1.5 ${isActive
+      ? 'bg-[#1F3C6D] text-white dark:bg-red-600 dark:text-white shadow-xs font-bold'
+      : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100/80 dark:hover:bg-white/[0.06]'
     }`;
 
   return (

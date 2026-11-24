@@ -56,9 +56,8 @@ export function DisclaimerBanner({ compact = false }) {
           </div>
           <p
             id="cad-advisory-details"
-            className={`text-emerald-900/80 dark:text-emerald-300/80 text-[11px] sm:text-xs font-sans mt-1 leading-relaxed ${
-              expanded ? 'block' : 'hidden sm:block'
-            }`}
+            className={`text-emerald-900/80 dark:text-emerald-300/80 text-[11px] sm:text-xs font-sans mt-1 leading-relaxed ${expanded ? 'block' : 'hidden sm:block'
+              }`}
           >
             Real-time traffic-calibrated emergency routing and hospital triage system for Pan-India & Delhi-NCR. Traversal paths and arrival windows are dynamically computed over the live OpenStreetMap road network.
           </p>

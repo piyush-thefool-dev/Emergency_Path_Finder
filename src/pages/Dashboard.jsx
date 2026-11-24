@@ -105,8 +105,8 @@ export function Dashboard() {
             activeHospital?.roadDistanceKm
               ? `${activeHospital.roadDistanceKm} km road · Corridor`
               : activeDistance > 0
-              ? `${formatDistance(activeDistance)} · Corridor`
-              : 'Pan-India Grid'
+                ? `${formatDistance(activeDistance)} · Corridor`
+                : 'Pan-India Grid'
           }
           icon={(props) => <HospitalBrandLogo hospitalName={activeHospital?.name} className="w-6 h-6 rounded-md" {...props} />}
           tint="red"
@@ -133,8 +133,8 @@ export function Dashboard() {
             weather && weather !== 'clear'
               ? `Weather Calibrated (${WEATHER_FACTORS[weather]?.label?.split(' ')[0] || weather.toUpperCase()})`
               : liveWeather?.label
-              ? `Live: ${liveWeather.label}`
-              : 'Friction Calibrated'
+                ? `Live: ${liveWeather.label}`
+                : 'Friction Calibrated'
           }
           icon={KpiEtaRadarLogo}
           tint="emerald"
@@ -207,13 +207,13 @@ export function Dashboard() {
           <ResultCard
             hospital={
               roadTelemetry?.distanceM &&
-              activeHospital &&
-              (!roadTelemetry.hospitalId || roadTelemetry.hospitalId === activeHospital.id)
+                activeHospital &&
+                (!roadTelemetry.hospitalId || roadTelemetry.hospitalId === activeHospital.id)
                 ? {
-                    ...activeHospital,
-                    distanceM: roadTelemetry.distanceM,
-                    travelTimeSec: roadTelemetry.durationSec || activeHospital.travelTimeSec,
-                  }
+                  ...activeHospital,
+                  distanceM: roadTelemetry.distanceM,
+                  travelTimeSec: roadTelemetry.durationSec || activeHospital.travelTimeSec,
+                }
                 : activeHospital
             }
             alternateHospitals={rankingResult.alternateCandidates}

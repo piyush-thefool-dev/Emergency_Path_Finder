@@ -95,11 +95,10 @@ export function RegionalBedCapacityGraph({ hospitals = PAN_INDIA_HOSPITALS, clas
             <div
               key={key}
               onClick={() => setActiveZone((prev) => (prev === key ? 'ALL' : key))}
-              className={`p-2.5 rounded-xl border transition-all cursor-pointer ${
-                isSelected
+              className={`p-2.5 rounded-xl border transition-all cursor-pointer ${isSelected
                   ? 'bg-slate-50/80 dark:bg-slate-950/60 border-slate-200/90 dark:border-white/[0.08]'
                   : 'bg-transparent border-transparent opacity-50'
-              }`}
+                }`}
             >
               <div className="flex items-center justify-between text-xs mb-1.5">
                 <span className="font-bold text-slate-900 dark:text-slate-100 flex items-center gap-1.5">

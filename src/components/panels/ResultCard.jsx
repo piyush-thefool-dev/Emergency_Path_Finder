@@ -204,9 +204,8 @@ export function ResultCard({
       <div className="bg-slate-50/80 dark:bg-slate-950/80 border border-slate-200/80 dark:border-white/[0.06] rounded-2xl p-3.5 flex flex-col @2xl:flex-row @2xl:items-center justify-between gap-3">
         <div className="flex items-center gap-3 min-w-0">
           <div
-            className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 text-white font-bold text-xs shadow-xs ${
-              icuCount > 0 ? 'bg-emerald-600' : 'bg-amber-600'
-            }`}
+            className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 text-white font-bold text-xs shadow-xs ${icuCount > 0 ? 'bg-emerald-600' : 'bg-amber-600'
+              }`}
           >
             <Bed className="w-4 h-4" />
           </div>
@@ -220,13 +219,12 @@ export function ResultCard({
               </Badge>
               {hospital.seatReadinessLabel && (
                 <span
-                  className={`px-1.5 py-0.5 rounded text-[10px] font-mono font-semibold ${
-                    hospital.seatReadinessLevel === 'OPTIMAL'
+                  className={`px-1.5 py-0.5 rounded text-[10px] font-mono font-semibold ${hospital.seatReadinessLevel === 'OPTIMAL'
                       ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800'
                       : hospital.seatReadinessLevel === 'CRITICAL'
-                      ? 'bg-red-50 dark:bg-red-950/60 text-red-700 dark:text-red-300 border border-red-300 dark:border-red-800'
-                      : 'bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-300 dark:border-amber-800'
-                  }`}
+                        ? 'bg-red-50 dark:bg-red-950/60 text-red-700 dark:text-red-300 border border-red-300 dark:border-red-800'
+                        : 'bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-300 dark:border-amber-800'
+                    }`}
                 >
                   {hospital.seatReadinessLabel}
                 </span>
@@ -242,9 +240,8 @@ export function ResultCard({
           <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-white/[0.08] rounded-xl p-2 shadow-2xs">
             <span className="text-[10px] font-mono text-slate-500 uppercase block font-semibold">ICU Free</span>
             <span
-              className={`text-sm font-bold font-mono tabular-nums ${
-                icuCount > 0 ? 'text-[#16A34A] dark:text-emerald-400' : 'text-[#D62828] dark:text-red-400'
-              }`}
+              className={`text-sm font-bold font-mono tabular-nums ${icuCount > 0 ? 'text-[#16A34A] dark:text-emerald-400' : 'text-[#D62828] dark:text-red-400'
+                }`}
             >
               {icuCount}
             </span>
@@ -414,11 +411,10 @@ export function ResultCard({
                       type="button"
                       whileTap={{ scale: 0.98 }}
                       onClick={() => onSelectHospital(alt.id)}
-                      className={`text-left p-3 rounded-xl border transition-all text-xs flex items-center justify-between cursor-pointer min-h-[48px] ${
-                        isSelected
+                      className={`text-left p-3 rounded-xl border transition-all text-xs flex items-center justify-between cursor-pointer min-h-[48px] ${isSelected
                           ? 'border-[#D62828] dark:border-red-500 bg-red-500/10 dark:bg-red-950/40 ring-1 ring-red-500 font-semibold shadow-xs'
                           : 'border-slate-200/80 dark:border-white/[0.06] bg-white/60 dark:bg-slate-900/60 hover:bg-slate-100/60 dark:hover:bg-slate-800/60'
-                      }`}
+                        }`}
                     >
                       <div className="flex items-center gap-2.5 min-w-0 pr-2 flex-1">
                         <HospitalBrandLogo hospitalName={alt.name} className="w-7 h-7 rounded-md shrink-0" />

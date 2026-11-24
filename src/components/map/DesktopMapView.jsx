@@ -173,9 +173,8 @@ export function MapView({
 
   return (
     <div
-      className={`relative w-full rounded-xl overflow-hidden border border-slate-200/90 dark:border-slate-800/80 shadow-xs bg-slate-100 dark:bg-[#080D1A] transition-all duration-200 ${
-        isMapExpanded ? 'h-[75dvh]' : 'h-[440px] sm:h-[500px] lg:h-[580px]'
-      }`}
+      className={`relative w-full rounded-xl overflow-hidden border border-slate-200/90 dark:border-slate-800/80 shadow-xs bg-slate-100 dark:bg-[#080D1A] transition-all duration-200 ${isMapExpanded ? 'h-[75dvh]' : 'h-[440px] sm:h-[500px] lg:h-[580px]'
+        }`}
     >
       <MapContainer
         center={defaultCenter}
@@ -346,11 +345,10 @@ export function MapView({
           <button
             type="button"
             onClick={() => onTogglePinLock(!canDragPin)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl backdrop-blur-xl border shadow-xs text-xs font-mono font-bold transition-all cursor-pointer min-h-[36px] active:scale-95 ${
-              canDragPin
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl backdrop-blur-xl border shadow-xs text-xs font-mono font-bold transition-all cursor-pointer min-h-[36px] active:scale-95 ${canDragPin
                 ? 'bg-amber-500/20 text-amber-700 dark:text-amber-300 border-amber-500/40 ring-1 ring-amber-400'
                 : 'bg-white/90 dark:bg-slate-900/90 text-slate-700 dark:text-slate-200 border-slate-200/80 dark:border-white/[0.08] hover:bg-slate-100 dark:hover:bg-slate-800'
-            }`}
+              }`}
             title={canDragPin ? 'Ambulance pin is unlocked (drag on map to reposition). Click to lock.' : 'Ambulance pin is locked. Click to unlock.'}
             aria-pressed={canDragPin}
           >
@@ -373,11 +371,10 @@ export function MapView({
         <button
           type="button"
           onClick={() => setShowGraphNetwork((prev) => !prev)}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl backdrop-blur-xl border shadow-xs text-xs font-mono font-bold transition-all cursor-pointer min-h-[36px] active:scale-95 ${
-            showGraphNetwork
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl backdrop-blur-xl border shadow-xs text-xs font-mono font-bold transition-all cursor-pointer min-h-[36px] active:scale-95 ${showGraphNetwork
               ? 'bg-[#1F3C6D] text-white border-blue-900 shadow-md ring-1 ring-blue-400'
               : 'bg-white/90 dark:bg-slate-900/90 text-slate-700 dark:text-slate-200 border-slate-200/80 dark:border-white/[0.08] hover:bg-slate-100 dark:hover:bg-slate-800'
-          }`}
+            }`}
           title={showGraphNetwork ? 'Hide graph network & nodes' : 'Show road graph network & intersection nodes (default: OFF)'}
           aria-pressed={showGraphNetwork}
         >

@@ -98,11 +98,10 @@ export function IncidentTool({
               onClick={() => onChangeReporter(r)}
               title={r === 'Public' ? 'Logged as public citizen report' : 'Logged as authenticated ambulance telemetry'}
               aria-pressed={reporter === r}
-              className={`py-1.5 rounded-lg text-xs font-mono font-bold cursor-pointer transition-all ${
-                reporter === r
+              className={`py-1.5 rounded-lg text-xs font-mono font-bold cursor-pointer transition-all ${reporter === r
                   ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-xs'
                   : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
-              }`}
+                }`}
             >
               {r === 'Public' ? 'Public Telemetry' : 'Ambulance Unit'}
             </button>
@@ -122,11 +121,10 @@ export function IncidentTool({
               onClick={() => setLevelId(lvl.id)}
               title={lvl.hint}
               aria-pressed={on}
-              className={`p-2.5 rounded-xl border text-xs font-mono font-bold cursor-pointer transition-all flex items-center justify-center gap-1.5 min-h-[42px] ${
-                on
+              className={`p-2.5 rounded-xl border text-xs font-mono font-bold cursor-pointer transition-all flex items-center justify-center gap-1.5 min-h-[42px] ${on
                   ? 'text-white shadow-sm'
                   : 'bg-slate-50/80 dark:bg-slate-950/60 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-white/[0.06] hover:border-slate-300'
-              }`}
+                }`}
               style={on ? { backgroundColor: lvl.color, borderColor: lvl.color } : undefined}
             >
               {!on && (

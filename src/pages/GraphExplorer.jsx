@@ -357,9 +357,8 @@ export function GraphExplorer() {
                 <tr
                   key={edge.id}
                   onClick={() => setSelectedEdgeId(edge.id)}
-                  className={`hover:bg-slate-50 dark:hover:bg-slate-900/50 cursor-pointer transition-colors ${
-                    selectedEdgeId === edge.id ? 'bg-red-500/10 font-semibold' : ''
-                  }`}
+                  className={`hover:bg-slate-50 dark:hover:bg-slate-900/50 cursor-pointer transition-colors ${selectedEdgeId === edge.id ? 'bg-red-500/10 font-semibold' : ''
+                    }`}
                 >
                   <td className="py-2 px-3 text-[#D62828] dark:text-red-400">{edge.id}</td>
                   <td className="py-2 px-3">{edge.from}</td>
