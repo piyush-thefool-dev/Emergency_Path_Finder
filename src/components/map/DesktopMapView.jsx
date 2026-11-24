@@ -142,8 +142,8 @@ export function MapView({
   const [helpModalOpen, setHelpModalOpen] = useState(false);
   const [showQuickHint, setShowQuickHint] = useState(false);
   const [isMapExpanded, setIsMapExpanded] = useState(false);
-  // Graph network overlay: displays all road intersection nodes and directed edges (ON by default for Pan-India & NCR inspection)
-  const [showGraphNetwork, setShowGraphNetwork] = useState(true);
+  // Graph network overlay: displays all road intersection nodes and directed edges (OFF by default)
+  const [showGraphNetwork, setShowGraphNetwork] = useState(false);
   const [recenterTrigger, setRecenterTrigger] = useState(0);
   const handleRecenter = () => setRecenterTrigger((t) => t + 1);
 
@@ -376,7 +376,7 @@ export function MapView({
               ? 'bg-[#1F3C6D] text-white border-blue-900 shadow-md ring-1 ring-blue-400'
               : 'bg-white/90 dark:bg-slate-900/90 text-slate-700 dark:text-slate-200 border-slate-200/80 dark:border-white/[0.08] hover:bg-slate-100 dark:hover:bg-slate-800'
           }`}
-          title={showGraphNetwork ? 'Hide graph network & nodes' : 'Show road graph network & intersection nodes (default: ON)'}
+          title={showGraphNetwork ? 'Hide graph network & nodes' : 'Show road graph network & intersection nodes (default: OFF)'}
           aria-pressed={showGraphNetwork}
         >
           <Network className="w-3.5 h-3.5 text-[#D62828]" />

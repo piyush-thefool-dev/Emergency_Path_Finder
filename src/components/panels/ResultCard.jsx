@@ -72,7 +72,7 @@ export function ResultCard({
   const isSearching = trimmedQuery.length > 0;
   const searchablePool = searchHospitals && searchHospitals.length > 0 ? searchHospitals : alternateHospitals;
 
-  // Multi-token filter across name, city, address, and medical specialties (within 100km)
+  // Multi-token filter across name, city, address, and medical specialties
   const searchedHospitals = useMemo(() => {
     if (!trimmedQuery) return [];
     const tokens = trimmedQuery.toLowerCase().split(/\s+/).filter(Boolean);
@@ -327,7 +327,7 @@ export function ResultCard({
               type="text"
               value={inlineQuery}
               onChange={(e) => setInlineQuery(e.target.value)}
-              placeholder={`Search ${searchablePool.length} contingency facilities within 100 km by name, specialty, or city...`}
+              placeholder={`Search ${searchablePool.length} registered facilities by name, specialty, or city...`}
               className="w-full text-xs font-sans pl-10 pr-24 py-2.5 rounded-xl bg-slate-50/90 dark:bg-slate-900/90 border border-slate-200/90 dark:border-white/[0.08] text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-hidden focus:border-slate-400 dark:focus:border-slate-500 focus:ring-2 focus:ring-slate-400/20 dark:focus:ring-white/10 transition-all shadow-2xs"
             />
             <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
@@ -362,7 +362,7 @@ export function ResultCard({
               </div>
               <div>
                 <p className="text-xs font-semibold text-slate-800 dark:text-slate-200 font-sans">
-                  {searchablePool.length} Contingency Facilities Available (100 km)
+                  {searchablePool.length} Registered Facilities Available
                 </p>
                 <p className="text-[11px] text-slate-500 dark:text-slate-400 font-sans mt-0.5 max-w-sm mx-auto">
                   Facility cards are hidden to keep your manifest clean. Type in the search bar above or click below to search and override route.
@@ -474,7 +474,7 @@ export function ResultCard({
                     </button>
                     <span className="font-bold text-xs uppercase tracking-wider text-slate-900 dark:text-slate-100 font-mono flex items-center gap-1.5 truncate">
                       <Hospital className="w-3.5 h-3.5 text-[#D62828] shrink-0" />
-                      <span className="truncate">Contingency Search ({searchablePool.length} within 100 km)</span>
+                      <span className="truncate">Registry Search ({searchablePool.length} Registered Facilities)</span>
                     </span>
                   </div>
                   <button

@@ -241,20 +241,10 @@ export function useRouting(weightedGraph, isFigure2Mode) {
     return wibHospitals.length > 0 ? wibHospitals : SAMPLE_HOSPITALS;
   }, [isFigure2Mode, wibHospitals]);
 
-  // Hospitals within 100 km radius of the ambulance position for emergency search & registry
-  const SEARCH_RADIUS_KM = 100;
+  // All registered hospitals in the CAD directory for emergency search & registry
   const searchHospitals = useMemo(() => {
-    if (isFigure2Mode) return availableHospitals;
-    if (!ambulancePos || typeof ambulancePos.lat !== 'number' || typeof ambulancePos.lon !== 'number') {
-      return availableHospitals;
-    }
-    const maxM = SEARCH_RADIUS_KM * 1000;
-    return availableHospitals.filter((h) => {
-      if (h.lat == null || h.lon == null) return false;
-      const distM = haversineDistance(ambulancePos.lat, ambulancePos.lon, h.lat, h.lon);
-      return distM <= maxM;
-    });
-  }, [isFigure2Mode, availableHospitals, ambulancePos]);
+    return availableHospitals;
+  }, [availableHospitals]);
 
   // Execute automatic built-in cascading radius (5km -> 10km -> 20km) + OSRM filtering
   useEffect(() => {

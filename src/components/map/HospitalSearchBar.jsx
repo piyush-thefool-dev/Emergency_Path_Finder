@@ -80,29 +80,18 @@ export function HospitalSearchBar({
     }
   }, [autoFocus]);
 
-  // Compute distances, regions, and driving times for all facilities (scoped to 100km radius)
+  // Compute distances, regions, and driving times for all registered facilities
   const enrichedHospitals = useMemo(() => {
-    return (hospitals || [])
-      .map((h) => {
-        const distM =
-          ambulancePos?.lat != null && ambulancePos?.lon != null && h.lat != null && h.lon != null
-            ? haversineDistance(ambulancePos.lat, ambulancePos.lon, h.lat, h.lon)
-            : null;
-        const region = getHospitalRegion(h);
-        const driveTime = estimateDrivingTime(distM);
-        return { ...h, _distM: distM, _region: region, _driveTime: driveTime };
-      })
-      .filter((h) => {
-        // In the searching, keep all hospitals under 100km radius from the ambulance
-        if (ambulancePos?.lat != null && ambulancePos?.lon != null && h._distM != null) {
-          if (h.id === selectedHospitalId || (activeHospital && h.id === activeHospital.id)) {
-            return true;
-          }
-          return h._distM <= SEARCH_MAX_RADIUS_M;
-        }
-        return true;
-      });
-  }, [hospitals, ambulancePos, selectedHospitalId, activeHospital]);
+    return (hospitals || []).map((h) => {
+      const distM =
+        ambulancePos?.lat != null && ambulancePos?.lon != null && h.lat != null && h.lon != null
+          ? haversineDistance(ambulancePos.lat, ambulancePos.lon, h.lat, h.lon)
+          : null;
+      const region = getHospitalRegion(h);
+      const driveTime = estimateDrivingTime(distM);
+      return { ...h, _distM: distM, _region: region, _driveTime: driveTime };
+    });
+  }, [hospitals, ambulancePos]);
 
   // Dynamic filter chip counts
   const filterCounts = useMemo(() => {
@@ -202,7 +191,7 @@ export function HospitalSearchBar({
     setQuery('');
   };
 
-  const totalHospitals = enrichedHospitals.length;
+  const totalHospitals = hospitals.length || enrichedHospitals.length || 280;
   const showList = embedded || isOpen;
   const hasAmbulancePos = ambulancePos?.lat != null && ambulancePos?.lon != null;
   const inputRightPadding = selectedHospitalId ? 'pr-44' : query ? 'pr-32' : 'pr-28';
@@ -235,7 +224,7 @@ export function HospitalSearchBar({
             setQuery(e.target.value);
             if (!isOpen) setIsOpen(true);
           }}
-          placeholder={`Search ${totalHospitals} facilities within 100km (e.g. AIIMS)...`}
+          placeholder={`Search all ${totalHospitals} registered hospitals (e.g. AIIMS)...`}
           className={`w-full pl-10 ${inputRightPadding} py-2 sm:py-2.5 rounded-xl border text-xs sm:text-sm font-sans transition-all backdrop-blur-md shadow-xs bg-slate-50/90 dark:bg-slate-900/90 border-slate-200/90 dark:border-white/[0.08] text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-hidden focus:border-slate-400 dark:focus:border-slate-500 focus:ring-2 focus:ring-slate-400/20 dark:focus:ring-white/10`}
         />
 

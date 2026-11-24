@@ -89,8 +89,8 @@ export function MapScreen() {
   const [trafficOpen, setTrafficOpen] = useState(false);
   const [focusPoint, setFocusPoint] = useState(null);
   const [searchModalOpen, setSearchModalOpen] = useState(false);
-  // Graph network overlay: displays all road intersection nodes and directed edges (ON by default for Pan-India & NCR inspection)
-  const [showGraphNetwork, setShowGraphNetwork] = useState(true);
+  // Graph network overlay: displays all road intersection nodes and directed edges (OFF by default)
+  const [showGraphNetwork, setShowGraphNetwork] = useState(false);
   const [isNetOffline, setIsNetOffline] = useState(() => isOffline());
 
   useEffect(() => {
@@ -310,10 +310,10 @@ export function MapScreen() {
                 setSearchModalOpen(true);
               }}
               className="pointer-events-auto flex-1 h-8 px-2.5 rounded-lg text-xs font-mono font-bold flex items-center justify-center gap-1.5 border shadow-xs cursor-pointer active:scale-95 transition-all bg-white/95 dark:bg-slate-900/95 text-slate-800 dark:text-slate-200 border-slate-200/90 dark:border-slate-800 truncate hover:border-slate-300 dark:hover:border-slate-700"
-              title={`Search hospitals within 100 km radius (${routing.searchHospitals?.length || 74} facilities)`}
+              title={`Search all ${availableHospitals?.length || 280} registered hospitals by name, city, or specialty`}
             >
               <Search className="w-3.5 h-3.5 text-[#D62828] shrink-0" />
-              <span className="truncate">Search (100 km)</span>
+              <span className="truncate">Search Registry</span>
             </button>
 
             {/* Quick Tools Button */}
@@ -407,7 +407,7 @@ export function MapScreen() {
             onClick={() => setShowGraphNetwork(!showGraphNetwork)}
             active={showGraphNetwork}
           >
-            <Network className="w-4 h-4 text-[#D62828] dark:text-red-400" />
+            <Network className="w-4 h-4" />
           </RoundButton>
           <RoundButton
             label={
@@ -491,7 +491,7 @@ export function MapScreen() {
                   </button>
                   <span className="font-bold text-xs uppercase tracking-wider text-slate-900 dark:text-slate-100 font-mono flex items-center gap-1.5 truncate">
                     <Hospital className="w-3.5 h-3.5 text-[#D62828] shrink-0" />
-                    <span className="truncate">Hospital Registry ({routing.searchHospitals?.length || 74} within 100km)</span>
+                    <span className="truncate">Hospital Registry ({availableHospitals?.length || 280} Registered Facilities)</span>
                   </span>
                 </div>
                 <button
@@ -505,7 +505,7 @@ export function MapScreen() {
               </div>
               <div className="p-2 sm:p-4 flex-1 min-h-0 flex flex-col overflow-hidden">
                 <HospitalSearchBar
-                  hospitals={routing.searchHospitals && routing.searchHospitals.length > 0 ? routing.searchHospitals : availableHospitals}
+                  hospitals={availableHospitals}
                   selectedHospitalId={routing.selectedHospitalId}
                   activeHospital={activeHospital}
                   onSelectHospital={(id) => {

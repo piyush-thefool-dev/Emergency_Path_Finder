@@ -66,8 +66,22 @@ test('Smart Multi-Token Hospital Search Verification', async (t) => {
     assert.ok(reachable.some((h) => h.id === 'hosp_max_saket'), 'Max Saket must be in 100 km search');
 
     // Should strictly exclude distant national hospitals > 100 km (e.g. Mumbai, Bangalore, Kolkata)
-    assert.ok(!reachable.some((h) => h.city === 'Mumbai'), 'Mumbai hospitals (>1000 km) must be excluded from 100 km search');
-    assert.ok(!reachable.some((h) => h.city === 'Bengaluru'), 'Bengaluru hospitals (>1700 km) must be excluded from 100 km search');
-    assert.ok(!reachable.some((h) => h.city === 'Kolkata'), 'Kolkata hospitals (>1300 km) must be excluded from 100 km search');
+    assert.ok(!reachable.some((h) => (h.address || '').toLowerCase().includes('mumbai')), 'Mumbai hospitals (>1000 km) must be excluded from 100 km search');
+    assert.ok(!reachable.some((h) => (h.address || '').toLowerCase().includes('bengaluru') || (h.address || '').toLowerCase().includes('bangalore')), 'Bengaluru hospitals (>1700 km) must be excluded from 100 km search');
+    assert.ok(!reachable.some((h) => (h.address || '').toLowerCase().includes('kolkata')), 'Kolkata hospitals (>1300 km) must be excluded from 100 km search');
+  });
+
+  await t.test('All registered hospitals (280) are available and searchable in registry', () => {
+    assert.equal(PAN_INDIA_HOSPITALS.length, 280, 'Must have exactly 280 registered hospitals in registry');
+    
+    // Check key regional hospitals across India exist in address/name and can be matched
+    const cities = ['Delhi', 'Noida', 'Mumbai', 'Bengaluru', 'Kolkata', 'Chennai', 'Hyderabad'];
+    for (const city of cities) {
+      const match = PAN_INDIA_HOSPITALS.filter(
+        (h) => (h.address || '').toLowerCase().includes(city.toLowerCase()) ||
+               (h.name || '').toLowerCase().includes(city.toLowerCase())
+      );
+      assert.ok(match.length > 0, `Registry must include hospitals for ${city}`);
+    }
   });
 });
