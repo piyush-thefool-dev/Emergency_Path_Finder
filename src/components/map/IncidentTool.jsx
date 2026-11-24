@@ -22,6 +22,7 @@ export function IncidentTool({
   onClearIncidents,
   timeOfDay,
   weather,
+  className = '',
 }) {
   const [selectedEdgeId, setSelectedEdgeId] = useState('');
   const [levelId, setLevelId] = useState('heavy');
@@ -48,7 +49,7 @@ export function IncidentTool({
   };
 
   return (
-    <div className="@container rounded-2xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200/90 dark:border-white/[0.08] shadow-xs dark:shadow-[0_4px_24px_rgba(0,0,0,0.35)] p-4 sm:p-5 space-y-4 transition-colors">
+    <div className={`@container rounded-2xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200/90 dark:border-white/[0.08] shadow-xs dark:shadow-[0_4px_24px_rgba(0,0,0,0.35)] p-4 sm:p-5 space-y-4 transition-colors ${className}`}>
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 dark:border-white/[0.06] pb-3.5">
         <div className="flex items-center gap-2.5">
           <div className="w-8 h-8 rounded-xl bg-red-500/10 text-[#D62828] dark:text-red-400 border border-red-500/20 flex items-center justify-center shrink-0 shadow-xs">

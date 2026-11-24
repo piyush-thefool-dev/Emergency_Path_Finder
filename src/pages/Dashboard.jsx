@@ -65,6 +65,7 @@ export function Dashboard() {
     ambulancePos, setAmbulanceCoordinates, snappedSourceNode, emergencyCategory, setEmergencyCategory,
     algorithm, selectedHospitalId, setSelectedHospitalId, rankingResult, activeHospital,
     comparisonData, availableHospitals, topHospitals,
+    searchRadiusKm, setSearchRadiusKm,
     effectiveRadiusKm, isRadiusFallback, wibApiStatus, refreshWibData, isSyncingWib,
     saveCustomHospitals, resetCustomHospitals,
   } = routing;
@@ -276,84 +277,11 @@ export function Dashboard() {
               onTogglePinLock={setCanDragAmbulance}
               onRoadResolved={setRoadTelemetry}
               algorithm={algorithm}
+              searchRadiusKm={searchRadiusKm}
+              onRadiusChange={setSearchRadiusKm}
               effectiveRadiusKm={effectiveRadiusKm}
               isRadiusFallback={isRadiusFallback}
             />
-          </div>
-
-          {/* Network Topology & Operational Manifest Card */}
-          <div className="@container rounded-2xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200/90 dark:border-white/[0.08] p-4 sm:p-5 shadow-xs text-xs font-mono space-y-3.5 transition-colors">
-            <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 border-b border-slate-100 dark:border-white/[0.06] pb-3">
-              <span className="font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider text-[11px] flex items-center gap-2">
-                <div className="w-6 h-6 rounded-lg bg-red-500/10 text-[#D62828] dark:text-red-400 flex items-center justify-center">
-                  <Database className="w-3.5 h-3.5" />
-                </div>
-                <span>Road Network Topology & Telemetry State</span>
-              </span>
-              <span className="text-[10px] text-slate-400">
-                Study Area: Pan-India & Delhi-NCR (ODbL 1.0)
-              </span>
-            </div>
-
-            <div className="grid grid-cols-1 @2xl:grid-cols-2 gap-x-6 gap-y-3.5 text-xs text-slate-600 dark:text-slate-400">
-              <div>
-                <span className="font-semibold text-slate-700 dark:text-slate-200 block mb-1 text-[11px]">
-                  Graph Engine Architecture:
-                </span>
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-[11px] font-semibold bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/25">
-                  <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
-                  Real OSM Directed Graph (Pan-India & Delhi-NCR)
-                </span>
-              </div>
-
-              <div>
-                <span className="font-semibold text-slate-700 dark:text-slate-200 block mb-1 text-[11px]">
-                  Atmospheric Conditions Feed:
-                </span>
-                {liveWeather ? (
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-[11px] font-semibold bg-sky-500/10 text-sky-700 dark:text-sky-300 border border-sky-500/25">
-                    <CloudSun className="w-3.5 h-3.5 text-sky-500 shrink-0" />
-                    Open-Meteo NCR: {liveWeather.label} ({liveWeather.temperatureC}°C, {liveWeather.humidityPercent}% RH)
-                  </span>
-                ) : (
-                  <span className="text-slate-500 text-[11px]">Manual scenario overrides</span>
-                )}
-              </div>
-
-              <div>
-                <span className="font-semibold text-slate-700 dark:text-slate-200 block mb-1 text-[11px]">
-                  Speed & Friction Modeling:
-                </span>
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-[11px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700">
-                  <Radio className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-                  v(e) Traffic Multiplier + Signal Delays
-                </span>
-              </div>
-
-              <div>
-                <div className="flex items-center justify-between">
-                  <span className="font-semibold text-slate-700 dark:text-slate-200 block mb-1 text-[11px]">
-                    Hospital Facilities Registry:
-                  </span>
-                  <button
-                    type="button"
-                    onClick={openBedManager}
-                    className="text-[11px] text-[#D62828] dark:text-red-400 hover:underline font-bold flex items-center gap-1 cursor-pointer"
-                  >
-                    <Bed className="w-3 h-3" />
-                    <span>Edit Capacity</span>
-                  </button>
-                </div>
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-[11px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                  {availableHospitals.length} Apex Facilities (Pan-India & Delhi-NCR)
-                </span>
-              </div>
-            </div>
-
-            <p className="text-[10px] text-slate-400 italic pt-2.5 border-t border-slate-100 dark:border-white/[0.06]">
-              * Operational Guidance: Origin coordinates are locked to prevent inadvertent relocation during vehicle tracking. Toggle &quot;Lock Pin&quot; above to reposition manually across street nodes.
-            </p>
           </div>
 
           {/* External Telemetry Feeds & Health Monitoring */}
@@ -361,9 +289,9 @@ export function Dashboard() {
         </div>
       </div>
 
-      {/* ──────────────── CLINICAL BED MATRIX & ROAD CONGESTION INJECTION (SIDE BY SIDE) ──────────────── */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 pt-2 items-start">
-        <RegionalBedCapacityGraph hospitals={availableHospitals} />
+      {/* ──────────────── ROAD OPERATIONS & TOPOLOGY MATRIX (BALANCED 2-COL ROW - ZERO GAPS) ──────────────── */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-stretch">
+        {/* Road Incident & Congestion Tool */}
         <IncidentTool
           edges={weightedGraph.edges}
           nodes={weightedGraph.nodes}
@@ -376,8 +304,96 @@ export function Dashboard() {
           onClearIncidents={clearIncidents}
           timeOfDay={timeOfDay}
           weather={weather}
+          className="h-full flex flex-col justify-between"
         />
+
+        {/* Road Network Topology & Telemetry State */}
+        <div className="@container h-full flex flex-col justify-between rounded-2xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200/90 dark:border-white/[0.08] p-4 sm:p-5 shadow-xs text-xs font-mono transition-colors space-y-3.5">
+          <div>
+            <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 border-b border-slate-100 dark:border-white/[0.06] pb-3 mb-3.5">
+              <span className="font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider text-[11px] flex items-center gap-2">
+                <div className="w-8 h-8 rounded-xl bg-red-500/10 text-[#D62828] dark:text-red-400 border border-red-500/20 flex items-center justify-center shrink-0 shadow-xs">
+                  <Database className="w-4 h-4" />
+                </div>
+                <div>
+                  <h4 className="text-xs sm:text-sm font-bold uppercase tracking-wider font-mono text-slate-900 dark:text-slate-100">
+                    Road Network Topology & Telemetry State
+                  </h4>
+                  <span className="text-[10px] text-slate-500 dark:text-slate-400 font-mono block normal-case font-normal">
+                    Study Area: Pan-India & Delhi-NCR (ODbL 1.0)
+                  </span>
+                </div>
+              </span>
+              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 text-[10px] font-mono font-bold">
+                ACTIVE GRID
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-slate-600 dark:text-slate-400">
+              <div className="p-3 rounded-xl border border-slate-200/80 dark:border-white/[0.06] bg-slate-50/60 dark:bg-slate-950/40">
+                <span className="font-semibold text-slate-700 dark:text-slate-200 block mb-1 text-[11px]">
+                  Graph Engine Architecture:
+                </span>
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-[11px] font-semibold bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/25">
+                  <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+                  Real OSM Directed Graph (Pan-India)
+                </span>
+              </div>
+
+              <div className="p-3 rounded-xl border border-slate-200/80 dark:border-white/[0.06] bg-slate-50/60 dark:bg-slate-950/40">
+                <span className="font-semibold text-slate-700 dark:text-slate-200 block mb-1 text-[11px]">
+                  Atmospheric Conditions Feed:
+                </span>
+                {liveWeather ? (
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-[11px] font-semibold bg-sky-500/10 text-sky-700 dark:text-sky-300 border border-sky-500/25">
+                    <CloudSun className="w-3.5 h-3.5 text-sky-500 shrink-0" />
+                    Open-Meteo: {liveWeather.label} ({liveWeather.temperatureC}°C)
+                  </span>
+                ) : (
+                  <span className="text-slate-500 text-[11px]">Manual scenario overrides</span>
+                )}
+              </div>
+
+              <div className="p-3 rounded-xl border border-slate-200/80 dark:border-white/[0.06] bg-slate-50/60 dark:bg-slate-950/40">
+                <span className="font-semibold text-slate-700 dark:text-slate-200 block mb-1 text-[11px]">
+                  Speed & Friction Modeling:
+                </span>
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-[11px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700">
+                  <Radio className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                  v(e) Multiplier + Signal Delay
+                </span>
+              </div>
+
+              <div className="p-3 rounded-xl border border-slate-200/80 dark:border-white/[0.06] bg-slate-50/60 dark:bg-slate-950/40">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="font-semibold text-slate-700 dark:text-slate-200 block text-[11px]">
+                    Hospital Facilities Registry:
+                  </span>
+                  <button
+                    type="button"
+                    onClick={openBedManager}
+                    className="text-[11px] text-[#D62828] dark:text-red-400 hover:underline font-bold flex items-center gap-1 cursor-pointer"
+                  >
+                    <Bed className="w-3 h-3" />
+                    <span>Edit</span>
+                  </button>
+                </div>
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-[11px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                  {availableHospitals.length} Apex Centers
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <p className="text-[10px] text-slate-400 italic pt-2.5 border-t border-slate-100 dark:border-white/[0.06] mt-auto">
+            * Operational Guidance: Origin coordinates are locked during vehicle tracking. Toggle &quot;Lock Pin&quot; above to reposition manually across street nodes.
+          </p>
+        </div>
       </div>
+
+      {/* ──────────────── PAN-INDIA CLINICAL BED INTAKE MATRIX (FULL WIDTH 3-COL COMMAND GRID) ──────────────── */}
+      <RegionalBedCapacityGraph hospitals={availableHospitals} />
 
       {/* Hospital Bed Estimate Manager Modal */}
       <HospitalBedManagerModal

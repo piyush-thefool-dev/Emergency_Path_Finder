@@ -12,10 +12,10 @@ import { haversineDistance } from '../utils/geo.js';
 import { isOffline, markNetworkFailure } from '../utils/network.js';
 
 export const OVERPASS_MIRRORS = [
-  'https://overpass.osm.ch/api/interpreter',
-  'https://overpass.private.coffee/api/interpreter',
-  'https://lz4.overpass-api.de/api/interpreter',
   'https://overpass-api.de/api/interpreter',
+  'https://lz4.overpass-api.de/api/interpreter',
+  'https://overpass.private.coffee/api/interpreter',
+  'https://overpass.osm.ch/api/interpreter',
 ];
 
 export const GREATER_NOIDA_BBOX = {

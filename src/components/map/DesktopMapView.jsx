@@ -135,7 +135,9 @@ export function MapView({
   onTogglePinLock,
   onRoadResolved = null,
   algorithm = 'astar',
-  effectiveRadiusKm = 5,
+  searchRadiusKm = 10,
+  onRadiusChange = null,
+  effectiveRadiusKm = 10,
   isRadiusFallback = false,
 }) {
   const [legendOpen, setLegendOpen] = useState(false);
@@ -239,8 +241,8 @@ export function MapView({
           />
         )}
 
-        {/* Dynamic semi-transparent search radius circle (5km, 10km, or 20km) */}
-        {ambulancePos && effectiveRadiusKm && (
+        {/* Dynamic semi-transparent search radius circle (5km, 10km, 25km, 100km - hidden when All/0) */}
+        {ambulancePos && effectiveRadiusKm > 0 && (
           <Circle
             center={[ambulancePos.lat, ambulancePos.lon]}
             radius={effectiveRadiusKm * 1000}

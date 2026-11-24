@@ -108,11 +108,12 @@ async function checkOverpass() {
   }
   for (const mirror of OVERPASS_MIRRORS) {
     try {
-      // Use status endpoint where available for near-instant health check without query interpreter load
-      const statusUrl = mirror.endsWith('/interpreter')
+      // Overpass-api.de mirrors support /status endpoint for instant checks; others ping interpreter
+      const isDe = mirror.includes('overpass-api.de');
+      const pingUrl = isDe
         ? mirror.replace(/\/interpreter$/, '/status')
-        : mirror;
-      const res = await ping(statusUrl);
+        : `${mirror}?data=[out:json];node(1);out;`;
+      const res = await ping(pingUrl);
       if (res.ok) return { detail: hostOf(mirror) };
     } catch {
       // try next mirror

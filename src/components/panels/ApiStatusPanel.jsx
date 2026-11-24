@@ -30,7 +30,7 @@ function ago(ts) {
   return `${Math.round(s / 60)} min ago`;
 }
 
-export function ApiStatusPanel({ health, bare = false }) {
+export function ApiStatusPanel({ health, bare = false, className = '' }) {
   const { results, summary, checkAll, checkOne } = health;
   const overall = STATE_STYLE[summary.overall === 'ok' ? 'ok' : summary.overall];
 
@@ -122,7 +122,7 @@ export function ApiStatusPanel({ health, bare = false }) {
   if (bare) return <div>{body}</div>;
 
   return (
-    <div className="rounded-2xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200/90 dark:border-white/[0.08] shadow-xs dark:shadow-[0_4px_24px_rgba(0,0,0,0.35)] p-4 sm:p-5 transition-colors">
+    <div className={`rounded-2xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200/90 dark:border-white/[0.08] shadow-xs dark:shadow-[0_4px_24px_rgba(0,0,0,0.35)] p-4 sm:p-5 transition-colors ${className}`}>
       {body}
     </div>
   );

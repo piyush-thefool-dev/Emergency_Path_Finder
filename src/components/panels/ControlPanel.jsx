@@ -6,7 +6,6 @@
 import { motion } from 'motion/react';
 import { EMERGENCY_CATEGORIES } from '../../config/emergencyCategories.js';
 import { TIME_OF_DAY_FACTORS, WEATHER_FACTORS } from '../../data/congestionFactors.js';
-import { GRAPH_MODES_CATALOG } from '../../services/graphLoader.js';
 import Badge from '../ui/Badge.jsx';
 import Switch from '../ui/Switch.jsx';
 import {
@@ -21,9 +20,7 @@ import {
   CloudSun,
   Radio,
   RefreshCw,
-  MapPin,
   Download,
-  CheckCircle2,
   Wind,
   Droplets,
   Eye,
@@ -74,64 +71,8 @@ export function ControlPanel({
         </div>
       </div>
 
-      {/* 1. Road Network Data Status & Subgraph Topology Selector */}
-      <div className="space-y-2">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <span className="text-[11px] font-mono font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-            <MapPin className="w-3.5 h-3.5 text-blue-500" />
-            <span>Road Network Topology</span>
-          </span>
-          <Badge variant="primary">{GRAPH_MODES_CATALOG[graphMode]?.badge || 'ACTIVE GRID'}</Badge>
-        </div>
-
-        {/* Subgraph Selector */}
-        {onChangeGraphMode && (
-          <div className="space-y-1">
-            <label className="block text-[10px] font-mono text-slate-500 dark:text-slate-400">
-              Active Routing Subgraph Partition:
-            </label>
-            <select
-              aria-label="Active road network subgraph partition"
-              value={graphMode}
-              onChange={(e) => onChangeGraphMode(e.target.value)}
-              className="w-full text-xs font-mono bg-slate-50/90 dark:bg-slate-950/80 border border-slate-200 dark:border-white/[0.08] rounded-xl px-3 py-2 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:border-blue-500 transition-colors cursor-pointer"
-            >
-              {Object.entries(GRAPH_MODES_CATALOG).map(([key, config]) => (
-                <option key={key} value={key}>
-                  {config.label}
-                </option>
-              ))}
-            </select>
-          </div>
-        )}
-
-        <div className="p-3 rounded-xl bg-slate-50/80 dark:bg-slate-950/60 border border-slate-200/80 dark:border-white/[0.06] flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-7 h-7 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-500/20">
-              <CheckCircle2 className="w-4 h-4" />
-            </div>
-            <div className="min-w-0">
-              <div className="text-xs font-bold text-slate-900 dark:text-slate-100 truncate font-sans">
-                {GRAPH_MODES_CATALOG[graphMode]?.label || 'Pan-India & Delhi-NCR High-Fidelity OSM Grid'}
-              </div>
-              <div className="text-[10px] font-mono text-slate-500 dark:text-slate-400 truncate">
-                {GRAPH_MODES_CATALOG[graphMode]?.description || 'Directed weighted graph G=(V,E,w) · Calibrated'}
-              </div>
-            </div>
-          </div>
-          <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 shrink-0 font-semibold">
-            ACTIVE
-          </span>
-        </div>
-        {overpassError && (
-          <p className="text-[11px] text-amber-600 dark:text-amber-400 font-mono">
-            Overpass sync notice: {overpassError}. Bundled OSM grid active.
-          </p>
-        )}
-      </div>
-
-      {/* 2. Emergency Triage Category (Specialty Constraint) */}
-      <div className="space-y-2.5 pt-2 border-t border-slate-100 dark:border-white/[0.06]">
+      {/* Emergency Triage Category (Specialty Constraint) */}
+      <div className="space-y-2.5">
         <label className="text-[11px] font-mono font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center justify-between">
           <span className="flex items-center gap-1.5">
             <ShieldAlert className="w-3.5 h-3.5 text-[#D62828] dark:text-red-400" />

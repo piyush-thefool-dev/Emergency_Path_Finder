@@ -86,7 +86,7 @@ export function RegionalBedCapacityGraph({ hospitals = PAN_INDIA_HOSPITALS, clas
       </div>
 
       {/* Regional Zone Bars */}
-      <div className="space-y-3.5">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
         {Object.entries(regionalMetrics).map(([key, zone]) => {
           const isSelected = activeZone === key || activeZone === 'ALL';
           const icuPercent = Math.round((zone.icuFree / maxZoneIcu) * 100);

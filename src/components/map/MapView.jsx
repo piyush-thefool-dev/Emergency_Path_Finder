@@ -208,8 +208,8 @@ export function MapView({
         onSelectHospital={onSelectHospital}
       />
 
-      {/* Dynamic Search Radius Corridor (5km / 10km / 20km) */}
-      {ambulancePos && effectiveRadiusKm && (
+      {/* Dynamic Search Radius Corridor (5km, 10km, 25km, 100km - hidden when All/0) */}
+      {ambulancePos && effectiveRadiusKm > 0 && (
         <Circle
           center={[ambulancePos.lat, ambulancePos.lon]}
           radius={effectiveRadiusKm * 1000}

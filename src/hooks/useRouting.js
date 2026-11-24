@@ -37,13 +37,14 @@ export function useRouting(weightedGraph, isFigure2Mode, options = {}) {
   const [emergencyCategory, setEmergencyCategory] = useState('TRAUMA');
   const [algorithm, setAlgorithm] = useState('compare'); // 'compare' runs the optimal combo: A* for fast dispatch + Dijkstra for audit verification
   const [selectedHospitalId, setSelectedHospitalId] = useState(null);
+  const [searchRadiusKm, setSearchRadiusKm] = useState(10); // 5, 10 (default), 25, 100 km, or 0 (All)
 
-  // Automatic built-in cascading radius state (5 km -> 10 km -> 20 km)
+  // Two-Stage Distance & OSRM ETA Filtered State
   const [osrmRanking, setOsrmRanking] = useState({
     topHospitals: [],
     allValidHospitals: [],
     isFallback: false,
-    effectiveRadiusKm: 5,
+    effectiveRadiusKm: 10,
     isLoading: false,
   });
 
@@ -267,6 +268,7 @@ export function useRouting(weightedGraph, isFigure2Mode, options = {}) {
       1.0;
 
     filterAndRankHospitalsByOsrmEta(ambulancePos, availableHospitals, {
+      radiusKm: searchRadiusKm,
       signal: controller.signal,
       weather,
       weatherMultiplier: weatherMult,
@@ -292,7 +294,7 @@ export function useRouting(weightedGraph, isFigure2Mode, options = {}) {
       isCancelled = true;
       controller.abort();
     };
-  }, [ambulancePos, availableHospitals, isFigure2Mode, weather, liveWeather, useLiveWeather]);
+  }, [ambulancePos, availableHospitals, isFigure2Mode, weather, liveWeather, useLiveWeather, searchRadiusKm]);
 
   // Execute constrained hospital ranking on graph
   const rawRankingResult = useMemo(() => {
@@ -537,7 +539,9 @@ export function useRouting(weightedGraph, isFigure2Mode, options = {}) {
     availableHospitals,
     topHospitals: topRankedHospitals,
     searchHospitals,
-    effectiveRadiusKm: osrmRanking.effectiveRadiusKm || 5,
+    searchRadiusKm,
+    setSearchRadiusKm,
+    effectiveRadiusKm: searchRadiusKm === 0 ? 0 : (osrmRanking.effectiveRadiusKm || searchRadiusKm),
     isRadiusFallback: osrmRanking.isFallback,
     wibApiStatus,
     refreshWibData,

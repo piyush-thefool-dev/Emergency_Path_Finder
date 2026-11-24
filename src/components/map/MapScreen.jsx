@@ -170,7 +170,9 @@ export function MapScreen() {
           recenterKey={recenterKey}
           onRoadResolved={setRoadTelemetry}
           showGraphNetwork={showGraphNetwork}
-          effectiveRadiusKm={routing.effectiveRadiusKm || routing.searchRadiusKm}
+          searchRadiusKm={routing.searchRadiusKm}
+          onRadiusChange={routing.setSearchRadiusKm}
+          effectiveRadiusKm={routing.effectiveRadiusKm}
           isRadiusFallback={routing.isRadiusFallback}
         />
 

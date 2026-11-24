@@ -1,16 +1,19 @@
 /**
  * 21st.dev style Search Radius Selector Control.
- * Segmented pill selector offering 5 km, 10 km (default), and 20 km search corridors,
+ * Segmented pill selector offering 5 km, 10 km (default), 25 km, 100 km, and All (280 Hospitals) search corridors,
  * with automatic fallback indicator.
  */
 
+import React from 'react';
 import { motion } from 'motion/react';
 import { Compass, AlertCircle } from 'lucide-react';
 
-const RADIUS_OPTIONS = [
-  { value: 5, label: '5 km', hint: 'Immediate Emergency Vicinity' },
-  { value: 10, label: '10 km', hint: 'Default Operational Search Radius' },
-  { value: 20, label: '20 km', hint: 'Extended Regional Trauma Grid' },
+export const RADIUS_OPTIONS = [
+  { value: 5, label: '5 km', hint: 'Immediate Vicinity (5 km)' },
+  { value: 10, label: '10 km', hint: 'Standard Dispatch Radius (10 km)' },
+  { value: 25, label: '25 km', hint: 'Extended Regional Corridor (25 km)' },
+  { value: 100, label: '100 km', hint: 'Metropolitan Grid (100 km)' },
+  { value: 0, label: 'All', hint: 'All 280 Registered Hospitals (Nationwide)' },
 ];
 
 export function RadiusSelector({
@@ -40,8 +43,8 @@ export function RadiusSelector({
               whileTap={{ scale: 0.96 }}
               type="button"
               onClick={() => onChangeRadius && onChangeRadius(opt.value)}
-              title={`${opt.label} search radius (${opt.hint})`}
-              className={`relative px-2.5 py-1 rounded-lg text-xs font-mono font-bold cursor-pointer transition-all ${
+              title={`${opt.label} search corridor (${opt.hint})`}
+              className={`relative px-2 sm:px-2.5 py-1 rounded-lg text-[11px] sm:text-xs font-mono font-bold cursor-pointer transition-all ${
                 isSelected
                   ? 'bg-[#1F3C6D] dark:bg-red-600 text-white shadow-xs font-black'
                   : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800'
@@ -54,7 +57,7 @@ export function RadiusSelector({
         })}
       </div>
 
-      {isFallback && (
+      {isFallback && radiusKm !== 0 && (
         <span
           className="ml-1 px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30 flex items-center gap-1 animate-pulse"
           title={`Auto-expanded to ${effectiveRadiusKm} km because fewer than 3 hospitals were found within ${radiusKm} km`}
