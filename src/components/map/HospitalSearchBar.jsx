@@ -225,7 +225,7 @@ export function HospitalSearchBar({
             setQuery(e.target.value);
             if (!isOpen) setIsOpen(true);
           }}
-          placeholder={`Search all ${totalHospitals} registered hospitals (e.g. AIIMS)...`}
+          placeholder={`Search ${totalHospitals} hospitals...`}
           className={`w-full pl-10 ${inputRightPadding} py-2 sm:py-2.5 rounded-xl border text-xs sm:text-sm font-sans transition-all backdrop-blur-md shadow-xs bg-slate-50/90 dark:bg-slate-900/90 border-slate-200/90 dark:border-white/[0.08] text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-hidden focus:border-slate-400 dark:focus:border-slate-500 focus:ring-2 focus:ring-slate-400/20 dark:focus:ring-white/10`}
         />
 
