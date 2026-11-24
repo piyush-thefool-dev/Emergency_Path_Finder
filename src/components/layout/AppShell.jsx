@@ -35,7 +35,7 @@ export function AppShell() {
 
   return (
     <div className="h-dvh w-full bg-slate-200 dark:bg-black">
-      <div className="relative h-full w-full flex flex-col overflow-hidden bg-[#EEF3FA] dark:bg-slate-950 text-slate-900 dark:text-slate-100 [transform:translateZ(0)]">
+      <div className="relative h-full w-full flex flex-col overflow-hidden bg-[#F8FAFC] dark:bg-[#080C16] ambient-glow-light dark:ambient-glow-dark text-slate-900 dark:text-slate-100 [transform:translateZ(0)]">
         <div className="relative flex-1 min-h-0">
           <MapScreen />
 

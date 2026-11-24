@@ -7,7 +7,6 @@ import { Hospital } from 'lucide-react';
 import PageHeader from '../components/layout/PageHeader.jsx';
 import DisclaimerBanner from '../components/layout/DisclaimerBanner.jsx';
 import ResultCard from '../components/panels/ResultCard.jsx';
-import CompareTable from '../components/panels/CompareTable.jsx';
 import { useDispatch } from '../context/DispatchContext.jsx';
 import { useBedManager } from '../context/BedManagerContext.jsx';
 import { EMERGENCY_CATEGORIES } from '../config/emergencyCategories.js';
@@ -53,7 +52,6 @@ export function HospitalsPage() {
           isSyncingWib={isSyncingWib}
           onOpenBedManager={openBedManager}
         />
-        {algorithm === 'compare' && <CompareTable comparisonData={comparisonData} />}
       </div>
     </div>
   );

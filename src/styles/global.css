@@ -434,3 +434,44 @@
   text-align: center;
   cursor: pointer;
 }
+
+/* 21st.dev Design System Accents, Glassmorphism & Glows */
+.ambient-glow-dark {
+  background-image: 
+    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(31, 60, 109, 0.25), transparent),
+    radial-gradient(circle at 100% 100%, rgba(214, 40, 40, 0.08), transparent);
+}
+
+.ambient-glow-light {
+  background-image: 
+    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(31, 60, 109, 0.06), transparent),
+    radial-gradient(circle at 100% 100%, rgba(214, 40, 40, 0.04), transparent);
+}
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+}
+
+.dark .glass-card {
+  background: rgba(11, 15, 25, 0.8);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+}
+
+.glow-blue {
+  box-shadow: 0 0 20px -2px rgba(59, 130, 246, 0.25);
+}
+
+.glow-red {
+  box-shadow: 0 0 20px -2px rgba(239, 68, 68, 0.3);
+}
+
+.glow-emerald {
+  box-shadow: 0 0 20px -2px rgba(16, 185, 129, 0.25);
+}
+

@@ -7,7 +7,8 @@
  *   - Bottom: Corridor dispatch trip sheet with start/pause simulation
  */
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import {
   Navigation2,
@@ -20,6 +21,7 @@ import {
   Activity,
   ChevronRight,
   AlertTriangle,
+  ArrowLeft,
   Pin,
   MapPin,
   TriangleAlert,
@@ -49,17 +51,17 @@ function RoundButton({ label, onClick, active = false, children }) {
         type="button"
         onClick={onClick}
         aria-label={label}
-        className={`w-10 h-10 rounded-lg flex items-center justify-center shadow-sm border backdrop-blur-md cursor-pointer active:scale-95 transition-all ${
+        className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-xs border backdrop-blur-xl cursor-pointer active:scale-95 transition-all ${
           active
-            ? 'bg-[#D62828] border-red-600 text-white'
-            : 'bg-white/95 dark:bg-slate-900/95 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800'
+            ? 'bg-[#D62828] border-red-500 text-white shadow-md shadow-red-600/30'
+            : 'bg-white/90 dark:bg-slate-900/90 border-slate-200/80 dark:border-white/[0.08] text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800'
         }`}
       >
         {children}
       </button>
       <span
         role="tooltip"
-        className="map-tip pointer-events-none absolute right-full top-1/2 mr-2 whitespace-nowrap rounded-md bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 text-[11px] font-mono font-semibold px-2 py-1 shadow-md z-10"
+        className="map-tip pointer-events-none absolute right-full top-1/2 mr-2 whitespace-nowrap rounded-lg bg-slate-900/95 dark:bg-slate-100/95 text-white dark:text-slate-900 text-[11px] font-mono font-semibold px-2 py-1 shadow-md z-10 backdrop-blur-md"
       >
         {label}
       </span>
@@ -88,6 +90,16 @@ export function MapScreen() {
   const [searchModalOpen, setSearchModalOpen] = useState(false);
   // Graph network overlay: displays all road intersection nodes and directed edges (ON by default for Pan-India & NCR inspection)
   const [showGraphNetwork, setShowGraphNetwork] = useState(true);
+
+  // Lock body scrolling when search modal is open
+  useEffect(() => {
+    if (!searchModalOpen) return;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [searchModalOpen]);
 
   const { weightedGraph, incidents, addIncident, removeIncident, clearIncidents, reporter, setReporter } = graph;
   const {
@@ -150,17 +162,17 @@ export function MapScreen() {
         />
 
         {/* ───────── Top: Destination Telemetry & Category Chips ───────── */}
-        <div className="absolute top-0 inset-x-0 z-[500] pointer-events-none pt-safe px-3 space-y-1.5">
+        <div className="absolute top-0 inset-x-0 z-[500] pointer-events-none pt-1 sm:pt-safe px-2.5 sm:px-3 space-y-1 sm:space-y-1.5">
           {/* Row 1: Hospital Details Card (100% full width) */}
           <button
             type="button"
             onClick={() => navigate('/hospitals')}
             title="Open hospital details, ETA and alternatives"
-            className="pointer-events-auto w-full text-left flex items-center gap-2 sm:gap-3 rounded-xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-slate-200/90 dark:border-slate-800 shadow-sm pl-2.5 pr-2.5 py-1.5 sm:py-2 cursor-pointer active:scale-[0.99] transition-transform"
+            className="pointer-events-auto w-full text-left flex items-center gap-2 sm:gap-3 rounded-2xl bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border border-slate-200/90 dark:border-white/[0.08] shadow-md pl-3 pr-3 py-2 sm:py-2.5 cursor-pointer active:scale-[0.99] transition-transform"
             aria-label="Open hospital details"
           >
             <span
-              className={`w-8 h-8 sm:w-9 sm:h-9 rounded-lg flex items-center justify-center text-white shrink-0 ${
+              className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center text-white shrink-0 shadow-xs ${
                 activeHospital ? 'bg-emerald-600' : 'bg-amber-500'
               }`}
             >
@@ -435,30 +447,40 @@ export function MapScreen() {
           onFocusPoint={(pt) => setFocusPoint({ ...pt, key: Date.now() })}
         />
 
-        {/* ───────── Pan-India Hospital Search Modal Overlay ───────── */}
-        {searchModalOpen && (
+        {/* ───────── Pan-India Hospital Search Modal Overlay (Fixed Fullscreen Overlay) ───────── */}
+        {searchModalOpen && typeof document !== 'undefined' && createPortal(
           <div
-            className="fixed inset-0 z-[750] bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4"
+            className="fixed inset-0 z-[99999] bg-black/80 backdrop-blur-md flex items-start sm:items-center justify-center p-0 sm:p-4 animate-in fade-in duration-150"
             role="dialog"
             aria-modal="true"
             aria-label="Search Hospitals"
           >
-            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xl w-full max-w-lg h-[85dvh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150">
-              <div className="p-3 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between shrink-0 bg-slate-50 dark:bg-slate-950/60">
-                <span className="font-bold text-xs uppercase tracking-wider text-slate-800 dark:text-slate-200 font-mono flex items-center gap-2">
-                  <Hospital className="w-4 h-4 text-[#D62828]" />
-                  Pan-India & Delhi-NCR Hospital Registry Search ({availableHospitals?.length || 155})
-                </span>
+            <div className="bg-white dark:bg-slate-900 w-full h-full sm:h-[85dvh] sm:max-w-lg sm:rounded-2xl border-0 sm:border border-slate-200 dark:border-slate-800 shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+              <div className="px-3 py-2 sm:p-3.5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between shrink-0 bg-slate-50/90 dark:bg-slate-950/90">
+                <div className="flex items-center gap-2 min-w-0">
+                  <button
+                    type="button"
+                    onClick={() => setSearchModalOpen(false)}
+                    className="p-1.5 -ml-1 rounded-xl text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-200/60 dark:hover:bg-slate-800 transition-colors cursor-pointer sm:hidden"
+                    aria-label="Back"
+                  >
+                    <ArrowLeft className="w-5 h-5" />
+                  </button>
+                  <span className="font-bold text-xs uppercase tracking-wider text-slate-900 dark:text-slate-100 font-mono flex items-center gap-1.5 truncate">
+                    <Hospital className="w-3.5 h-3.5 text-[#D62828] shrink-0" />
+                    <span className="truncate">Pan-India Search ({availableHospitals?.length || 155})</span>
+                  </span>
+                </div>
                 <button
                   type="button"
                   onClick={() => setSearchModalOpen(false)}
-                  className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+                  className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
                   aria-label="Close search"
                 >
                   <X className="w-4 h-4" />
                 </button>
               </div>
-              <div className="p-3 flex-1 min-h-0 flex flex-col">
+              <div className="p-2 sm:p-4 flex-1 min-h-0 flex flex-col overflow-hidden">
                 <HospitalSearchBar
                   hospitals={availableHospitals}
                   selectedHospitalId={routing.selectedHospitalId}
@@ -473,7 +495,8 @@ export function MapScreen() {
                 />
               </div>
             </div>
-          </div>
+          </div>,
+          document.body
         )}
 
         {/* ───────── Location Permission / GPS Error Alert Modal ───────── */}
@@ -555,9 +578,9 @@ export function MapScreen() {
       </div>
 
       {/* Map Symbology Legend Modal (Centered overlay - never shifts header or triage chips) */}
-      {panel === 'legend' && (
+      {panel === 'legend' && typeof document !== 'undefined' && createPortal(
         <div
-          className="fixed inset-0 z-[700] bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150"
+          className="fixed inset-0 z-[99999] bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150"
           onClick={() => setPanel(null)}
           role="dialog"
           aria-modal="true"
@@ -569,13 +592,14 @@ export function MapScreen() {
           >
             <MapLegend onClose={() => setPanel(null)} />
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Telemetry Feeds Status Modal */}
-      {panel === 'api' && (
+      {panel === 'api' && typeof document !== 'undefined' && createPortal(
         <div
-          className="fixed inset-0 z-[700] bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150"
+          className="fixed inset-0 z-[99999] bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150"
           onClick={() => setPanel(null)}
           role="dialog"
           aria-modal="true"
@@ -594,7 +618,8 @@ export function MapScreen() {
               Close Telemetry Panel
             </button>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       <MapHelpModal isOpen={helpOpen} onClose={() => setHelpOpen(false)} />

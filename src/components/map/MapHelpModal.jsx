@@ -3,14 +3,15 @@
  * High-contrast dark mode support and clear step-by-step guidance.
  */
 
+import { createPortal } from 'react-dom';
 import { X, Navigation, AlertOctagon, Flame, Hospital, Info, Check, Sparkles, Activity } from 'lucide-react';
 
 export function MapHelpModal({ isOpen, onClose }) {
   if (!isOpen) return null;
 
-  return (
+  const content = (
     <div
-      className="fixed inset-0 z-[1100] flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs animate-in fade-in duration-150"
+      className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs animate-in fade-in duration-150"
       role="dialog"
       aria-modal="true"
       aria-labelledby="help-modal-title"
@@ -117,6 +118,11 @@ export function MapHelpModal({ isOpen, onClose }) {
       </div>
     </div>
   );
+
+  if (typeof document !== 'undefined') {
+    return createPortal(content, document.body);
+  }
+  return content;
 }
 
 export default MapHelpModal;

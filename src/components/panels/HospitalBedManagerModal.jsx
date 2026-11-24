@@ -4,6 +4,7 @@
  */
 
 import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import {
   X,
   Hospital,
@@ -138,12 +139,12 @@ export function HospitalBedManagerModal({
     }
   };
 
-  return (
+  const modalContent = (
     <div
       className={
         asPage
           ? 'flex-1 min-h-0 flex flex-col'
-          : 'fixed inset-0 z-[60] flex items-center justify-center p-3 sm:p-5 bg-slate-950/70 backdrop-blur-xs animate-in fade-in duration-150'
+          : 'fixed inset-0 z-[99999] flex items-center justify-center p-3 sm:p-5 bg-slate-950/70 backdrop-blur-md animate-in fade-in duration-150'
       }
       role={asPage ? undefined : 'dialog'}
       aria-modal={asPage ? undefined : 'true'}
@@ -153,13 +154,13 @@ export function HospitalBedManagerModal({
         className={
           asPage
             ? 'flex-1 min-h-0 flex flex-col text-slate-800 dark:text-slate-100'
-            : 'bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xl max-w-3xl w-full max-h-[92dvh] flex flex-col overflow-hidden text-slate-800 dark:text-slate-100 transition-colors'
+            : 'bg-white/95 dark:bg-slate-900/95 backdrop-blur-2xl rounded-2xl border border-slate-200/90 dark:border-white/[0.08] shadow-2xl max-w-3xl w-full max-h-[92dvh] flex flex-col overflow-hidden text-slate-800 dark:text-slate-100 transition-colors'
         }
       >
         {/* Header */}
-        <div className={`${asPage ? 'hidden' : ''} bg-slate-900 dark:bg-slate-900 text-white p-4 flex items-center justify-between shrink-0 border-b border-slate-800`}>
+        <div className={`${asPage ? 'hidden' : ''} bg-slate-900/90 dark:bg-slate-950/90 text-white p-4 flex items-center justify-between shrink-0 border-b border-slate-800 backdrop-blur-md`}>
           <div className="flex items-center gap-2.5 font-mono">
-            <span className="p-1.5 rounded-lg bg-[#D62828] text-white shrink-0">
+            <span className="p-2 rounded-xl bg-gradient-to-tr from-[#D62828] to-rose-600 text-white shrink-0 shadow-xs border border-red-400/40">
               <Hospital className="w-4 h-4" />
             </span>
             <div>
@@ -174,7 +175,7 @@ export function HospitalBedManagerModal({
           <button
             type="button"
             onClick={onClose}
-            className="text-slate-400 hover:text-white p-1 rounded-md transition-colors cursor-pointer"
+            className="text-slate-400 hover:text-white p-1.5 rounded-lg transition-colors cursor-pointer"
             aria-label="Close modal"
           >
             <X className="w-5 h-5" />
@@ -182,15 +183,15 @@ export function HospitalBedManagerModal({
         </div>
 
         {/* Search & Reset Bar */}
-        <div className="bg-slate-50 dark:bg-slate-900/90 border-b border-slate-200/80 dark:border-slate-800 px-4 py-2 text-xs font-mono text-slate-600 dark:text-slate-400 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+        <div className="bg-slate-50/80 dark:bg-slate-950/80 border-b border-slate-200/80 dark:border-white/[0.06] px-4 py-2.5 text-xs font-mono text-slate-600 dark:text-slate-400 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
           <div className="relative flex-1 max-w-sm">
-            <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+            <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
               type="text"
               placeholder={`Search ${editedList.length} hospitals by name or city...`}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full text-xs pl-8 pr-3 py-1 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-hidden focus:border-red-500"
+              className="w-full text-xs pl-8 pr-3 py-1.5 rounded-xl border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-hidden focus:border-slate-400 dark:focus:border-slate-500 focus:ring-1 focus:ring-slate-400/20 shadow-2xs transition-all"
             />
           </div>
           <button
@@ -424,6 +425,12 @@ export function HospitalBedManagerModal({
       </div>
     </div>
   );
+
+  if (!asPage && typeof document !== 'undefined') {
+    return createPortal(modalContent, document.body);
+  }
+
+  return modalContent;
 }
 
 export default HospitalBedManagerModal;

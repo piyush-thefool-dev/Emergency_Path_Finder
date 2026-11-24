@@ -14,15 +14,16 @@ import { ThemeProvider } from './context/ThemeContext.jsx';
 import { BedManagerProvider } from './context/BedManagerContext.jsx';
 import { DispatchProvider } from './context/DispatchContext.jsx';
 import HoverTips from './components/ui/HoverTips.jsx';
+import ErrorBoundary from './components/ui/ErrorBoundary.jsx';
 
 function Layout() {
   // PC keeps the original dashboard; phones/tablets get the app-style UI.
   const isDesktop = useIsDesktop();
   return (
-    <>
+    <ErrorBoundary>
       {isDesktop ? <DesktopShell /> : <AppShell />}
       <HoverTips />
-    </>
+    </ErrorBoundary>
   );
 }
 

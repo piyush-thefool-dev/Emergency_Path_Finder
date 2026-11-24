@@ -249,94 +249,54 @@ export function MapView({
         )}
       </MapContainer>
 
-      {/* Top-Left Search Bar (Positioned gracefully next to Leaflet zoom controls) */}
-      <div className="absolute top-2.5 left-14 z-20 max-w-[calc(100%-250px)] sm:max-w-xs md:max-w-sm">
-        <HospitalSearchBar
-          hospitals={hospitals}
-          selectedHospitalId={activeHospitalId}
-          activeHospital={targetHospital}
-          onSelectHospital={onSelectHospital}
-          ambulancePos={ambulancePos}
-        />
-      </div>
+      {/* Top Floating Bar: Unified non-overlapping flex row (Search Bar on Left, Map Utilities on Right) */}
+      <div className="absolute top-2.5 left-14 right-2.5 z-30 flex items-center justify-between gap-2 pointer-events-none">
+        {/* Left: Clean 21st.dev Command Search Bar */}
+        <div className="pointer-events-auto flex-1 max-w-sm sm:max-w-md md:max-w-lg min-w-0">
+          <HospitalSearchBar
+            hospitals={hospitals}
+            selectedHospitalId={activeHospitalId}
+            activeHospital={targetHospital}
+            onSelectHospital={onSelectHospital}
+            ambulancePos={ambulancePos}
+          />
+        </div>
 
-      {/* Top-Right Quick Map Action Bar */}
-      <div className="absolute top-2.5 right-2.5 sm:top-3 sm:right-3 z-20 flex items-center gap-1 sm:gap-1.5 flex-wrap justify-end">
-        {onTogglePinLock && (
+        {/* Right: Map Utility Controls (Expand & Interactive Guide) */}
+        <div className="pointer-events-auto flex items-center gap-1.5 shrink-0">
           <button
             type="button"
-            onClick={() => onTogglePinLock(!canDragPin)}
-            className={`flex items-center gap-1 px-2 sm:px-2.5 py-1.5 rounded-lg backdrop-blur-md border shadow-xs text-xs font-mono font-bold transition-all cursor-pointer min-h-[34px] active:scale-95 ${
-              canDragPin
-                ? 'bg-amber-500/20 text-amber-700 dark:text-amber-300 border-amber-500/40 ring-1 ring-amber-400'
-                : 'bg-white/95 dark:bg-slate-900/95 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800'
-            }`}
-            title={canDragPin ? 'Ambulance pin is unlocked (drag on map to reposition). Click to lock.' : 'Ambulance pin is locked. Click to unlock.'}
-            aria-pressed={canDragPin}
+            onClick={() => setIsMapExpanded(!isMapExpanded)}
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border border-slate-200/80 dark:border-white/[0.08] shadow-xs text-xs font-mono font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer min-h-[36px] active:scale-95"
+            title={isMapExpanded ? 'Collapse map' : 'Expand map'}
+            aria-label={isMapExpanded ? 'Collapse map' : 'Expand map'}
           >
-            {canDragPin ? <Unlock className="w-3.5 h-3.5 text-amber-500" /> : <Lock className="w-3.5 h-3.5 text-slate-400" />}
-            <span className="hidden md:inline">{canDragPin ? 'Pin: Free' : 'Pin: Locked'}</span>
+            {isMapExpanded ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
+            <span className="hidden sm:inline">{isMapExpanded ? 'Restore' : 'Expand'}</span>
           </button>
-        )}
 
-        <button
-          type="button"
-          onClick={handleRecenter}
-          className="flex items-center gap-1 px-2 sm:px-2.5 py-1.5 rounded-lg bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-slate-200 dark:border-slate-800 shadow-xs text-xs font-mono font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer min-h-[34px] active:scale-95"
-          title="Recenter camera on ambulance and route corridor"
-          aria-label="Recenter camera on ambulance and route corridor"
-        >
-          <Locate className="w-3.5 h-3.5 text-[#D62828]" />
-          <span className="hidden md:inline">Recenter</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setShowGraphNetwork((prev) => !prev)}
-          className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1.5 rounded-lg backdrop-blur-md border shadow-xs text-xs font-mono font-bold transition-all cursor-pointer min-h-[34px] active:scale-95 ${
-            showGraphNetwork
-              ? 'bg-[#1F3C6D] text-white border-blue-900 shadow-md ring-1 ring-blue-400'
-              : 'bg-white/95 dark:bg-slate-900/95 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800'
-          }`}
-          title={showGraphNetwork ? 'Hide graph network & nodes' : 'Show road graph network & intersection nodes (default: ON)'}
-          aria-pressed={showGraphNetwork}
-        >
-          <Network className="w-3.5 h-3.5 text-[#D62828]" />
-          <span>Nodes: {showGraphNetwork ? `ON (${nodes.length})` : 'OFF'}</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setIsMapExpanded(!isMapExpanded)}
-          className="flex items-center gap-1 px-2 sm:px-2.5 py-1.5 rounded-lg bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-slate-200 dark:border-slate-800 shadow-xs text-xs font-mono font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer min-h-[34px] active:scale-95"
-          title={isMapExpanded ? 'Collapse map' : 'Expand map'}
-          aria-label={isMapExpanded ? 'Collapse map' : 'Expand map'}
-        >
-          {isMapExpanded ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
-          <span className="hidden sm:inline">{isMapExpanded ? 'Restore' : 'Expand'}</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setHelpModalOpen(true)}
-          className="flex items-center gap-1 px-2 sm:px-2.5 py-1.5 rounded-lg bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-slate-200 dark:border-slate-800 shadow-xs text-xs font-mono font-bold text-slate-800 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer select-none min-h-[34px] active:scale-95"
-          title="Interactive CAD Map Guide"
-          aria-label="Interactive CAD Map Guide"
-        >
-          <HelpCircle className="w-3.5 h-3.5 text-[#D62828]" />
-          <span className="hidden sm:inline">Guide</span>
-        </button>
+          <button
+            type="button"
+            onClick={() => setHelpModalOpen(true)}
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border border-slate-200/80 dark:border-white/[0.08] shadow-xs text-xs font-mono font-bold text-slate-800 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer select-none min-h-[36px] active:scale-95"
+            title="Interactive CAD Map Guide"
+            aria-label="Interactive CAD Map Guide"
+          >
+            <HelpCircle className="w-3.5 h-3.5 text-[#D62828]" />
+            <span className="hidden sm:inline">Guide</span>
+          </button>
+        </div>
       </div>
 
-      {/* Top Telemetry & Interactive Tip Ribbon - Positioned vertically below top buttons (never overlaps) */}
+      {/* Top Telemetry & Interactive Tip Ribbon - Positioned below search bar */}
       {showQuickHint && (
-        <div className="absolute top-[48px] left-14 right-2.5 sm:right-auto sm:max-w-md z-20 flex min-w-0 items-center justify-between gap-2 px-2.5 py-1 rounded-lg bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-slate-200/90 dark:border-slate-800 shadow-xs text-[11px] font-mono text-slate-800 dark:text-slate-200 animate-in fade-in duration-200">
+        <div className="absolute top-[52px] left-14 z-20 flex min-w-0 items-center justify-between gap-2 px-2.5 py-1 rounded-lg bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-slate-200/90 dark:border-slate-800 shadow-xs text-[11px] font-mono text-slate-800 dark:text-slate-200 animate-in fade-in duration-200 max-w-sm">
           <div className="flex items-center gap-1.5 truncate min-w-0">
             <span className="w-1.5 h-1.5 rounded-full bg-[#D62828] animate-pulse shrink-0"></span>
             <span className="truncate">
               {canDragPin
                 ? 'PIN UNLOCKED: Drag pin to move'
-                : 'PIN LOCKED: Toggle "Lock Pin" in telemetry'}
+                : 'PIN LOCKED: Toggle "Lock Pin" below'}
             </span>
           </div>
           <div className="flex items-center gap-1.5 shrink-0">
@@ -358,6 +318,52 @@ export function MapView({
           </div>
         </div>
       )}
+
+      {/* Bottom-Right Tactical Map Controls Dock (Google Maps Style) */}
+      <div className="absolute bottom-3 right-3 z-20 flex items-center gap-1.5 flex-wrap justify-end">
+        {onTogglePinLock && (
+          <button
+            type="button"
+            onClick={() => onTogglePinLock(!canDragPin)}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl backdrop-blur-xl border shadow-xs text-xs font-mono font-bold transition-all cursor-pointer min-h-[36px] active:scale-95 ${
+              canDragPin
+                ? 'bg-amber-500/20 text-amber-700 dark:text-amber-300 border-amber-500/40 ring-1 ring-amber-400'
+                : 'bg-white/90 dark:bg-slate-900/90 text-slate-700 dark:text-slate-200 border-slate-200/80 dark:border-white/[0.08] hover:bg-slate-100 dark:hover:bg-slate-800'
+            }`}
+            title={canDragPin ? 'Ambulance pin is unlocked (drag on map to reposition). Click to lock.' : 'Ambulance pin is locked. Click to unlock.'}
+            aria-pressed={canDragPin}
+          >
+            {canDragPin ? <Unlock className="w-3.5 h-3.5 text-amber-500" /> : <Lock className="w-3.5 h-3.5 text-slate-400" />}
+            <span className="hidden sm:inline">{canDragPin ? 'Pin: Free' : 'Pin: Locked'}</span>
+          </button>
+        )}
+
+        <button
+          type="button"
+          onClick={handleRecenter}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border border-slate-200/80 dark:border-white/[0.08] shadow-xs text-xs font-mono font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer min-h-[36px] active:scale-95"
+          title="Recenter camera on ambulance and route corridor"
+          aria-label="Recenter camera on ambulance and route corridor"
+        >
+          <Locate className="w-3.5 h-3.5 text-[#D62828]" />
+          <span className="hidden sm:inline">Recenter</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setShowGraphNetwork((prev) => !prev)}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl backdrop-blur-xl border shadow-xs text-xs font-mono font-bold transition-all cursor-pointer min-h-[36px] active:scale-95 ${
+            showGraphNetwork
+              ? 'bg-[#1F3C6D] text-white border-blue-900 shadow-md ring-1 ring-blue-400'
+              : 'bg-white/90 dark:bg-slate-900/90 text-slate-700 dark:text-slate-200 border-slate-200/80 dark:border-white/[0.08] hover:bg-slate-100 dark:hover:bg-slate-800'
+          }`}
+          title={showGraphNetwork ? 'Hide graph network & nodes' : 'Show road graph network & intersection nodes (default: ON)'}
+          aria-pressed={showGraphNetwork}
+        >
+          <Network className="w-3.5 h-3.5 text-[#D62828]" />
+          <span>Nodes: {showGraphNetwork ? `ON (${nodes.length})` : 'OFF'}</span>
+        </button>
+      </div>
 
       {/* Floating Tactical Map Legend */}
       <div className="absolute bottom-3 left-3 z-20 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-slate-200/90 dark:border-slate-800 rounded-lg shadow-sm w-[min(16rem,calc(100%-1.5rem))] transition-all">

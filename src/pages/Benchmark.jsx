@@ -4,14 +4,20 @@
  */
 
 import { useState, useMemo } from 'react';
+import { useDispatch } from '../context/DispatchContext.jsx';
 import { runAlgorithmBenchmark } from '../services/benchmark.js';
 import { getDefaultGraph } from '../services/graphLoader.js';
 import { computeGraphWeights } from '../services/edgeWeights.js';
+import { dijkstra } from '../algorithms/dijkstra.js';
+import { astar } from '../algorithms/astar.js';
 import { SAMPLE_HOSPITALS } from '../data/sampleHospitals.js';
 import BenchmarkChart from '../components/charts/BenchmarkChart.jsx';
+import CompareTable from '../components/panels/CompareTable.jsx';
 import { Play, CheckCircle2, AlertOctagon, HelpCircle, Cpu, Zap, Activity } from 'lucide-react';
 
 export function Benchmark() {
+  const { routing, graph } = useDispatch();
+  const { comparisonData, activeHospital, snappedSourceNode } = routing;
   const [pairCount, setPairCount] = useState(15);
   const [benchmarkRunIndex, setBenchmarkRunIndex] = useState(0);
 
@@ -31,6 +37,63 @@ export function Benchmark() {
   }, [weightedGraph, pairCount, benchmarkRunIndex]);
 
   const { pairResults, summary, allCostsMatched } = benchmarkData;
+
+  // Live active comparison data for the Dual-Engine Benchmark Audit table
+  const liveComparisonData = useMemo(() => {
+    if (comparisonData) return comparisonData;
+    const g = graph?.weightedGraph || weightedGraph;
+    if (activeHospital?.nodeId && snappedSourceNode?.id && g) {
+      const dRun = dijkstra(g, snappedSourceNode.id, activeHospital.nodeId);
+      const aRun = astar(g, snappedSourceNode.id, activeHospital.nodeId);
+      const costDelta = Math.abs(dRun.totalCost - aRun.totalCost);
+      const isCostEqual = costDelta < 0.001;
+      return {
+        dijkstra: {
+          cost: dRun.totalCost,
+          costFormatted: `${(dRun.totalCost / 60).toFixed(1)} min`,
+          nodesExpanded: dRun.nodesExpanded,
+          queryTimeMs: dRun.queryTimeMs,
+          path: dRun.path,
+          success: dRun.success,
+        },
+        astar: {
+          cost: aRun.totalCost,
+          costFormatted: `${(aRun.totalCost / 60).toFixed(1)} min`,
+          nodesExpanded: aRun.nodesExpanded,
+          queryTimeMs: aRun.queryTimeMs,
+          path: aRun.path,
+          success: aRun.success,
+        },
+        isCostEqual,
+        costDelta: Number(costDelta.toFixed(2)),
+      };
+    }
+    if (pairResults && pairResults.length > 0) {
+      const p = pairResults[0];
+      const costDelta = Math.abs(p.dijkstraCost - p.astarCost);
+      return {
+        dijkstra: {
+          cost: p.dijkstraCost,
+          costFormatted: `${(p.dijkstraCost / 60).toFixed(1)} min`,
+          nodesExpanded: p.dijkstraNodes,
+          queryTimeMs: p.dijkstraTimeMs,
+          path: [],
+          success: true,
+        },
+        astar: {
+          cost: p.astarCost,
+          costFormatted: `${(p.astarCost / 60).toFixed(1)} min`,
+          nodesExpanded: p.astarNodes,
+          queryTimeMs: p.astarTimeMs,
+          path: [],
+          success: true,
+        },
+        isCostEqual: p.costsMatch,
+        costDelta: Number(costDelta.toFixed(2)),
+      };
+    }
+    return null;
+  }, [comparisonData, graph, weightedGraph, activeHospital, snappedSourceNode, pairResults]);
 
   const handleRerun = () => {
     setBenchmarkRunIndex((prev) => prev + 1);
@@ -139,6 +202,11 @@ export function Benchmark() {
           </span>
         </div>
       </div>
+
+      {/* Dual-Engine Benchmark Audit Table */}
+      {liveComparisonData && (
+        <CompareTable comparisonData={liveComparisonData} />
+      )}
 
       {/* Chart */}
       <BenchmarkChart pairResults={pairResults} summary={summary} />
