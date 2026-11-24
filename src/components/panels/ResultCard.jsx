@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import Badge from '../ui/Badge.jsx';
 import HospitalSearchBar from '../map/HospitalSearchBar.jsx';
+import { HospitalBrandLogo } from '../ui/ProfessionalLogos.jsx';
 import { formatDistance } from '../../utils/geo.js';
 import { formatDuration } from '../../utils/time.js';
 import { WarningsList } from './WarningsList.jsx';
@@ -113,8 +114,8 @@ export function ResultCard({
       <div className="flex flex-col @2xl:flex-row @2xl:items-start justify-between gap-4 border-b border-slate-100 dark:border-white/[0.06] pb-4">
         <div className="space-y-2 min-w-0 flex-1">
           <div className="flex items-start gap-3">
-            <span className="p-2.5 rounded-xl bg-red-500/10 text-[#D62828] dark:text-red-400 shrink-0 mt-0.5 border border-red-500/25 shadow-xs">
-              <Hospital className="w-5 h-5" />
+            <span className="p-1 rounded-xl bg-slate-100 dark:bg-slate-800 shrink-0 mt-0.5 border border-slate-200/80 dark:border-white/[0.08] shadow-xs">
+              <HospitalBrandLogo hospitalName={hospital.name} className="w-8 h-8 rounded-lg" />
             </span>
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-2">
@@ -419,23 +420,26 @@ export function ResultCard({
                           : 'border-slate-200/80 dark:border-white/[0.06] bg-white/60 dark:bg-slate-900/60 hover:bg-slate-100/60 dark:hover:bg-slate-800/60'
                       }`}
                     >
-                      <div className="min-w-0 pr-2">
-                        <span className="font-bold text-slate-900 dark:text-slate-100 block truncate leading-tight font-sans">
-                          {alt.name}
-                        </span>
-                        <span className="text-[10px] font-mono text-slate-500 dark:text-slate-400 mt-0.5 block">
-                          ETA: {alt.durationMin != null ? `${alt.durationMin} min` : formatDuration(alt.travelTimeSec)} · {alt.roadDistanceKm != null ? `${alt.roadDistanceKm} km road` : formatDistance(alt.distanceM)}
-                          {deltaMinutes > 0 && (
-                            <span className="text-amber-600 dark:text-amber-400 ml-1 font-semibold">
-                              (+{deltaMinutes} min)
-                            </span>
-                          )}
-                          {alt.phone && (
-                            <span className="text-slate-400 ml-1.5 font-sans">
-                              · {alt.phone}
-                            </span>
-                          )}
-                        </span>
+                      <div className="flex items-center gap-2.5 min-w-0 pr-2 flex-1">
+                        <HospitalBrandLogo hospitalName={alt.name} className="w-7 h-7 rounded-md shrink-0" />
+                        <div className="min-w-0 flex-1">
+                          <span className="font-bold text-slate-900 dark:text-slate-100 block truncate leading-tight font-sans">
+                            {alt.name}
+                          </span>
+                          <span className="text-[10px] font-mono text-slate-500 dark:text-slate-400 mt-0.5 block truncate">
+                            ETA: {alt.durationMin != null ? `${alt.durationMin} min` : formatDuration(alt.travelTimeSec)} · {alt.roadDistanceKm != null ? `${alt.roadDistanceKm} km road` : formatDistance(alt.distanceM)}
+                            {deltaMinutes > 0 && (
+                              <span className="text-amber-600 dark:text-amber-400 ml-1 font-semibold">
+                                (+{deltaMinutes} min)
+                              </span>
+                            )}
+                            {alt.phone && (
+                              <span className="text-slate-400 ml-1.5 font-sans">
+                                · {alt.phone}
+                              </span>
+                            )}
+                          </span>
+                        </div>
                       </div>
                       {isSelected ? (
                         <span className="p-1.5 rounded-lg bg-[#D62828] text-white shrink-0 shadow-xs">

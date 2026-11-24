@@ -18,8 +18,16 @@ import { astar } from '../algorithms/astar.js';
 import { extractPathDetails } from '../algorithms/pathUtils.js';
 import { findNearestNode, haversineDistance } from '../utils/geo.js';
 import { isOffline, subscribeNetworkStatus } from '../utils/network.js';
+import { WEATHER_FACTORS } from '../data/congestionFactors.js';
 
-export function useRouting(weightedGraph, isFigure2Mode) {
+export function useRouting(weightedGraph, isFigure2Mode, options = {}) {
+  const {
+    weather = 'clear',
+    timeOfDay = 'morning_peak',
+    liveWeather = null,
+    useLiveWeather = false,
+  } = options;
+
   // Coordinates of ambulance. Default: near DTC gate in Greater Noida
   const [ambulancePos, setAmbulancePos] = useState({
     lat: 28.4625,
@@ -253,8 +261,15 @@ export function useRouting(weightedGraph, isFigure2Mode) {
 
     if (isFigure2Mode) return;
 
+    const weatherMult =
+      (useLiveWeather && liveWeather?.frictionFactor) ||
+      WEATHER_FACTORS[weather]?.speedMultiplier ||
+      1.0;
+
     filterAndRankHospitalsByOsrmEta(ambulancePos, availableHospitals, {
       signal: controller.signal,
+      weather,
+      weatherMultiplier: weatherMult,
     })
       .then((res) => {
         if (!isCancelled && res) {
@@ -277,7 +292,7 @@ export function useRouting(weightedGraph, isFigure2Mode) {
       isCancelled = true;
       controller.abort();
     };
-  }, [ambulancePos, availableHospitals, isFigure2Mode]);
+  }, [ambulancePos, availableHospitals, isFigure2Mode, weather, liveWeather, useLiveWeather]);
 
   // Execute constrained hospital ranking on graph
   const rawRankingResult = useMemo(() => {
@@ -344,7 +359,15 @@ export function useRouting(weightedGraph, isFigure2Mode) {
           seatReadinessLabel = seatFactor.seatReadinessLabel;
         }
 
-        const durationSec = hosp.durationSec || (graphMatch?.travelTimeSec ?? 360);
+        const weatherMult =
+          (useLiveWeather && liveWeather?.frictionFactor) ||
+          WEATHER_FACTORS[weather]?.speedMultiplier ||
+          1.0;
+
+        let durationSec = hosp.durationSec || (graphMatch?.travelTimeSec ?? 360);
+        if (!hosp.isWeatherCalibrated && weatherMult < 1.0) {
+          durationSec = Math.round(durationSec / weatherMult);
+        }
         const roadDistanceM = hosp.roadDistanceM || (graphMatch?.distanceM ?? 3000);
         return {
           ...hosp,
@@ -366,7 +389,7 @@ export function useRouting(weightedGraph, isFigure2Mode) {
       durationMin: Number((h.travelTimeSec / 60).toFixed(1)),
       roadDistanceKm: Number((h.distanceM / 1000).toFixed(1)),
     }));
-  }, [isFigure2Mode, rawRankingResult.rankedHospitals, osrmRanking.topHospitals, snappedSourceNode, weightedGraph, algorithm, emergencyCategory]);
+  }, [isFigure2Mode, rawRankingResult.rankedHospitals, osrmRanking.topHospitals, snappedSourceNode, weightedGraph, algorithm, emergencyCategory, weather, liveWeather, useLiveWeather]);
 
   const rankingResult = useMemo(() => {
     return {

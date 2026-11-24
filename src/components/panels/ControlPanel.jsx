@@ -10,6 +10,12 @@ import { GRAPH_MODES_CATALOG } from '../../services/graphLoader.js';
 import Badge from '../ui/Badge.jsx';
 import Switch from '../ui/Switch.jsx';
 import {
+  TraumaTriageLogo,
+  CardiacTriageLogo,
+  BurnTriageLogo,
+  GeneralEmergencyLogo,
+} from '../ui/ProfessionalLogos.jsx';
+import {
   Sliders,
   ShieldAlert,
   CloudSun,
@@ -22,7 +28,6 @@ import {
   Droplets,
   Eye,
   Activity,
-  Zap,
   Network,
 } from 'lucide-react';
 
@@ -93,7 +98,7 @@ export function ControlPanel({
             >
               {Object.entries(GRAPH_MODES_CATALOG).map(([key, config]) => (
                 <option key={key} value={key}>
-                  {config.label} ({config.nodesCount} Nodes · {config.edgesCount} Edges)
+                  {config.label}
                 </option>
               ))}
             </select>
@@ -114,8 +119,8 @@ export function ControlPanel({
               </div>
             </div>
           </div>
-          <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-slate-200/70 dark:bg-slate-800 text-slate-700 dark:text-slate-300 shrink-0 font-semibold">
-            {GRAPH_MODES_CATALOG[graphMode]?.nodesCount || 371} Nodes
+          <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 shrink-0 font-semibold">
+            ACTIVE
           </span>
         </div>
         {overpassError && (
@@ -139,6 +144,15 @@ export function ControlPanel({
         <div className="grid grid-cols-2 gap-2">
           {Object.values(EMERGENCY_CATEGORIES).map((cat) => {
             const isSelected = emergencyCategory === cat.id;
+            const CategoryLogo =
+              cat.id === 'TRAUMA'
+                ? TraumaTriageLogo
+                : cat.id === 'CARDIAC'
+                ? CardiacTriageLogo
+                : cat.id === 'BURN'
+                ? BurnTriageLogo
+                : GeneralEmergencyLogo;
+
             return (
               <motion.button
                 key={cat.id}
@@ -146,14 +160,17 @@ export function ControlPanel({
                 whileTap={{ scale: 0.98 }}
                 onClick={() => onSelectCategory(cat.id)}
                 title={`Route to a hospital with ${cat.requiredSpecialty}`}
-                className={`text-left p-2.5 rounded-xl border transition-all text-xs flex flex-col justify-between cursor-pointer min-h-[56px] ${
+                className={`text-left p-2.5 rounded-xl border transition-all text-xs flex flex-col justify-between cursor-pointer min-h-[58px] ${
                   isSelected
                     ? 'border-[#D62828] dark:border-red-500 bg-red-500/10 dark:bg-red-950/40 text-red-950 dark:text-red-100 ring-1 ring-red-500 font-semibold shadow-[0_0_15px_rgba(239,68,68,0.15)]'
                     : 'border-slate-200/80 dark:border-white/[0.06] hover:border-slate-300 dark:hover:border-white/20 bg-slate-50/60 dark:bg-slate-950/40 text-slate-700 dark:text-slate-300 hover:bg-slate-100/60'
                 }`}
               >
                 <div className="flex items-center justify-between w-full">
-                  <span className="font-bold tracking-tight text-xs font-sans">{cat.shortLabel}</span>
+                  <span className="flex items-center gap-1.5 font-bold tracking-tight text-xs font-sans">
+                    <CategoryLogo className="w-4 h-4 shrink-0" />
+                    <span>{cat.shortLabel}</span>
+                  </span>
                   {isSelected && (
                     <span className="w-2 h-2 rounded-full bg-[#D62828] dark:bg-red-500 animate-pulse"></span>
                   )}
@@ -273,27 +290,6 @@ export function ControlPanel({
             ))}
           </select>
         </div>
-      </div>
-
-      {/* 5. Emergency Green Corridor (Signal Preemption) */}
-      <div className="pt-3 border-t border-slate-100 dark:border-white/[0.06]">
-        <label className="flex items-start gap-3 cursor-pointer group select-none">
-          <input
-            type="checkbox"
-            checked={signalPriority}
-            onChange={(e) => onToggleSignalPriority(e.target.checked)}
-            className="mt-0.5 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 w-4 h-4 cursor-pointer"
-          />
-          <div className="min-w-0">
-            <span className="text-xs font-bold text-slate-900 dark:text-slate-100 flex items-center gap-1.5 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors font-sans">
-              <Zap className={`w-3.5 h-3.5 ${signalPriority ? 'text-emerald-500 fill-emerald-500' : 'text-slate-400'}`} />
-              Emergency Green Corridor (Signal Preemption)
-            </span>
-            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 leading-snug font-mono">
-              Emergency Green Wave signal preemption reduces average junction delay from 25s to 4s.
-            </p>
-          </div>
-        </label>
       </div>
     </div>
   );

@@ -9,7 +9,6 @@
 import DisclaimerBanner from '../components/layout/DisclaimerBanner.jsx';
 import ControlPanel from '../components/panels/ControlPanel.jsx';
 import ResultCard from '../components/panels/ResultCard.jsx';
-import { Link } from 'react-router-dom';
 import MapView from '../components/map/DesktopMapView.jsx';
 import IncidentTool from '../components/map/IncidentTool.jsx';
 import LiveLocationTracker from '../components/map/LiveLocationTracker.jsx';
@@ -17,12 +16,18 @@ import HospitalBedManagerModal from '../components/panels/HospitalBedManagerModa
 import ApiStatusPanel from '../components/panels/ApiStatusPanel.jsx';
 import KpiStatCard from '../components/ui/KpiStatCard.jsx';
 import Badge from '../components/ui/Badge.jsx';
-import TrafficSpeedFrictionGraph from '../components/charts/TrafficSpeedFrictionGraph.jsx';
 import RegionalBedCapacityGraph from '../components/charts/RegionalBedCapacityGraph.jsx';
 import { useDispatch } from '../context/DispatchContext.jsx';
 import { useBedManager } from '../context/BedManagerContext.jsx';
 import { formatDistance } from '../utils/geo.js';
 import { formatEtaShort } from '../utils/time.js';
+import { WEATHER_FACTORS } from '../data/congestionFactors.js';
+import {
+  HospitalBrandLogo,
+  KpiEtaRadarLogo,
+  KpiIcuBedLogo,
+  KpiVelocityGaugeLogo,
+} from '../components/ui/ProfessionalLogos.jsx';
 import {
   CheckCircle2,
   Bed,
@@ -36,7 +41,6 @@ import {
   PhoneCall,
   Navigation2,
   Zap,
-  Cpu,
 } from 'lucide-react';
 
 export function Dashboard() {
@@ -70,10 +74,18 @@ export function Dashboard() {
   } = live;
   const { isBedManagerOpen, openBedManager, closeBedManager } = useBedManager();
 
-  // Primary active hospital metrics
+  // Primary active hospital metrics (calibrated with dynamic weather & traffic friction)
+  const weatherMult =
+    (useLiveWeather && liveWeather?.frictionFactor) ||
+    WEATHER_FACTORS[weather]?.speedMultiplier ||
+    1.0;
   const activeDistance = roadTelemetry?.distanceM || activeHospital?.distanceM || 0;
-  const activeTravelTime = roadTelemetry?.durationSec || activeHospital?.travelTimeSec || 0;
+  const rawTravelTime = roadTelemetry?.durationSec || activeHospital?.travelTimeSec || 0;
+  const activeTravelTime = roadTelemetry?.isWeatherCalibrated
+    ? rawTravelTime
+    : Math.round(rawTravelTime / (weatherMult < 1.0 ? weatherMult : 1.0));
   const activeEta = activeTravelTime > 0 ? formatEtaShort(activeTravelTime) : '2m';
+  const realSpeedKph = Math.max(0, Math.round(gpsSpeedKph ?? 0));
   const icuBedsCount = activeHospital?.bedAvailability?.icuBedsFree ?? 4;
   const traumaBedsCount = activeHospital?.bedAvailability?.traumaBedsFree ?? 2;
 
@@ -95,7 +107,7 @@ export function Dashboard() {
               ? `${formatDistance(activeDistance)} · Corridor`
               : 'Pan-India Grid'
           }
-          icon={Hospital}
+          icon={(props) => <HospitalBrandLogo hospitalName={activeHospital?.name} className="w-6 h-6 rounded-md" {...props} />}
           tint="red"
           trend={activeHospital?.nabhAccredited ? 'NABH' : 'LEVEL-1'}
           trendPositive={true}
@@ -116,8 +128,14 @@ export function Dashboard() {
         <KpiStatCard
           title="Projected ETA"
           value={activeHospital?.durationMin ? `${activeHospital.durationMin} min` : activeEta}
-          subtitle={signalPriority ? 'Signal Preempted' : 'Friction Calibrated'}
-          icon={Clock}
+          subtitle={
+            weather && weather !== 'clear'
+              ? `Weather Calibrated (${WEATHER_FACTORS[weather]?.label?.split(' ')[0] || weather.toUpperCase()})`
+              : liveWeather?.label
+              ? `Live: ${liveWeather.label}`
+              : 'Friction Calibrated'
+          }
+          icon={KpiEtaRadarLogo}
           tint="emerald"
           trend={algorithm === 'compare' ? 'DUAL OPTIMAL' : `${algorithm.toUpperCase()} OPTIMAL`}
           trendPositive={true}
@@ -128,7 +146,7 @@ export function Dashboard() {
           title="Intake Capacity"
           value={`${icuBedsCount} ICU Beds`}
           subtitle={`${traumaBedsCount} Trauma · ${activeHospital?.bedAvailability?.emergencyWardFree ?? 18} Ward`}
-          icon={Bed}
+          icon={KpiIcuBedLogo}
           tint="blue"
           trend={icuBedsCount > 2 ? 'SURPLUS' : 'LIMITED'}
           trendPositive={icuBedsCount > 2}
@@ -143,15 +161,19 @@ export function Dashboard() {
           }
         />
 
-        {/* KPI 4: Vehicle Cockpit & Road Topology */}
+        {/* KPI 4: Vehicle Cockpit & Velocity */}
         <KpiStatCard
           title="Vehicle Velocity"
-          value={`${Math.round(gpsSpeedKph || 42)} km/h`}
-          subtitle={`${weightedGraph.nodes.length} Nodes · ${weightedGraph.edges.length} Edges`}
-          icon={Gauge}
+          value={`${realSpeedKph} km/h`}
+          subtitle={
+            isGpsActive
+              ? (realSpeedKph > 0 ? 'Live Vehicle Telemetry Pacing' : 'Stationary at Origin')
+              : (isMoving ? 'Corridor Transit Pacing' : 'Stationary · Standby')
+          }
+          icon={KpiVelocityGaugeLogo}
           tint="amber"
-          trend={isGpsActive ? 'DEVICE GPS' : 'SIMULATED'}
-          trendPositive={isGpsActive}
+          trend={isGpsActive ? (realSpeedKph > 0 ? 'DEVICE GPS' : 'GPS STANDBY') : (isMoving ? 'MOVING' : 'STATIONARY')}
+          trendPositive={realSpeedKph > 0}
         />
       </div>
 
@@ -204,42 +226,6 @@ export function Dashboard() {
             onRefreshWib={refreshWibData}
             isSyncingWib={isSyncingWib}
             onOpenBedManager={openBedManager}
-          />
-
-          {algorithm === 'compare' && (
-            <div className="p-3.5 rounded-2xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200/90 dark:border-white/[0.08] shadow-xs flex items-center justify-between gap-3 text-xs">
-              <div className="flex items-center gap-2.5 min-w-0">
-                <span className="p-2 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 shrink-0 border border-blue-500/20">
-                  <Cpu className="w-4 h-4" />
-                </span>
-                <div className="min-w-0">
-                  <span className="font-bold text-slate-900 dark:text-slate-100 block font-mono truncate">
-                    Dual-Engine Compare Router Active
-                  </span>
-                  <span className="text-[11px] text-slate-500 dark:text-slate-400 block font-sans truncate">
-                    Dijkstra vs A* audit table moved to Benchmark page
-                  </span>
-                </div>
-              </div>
-              <Link
-                to="/benchmark"
-                className="px-3 py-1.5 rounded-xl bg-slate-900 dark:bg-slate-100 hover:bg-slate-800 dark:hover:bg-white text-white dark:text-slate-900 font-mono text-[11px] font-bold shadow-xs transition-all cursor-pointer shrink-0"
-              >
-                View Benchmark →
-              </Link>
-            </div>
-          )}
-
-          <IncidentTool
-            edges={weightedGraph.edges}
-            nodes={weightedGraph.nodes}
-            incidents={incidents}
-            ambulancePos={ambulancePos}
-            reporter={reporter}
-            onChangeReporter={setReporter}
-            onAddIncident={addIncident}
-            onRemoveIncident={removeIncident}
-            onClearIncidents={clearIncidents}
           />
         </div>
 
@@ -375,12 +361,21 @@ export function Dashboard() {
         </div>
       </div>
 
-      {/* ──────────────── 21st.dev VISUAL TELEMETRY & REGIONAL CAPACITY ANALYTICS ──────────────── */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 pt-2">
+      {/* ──────────────── CLINICAL BED MATRIX & ROAD CONGESTION INJECTION (SIDE BY SIDE) ──────────────── */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 pt-2 items-start">
         <RegionalBedCapacityGraph hospitals={availableHospitals} />
-        <TrafficSpeedFrictionGraph
-          activeTimeOfDay={timeOfDay}
-          activeWeather={weather}
+        <IncidentTool
+          edges={weightedGraph.edges}
+          nodes={weightedGraph.nodes}
+          incidents={incidents}
+          ambulancePos={ambulancePos}
+          reporter={reporter}
+          onChangeReporter={setReporter}
+          onAddIncident={addIncident}
+          onRemoveIncident={removeIncident}
+          onClearIncidents={clearIncidents}
+          timeOfDay={timeOfDay}
+          weather={weather}
         />
       </div>
 

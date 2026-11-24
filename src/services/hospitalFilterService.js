@@ -12,6 +12,7 @@
 import { haversineDistance } from '../utils/geo.js';
 import { OSRM_BASES } from './roadSnapService.js';
 import { isOffline, markNetworkFailure } from '../utils/network.js';
+import { WEATHER_FACTORS } from '../data/congestionFactors.js';
 
 export const AUTO_RADIUS_TIERS = [5, 10, 20];
 export const DEFAULT_RADIUS_KM = 5;
@@ -285,7 +286,30 @@ export async function filterAndRankHospitalsByOsrmEta(userPos, hospitals = [], o
   }
 
   // Stage 2: Project-OSRM routing calculation
-  const evaluated = await computeOsrmTableMetrics(userPos, candidates, { signal });
+  let evaluated = await computeOsrmTableMetrics(userPos, candidates, { signal });
+
+  // Calibrate evaluated driving durations with atmospheric weather speed multiplier
+  const weatherMult =
+    options.weatherMultiplier ??
+    (options.weather && WEATHER_FACTORS[options.weather]?.speedMultiplier ? WEATHER_FACTORS[options.weather].speedMultiplier : 1.0);
+
+  if (weatherMult < 1.0) {
+    evaluated = evaluated.map((h) => {
+      const baseSec = h.durationSec ?? h.travelTimeSec;
+      if (baseSec == null) return h;
+      const adjustedSec = Math.round(baseSec / weatherMult);
+      const adjustedMin = Number((adjustedSec / 60).toFixed(1));
+      return {
+        ...h,
+        durationSec: adjustedSec,
+        durationMin: adjustedMin,
+        travelTimeSec: adjustedSec,
+        travelTimeMin: adjustedMin,
+        weatherMultiplier: weatherMult,
+        isWeatherCalibrated: true,
+      };
+    });
+  }
 
   // Determine road distance cutoff dynamically based on the active corridor:
   // 5 km corridor: allow up to 8 km road

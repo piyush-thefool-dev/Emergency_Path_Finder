@@ -105,9 +105,19 @@ export function mapWmoCodeToWeather(code, visibilityMetres = 10000) {
   if (code === 45 || code === 48 || visibilityMetres < 1000) {
     return {
       weatherId: 'fog',
-      label: 'Fog / Morning Mist',
+      label: 'Dense Fog / Morning Mist',
       description: `Low visibility (${(visibilityMetres / 1000).toFixed(1)} km) along expressway and arterial roads`,
       frictionFactor: 0.75,
+    };
+  }
+
+  // Moderate NCR Winter Haze / Smog (visibility between 1000m and 8000m)
+  if (visibilityMetres < 8000) {
+    return {
+      weatherId: 'fog',
+      label: 'Moderate NCR Haze / Winter Smog',
+      description: `Reduced atmospheric visibility (${(visibilityMetres / 1000).toFixed(1)} km) requiring cautionary emergency pacing`,
+      frictionFactor: 0.85,
     };
   }
 

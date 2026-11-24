@@ -20,6 +20,8 @@ export function IncidentTool({
   onAddIncident,
   onRemoveIncident,
   onClearIncidents,
+  timeOfDay,
+  weather,
 }) {
   const [selectedEdgeId, setSelectedEdgeId] = useState('');
   const [levelId, setLevelId] = useState('heavy');
@@ -54,25 +56,32 @@ export function IncidentTool({
           </div>
           <div>
             <h4 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider font-mono">
-              Incident Injection & Dynamic Re-routing
+              Road Congestion & Incident Tool
             </h4>
             <span className="text-[10px] text-slate-500 dark:text-slate-400 font-mono block">
-              Inject Real-Time Bottlenecks & Hazards
+              Inject Bottlenecks, Delays & Dynamic Re-routing
             </span>
           </div>
         </div>
-        {list.length > 0 && (
-          <motion.button
-            whileTap={{ scale: 0.95 }}
-            type="button"
-            onClick={onClearIncidents}
-            title="Remove every incident report and recalculate baseline paths"
-            className="text-[11px] font-mono text-[#D62828] dark:text-red-400 hover:text-red-700 font-bold flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-red-500/20 bg-red-500/10 cursor-pointer transition-colors shadow-xs"
-          >
-            <RefreshCw className="w-3 h-3" />
-            <span>Clear All ({list.length})</span>
-          </motion.button>
-        )}
+        <div className="flex items-center gap-1.5 flex-wrap">
+          {timeOfDay && (
+            <span className="px-2 py-0.5 rounded-md bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 text-[10px] font-mono font-bold">
+              Active: {timeOfDay.replace('_', ' ').toUpperCase()}
+            </span>
+          )}
+          {list.length > 0 && (
+            <motion.button
+              whileTap={{ scale: 0.95 }}
+              type="button"
+              onClick={onClearIncidents}
+              title="Remove every incident report and recalculate baseline paths"
+              className="text-[11px] font-mono text-[#D62828] dark:text-red-400 hover:text-red-700 font-bold flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-red-500/20 bg-red-500/10 cursor-pointer transition-colors shadow-xs"
+            >
+              <RefreshCw className="w-3 h-3" />
+              <span>Clear All ({list.length})</span>
+            </motion.button>
+          )}
+        </div>
       </div>
 
       <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed font-mono">

@@ -75,10 +75,13 @@ export function useGraph() {
   // Update weather when live weather toggle changes
   const toggleLiveWeather = useCallback((enabled) => {
     setUseLiveWeather(enabled);
-    if (enabled && liveWeather?.weatherId) {
-      setWeather(liveWeather.weatherId);
+    if (enabled) {
+      refreshLiveWeather();
+      if (liveWeather?.weatherId) {
+        setWeather(liveWeather.weatherId);
+      }
     }
-  }, [liveWeather]);
+  }, [liveWeather, refreshLiveWeather]);
 
   // Trigger Overpass live road network download
   const fetchFreshOverpassGrid = useCallback(async () => {

@@ -43,6 +43,7 @@ import { useTheme } from '../../context/ThemeContext.jsx';
 import { EMERGENCY_CATEGORIES } from '../../config/emergencyCategories.js';
 import { formatDistance } from '../../utils/geo.js';
 import { formatEtaShort } from '../../utils/time.js';
+import { WEATHER_FACTORS } from '../../data/congestionFactors.js';
 import { isOffline, subscribeNetworkStatus } from '../../utils/network.js';
 
 function RoundButton({ label, onClick, active = false, children }) {
@@ -229,7 +230,16 @@ export function MapScreen() {
             {activeHospital && (
               <span className="text-right shrink-0">
                 <span className="block text-sm sm:text-base font-black font-mono text-emerald-600 dark:text-emerald-400 leading-none">
-                  {formatEtaShort(roadTelemetry?.durationSec || activeHospital.travelTimeSec)}
+                  {formatEtaShort(
+                    roadTelemetry?.isWeatherCalibrated
+                      ? roadTelemetry.durationSec
+                      : Math.round(
+                          (roadTelemetry?.durationSec || activeHospital.travelTimeSec) /
+                            ((graph.useLiveWeather && graph.liveWeather?.frictionFactor) ||
+                              WEATHER_FACTORS[graph.weather]?.speedMultiplier ||
+                              1.0)
+                        )
+                  )}
                 </span>
                 <span className="block text-[10px] font-mono text-slate-500 dark:text-slate-400 mt-0.5">
                   {formatDistance(roadTelemetry?.distanceM || activeHospital.distanceM)}

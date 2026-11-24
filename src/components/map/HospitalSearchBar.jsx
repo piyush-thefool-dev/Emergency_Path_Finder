@@ -28,6 +28,7 @@ import {
   estimateDrivingTime,
   getSearchRelevance,
 } from '../../utils/hospitalSearch.js';
+import { HospitalBrandLogo } from '../ui/ProfessionalLogos.jsx';
 
 export { getSearchRelevance, getHospitalRegion, estimateDrivingTime };
 
@@ -384,7 +385,8 @@ export function HospitalSearchBar({
                     }`}
                   >
                     {/* Top Row: Name, Proximity Badge, Badges */}
-                    <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-start justify-between gap-2.5">
+                      <HospitalBrandLogo hospitalName={hosp.name} className="w-8 h-8 rounded-lg shrink-0 mt-0.5 shadow-xs" />
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-1.5 flex-wrap">
                           <span className="font-bold text-xs sm:text-sm text-slate-900 dark:text-slate-100 leading-snug">

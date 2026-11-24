@@ -17,7 +17,12 @@ const DispatchContext = createContext(null);
 
 export function DispatchProvider({ children }) {
   const graph = useGraph();
-  const routing = useRouting(graph.weightedGraph, false);
+  const routing = useRouting(graph.weightedGraph, false, {
+    weather: graph.weather,
+    timeOfDay: graph.timeOfDay,
+    liveWeather: graph.liveWeather,
+    useLiveWeather: graph.useLiveWeather,
+  });
   const apiHealth = useApiHealth({ tomtomKey: graph.trafficConfig?.tomtomApiKey || '' });
 
   // Ambulance pin drag lock: false by default so pin is locked and won't accidentally be repositioned

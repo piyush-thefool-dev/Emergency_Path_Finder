@@ -7,7 +7,8 @@ import { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { useTheme } from '../../context/ThemeContext.jsx';
-import { Activity, Sun, Moon, Radio, Shield, Sparkles } from 'lucide-react';
+import { Sun, Moon, Radio, Shield, Sparkles } from 'lucide-react';
+import { CadBrandLogo } from '../ui/ProfessionalLogos.jsx';
 import { isOffline, subscribeNetworkStatus } from '../../utils/network.js';
 
 export function Navbar() {
@@ -55,9 +56,9 @@ export function Navbar() {
           <motion.div
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-tr from-red-600 to-rose-500 flex items-center justify-center text-white shadow-md shadow-red-600/30 shrink-0 border border-red-400/40"
+            className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center shrink-0 shadow-md shadow-red-600/25 cursor-pointer"
           >
-            <Activity className="w-5 h-5 stroke-[2.5]" />
+            <CadBrandLogo className="w-9 h-9 sm:w-10 sm:h-10" />
           </motion.div>
           <div className="flex flex-col min-w-0">
             <div className="flex items-center gap-2">
