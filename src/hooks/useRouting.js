@@ -16,7 +16,8 @@ import {
 import { dijkstra } from '../algorithms/dijkstra.js';
 import { astar } from '../algorithms/astar.js';
 import { extractPathDetails } from '../algorithms/pathUtils.js';
-import { findNearestNode } from '../utils/geo.js';
+import { findNearestNode, haversineDistance } from '../utils/geo.js';
+import { isOffline, subscribeNetworkStatus } from '../utils/network.js';
 
 export function useRouting(weightedGraph, isFigure2Mode) {
   // Coordinates of ambulance. Default: near DTC gate in Greater Noida
@@ -117,6 +118,7 @@ export function useRouting(weightedGraph, isFigure2Mode) {
 
   // Fetch hospital directory metadata from the WIB endpoint when available.
   const refreshWibData = useCallback(async () => {
+    if (isOffline()) return;
     if (typeof localStorage !== 'undefined' && localStorage.getItem('epf_custom_hospitals_data')) {
       return; // Respect user's custom ICU bed numbers
     }
@@ -133,7 +135,9 @@ export function useRouting(weightedGraph, isFigure2Mode) {
         });
       }
     } catch (err) {
-      console.warn('Could not sync WIB API data:', err);
+      if (!isOffline()) {
+        console.warn('Could not sync WIB API data:', err);
+      }
     } finally {
       setIsSyncingWib(false);
     }
@@ -141,6 +145,14 @@ export function useRouting(weightedGraph, isFigure2Mode) {
 
   useEffect(() => {
     refreshWibData();
+  }, [refreshWibData]);
+
+  // Re-fetch WIB data when network reconnects
+  useEffect(() => {
+    const unsub = subscribeNetworkStatus((online) => {
+      if (online) refreshWibData();
+    });
+    return unsub;
   }, [refreshWibData]);
 
   // Real-time hospital bed intake/discharge dynamic telemetry polling.
@@ -229,6 +241,21 @@ export function useRouting(weightedGraph, isFigure2Mode) {
     return wibHospitals.length > 0 ? wibHospitals : SAMPLE_HOSPITALS;
   }, [isFigure2Mode, wibHospitals]);
 
+  // Hospitals within 100 km radius of the ambulance position for emergency search & registry
+  const SEARCH_RADIUS_KM = 100;
+  const searchHospitals = useMemo(() => {
+    if (isFigure2Mode) return availableHospitals;
+    if (!ambulancePos || typeof ambulancePos.lat !== 'number' || typeof ambulancePos.lon !== 'number') {
+      return availableHospitals;
+    }
+    const maxM = SEARCH_RADIUS_KM * 1000;
+    return availableHospitals.filter((h) => {
+      if (h.lat == null || h.lon == null) return false;
+      const distM = haversineDistance(ambulancePos.lat, ambulancePos.lon, h.lat, h.lon);
+      return distM <= maxM;
+    });
+  }, [isFigure2Mode, availableHospitals, ambulancePos]);
+
   // Execute automatic built-in cascading radius (5km -> 10km -> 20km) + OSRM filtering
   useEffect(() => {
     let isCancelled = false;
@@ -292,6 +319,41 @@ export function useRouting(weightedGraph, isFigure2Mode) {
     if (osrmRanking.topHospitals.length > 0) {
       return osrmRanking.topHospitals.map((hosp) => {
         const graphMatch = rawRankingResult.rankedHospitals.find((r) => r.id === hosp.id);
+        let pathNodeIds = graphMatch?.pathNodeIds || hosp.pathNodeIds || [];
+        let pathEdges = graphMatch?.pathEdges || hosp.pathEdges || [];
+        let seatPenaltySec = graphMatch?.seatPenaltySec;
+        let seatReadinessLevel = graphMatch?.seatReadinessLevel;
+        let seatReadinessLabel = graphMatch?.seatReadinessLabel;
+
+        // If pathNodeIds is empty, compute graph route directly using A* or Dijkstra so graph topology is always intact
+        if (pathNodeIds.length === 0 && snappedSourceNode && weightedGraph && weightedGraph.nodes?.length > 0) {
+          let targetNodeId = hosp.nodeId;
+          const hasNode = weightedGraph.nodes.some((n) => n.id === targetNodeId);
+          if (!hasNode) {
+            const nearest = findNearestNode(hosp.lat, hosp.lon, weightedGraph.nodes);
+            targetNodeId = nearest ? nearest.id : weightedGraph.nodes[0]?.id;
+          }
+          if (targetNodeId && snappedSourceNode.id) {
+            const algoToUse = algorithm === 'compare' ? 'astar' : algorithm;
+            const res =
+              algoToUse === 'astar'
+                ? astar(weightedGraph, snappedSourceNode.id, targetNodeId)
+                : dijkstra(weightedGraph, snappedSourceNode.id, targetNodeId);
+            if (res.success && Array.isArray(res.path) && res.path.length > 0) {
+              pathNodeIds = res.path;
+              const details = extractPathDetails(res.path, weightedGraph.edges);
+              pathEdges = details.pathEdges || [];
+            }
+          }
+        }
+
+        if (seatPenaltySec == null) {
+          const seatFactor = calculateSeatIntakeFactor(hosp.bedAvailability, emergencyCategory);
+          seatPenaltySec = seatFactor.seatPenaltySec;
+          seatReadinessLevel = seatFactor.seatReadinessLevel;
+          seatReadinessLabel = seatFactor.seatReadinessLabel;
+        }
+
         const durationSec = hosp.durationSec || (graphMatch?.travelTimeSec ?? 360);
         const roadDistanceM = hosp.roadDistanceM || (graphMatch?.distanceM ?? 3000);
         return {
@@ -301,11 +363,11 @@ export function useRouting(weightedGraph, isFigure2Mode) {
           durationMin: Number((durationSec / 60).toFixed(1)),
           distanceM: roadDistanceM,
           roadDistanceKm: Number((roadDistanceM / 1000).toFixed(1)),
-          pathNodeIds: graphMatch?.pathNodeIds || hosp.pathNodeIds || [],
-          pathEdges: graphMatch?.pathEdges || hosp.pathEdges || [],
-          seatPenaltySec: graphMatch?.seatPenaltySec ?? 0,
-          seatReadinessLevel: graphMatch?.seatReadinessLevel ?? 'OPTIMAL',
-          seatReadinessLabel: graphMatch?.seatReadinessLabel ?? 'Ready Intake',
+          pathNodeIds,
+          pathEdges,
+          seatPenaltySec: seatPenaltySec ?? 0,
+          seatReadinessLevel: seatReadinessLevel ?? 'OPTIMAL',
+          seatReadinessLabel: seatReadinessLabel ?? 'Ready Intake',
         };
       });
     }
@@ -314,7 +376,7 @@ export function useRouting(weightedGraph, isFigure2Mode) {
       durationMin: Number((h.travelTimeSec / 60).toFixed(1)),
       roadDistanceKm: Number((h.distanceM / 1000).toFixed(1)),
     }));
-  }, [isFigure2Mode, rawRankingResult.rankedHospitals, osrmRanking.topHospitals]);
+  }, [isFigure2Mode, rawRankingResult.rankedHospitals, osrmRanking.topHospitals, snappedSourceNode, weightedGraph, algorithm, emergencyCategory]);
 
   const rankingResult = useMemo(() => {
     return {
@@ -430,10 +492,20 @@ export function useRouting(weightedGraph, isFigure2Mode) {
     };
   }, [algorithm, activeHospital, snappedSourceNode, weightedGraph, isFigure2Mode]);
 
-  const setAmbulanceCoordinates = useCallback((lat, lon) => {
-    setAmbulancePos({ lat, lon });
-    // Reset manual hospital override on move
-    setSelectedHospitalId(null);
+  const setAmbulanceCoordinates = useCallback((latOrObj, maybeLon) => {
+    let lat, lon;
+    if (typeof latOrObj === 'object' && latOrObj !== null) {
+      lat = latOrObj.lat;
+      lon = latOrObj.lon ?? latOrObj.lng;
+    } else {
+      lat = latOrObj;
+      lon = maybeLon;
+    }
+    if (typeof lat === 'number' && typeof lon === 'number' && !isNaN(lat) && !isNaN(lon)) {
+      setAmbulancePos({ lat, lon });
+      // Reset manual hospital override on move
+      setSelectedHospitalId(null);
+    }
   }, []);
 
   return {
@@ -451,6 +523,7 @@ export function useRouting(weightedGraph, isFigure2Mode) {
     comparisonData,
     availableHospitals,
     topHospitals: topRankedHospitals,
+    searchHospitals,
     effectiveRadiusKm: osrmRanking.effectiveRadiusKm || 5,
     isRadiusFallback: osrmRanking.isFallback,
     wibApiStatus,

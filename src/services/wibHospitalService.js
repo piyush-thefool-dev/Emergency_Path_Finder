@@ -11,6 +11,7 @@
  */
 
 import { SAMPLE_HOSPITALS } from '../data/delhiNcrHospitals.js';
+import { isOffline, markNetworkFailure } from '../utils/network.js';
 
 export const WIB_API_CONFIG = {
   endpoint: 'https://wibest.in/data/json/hospitals.json',
@@ -199,6 +200,15 @@ export function processWibRecords(rawList = []) {
  * @returns {Promise<{ hospitals: Array<Object>, isLive: boolean, totalFetched: number, source: string }>}
  */
 export async function fetchWibHospitals() {
+  if (isOffline()) {
+    return {
+      hospitals: processWibRecords([]),
+      isLive: false,
+      totalFetched: SAMPLE_HOSPITALS.length,
+      source: `${WIB_API_CONFIG.sourceName} (Offline Reference Mode)`,
+    };
+  }
+
   try {
     const response = await fetch(WIB_API_CONFIG.endpoint, {
       method: 'GET',
@@ -227,14 +237,17 @@ export async function fetchWibHospitals() {
       source: WIB_API_CONFIG.sourceName,
     };
   } catch (err) {
-    console.warn('WIB API live fetch failed, using bundled regional reference data:', err.message);
+    markNetworkFailure(err);
+    if (!isOffline()) {
+      console.warn('WIB API live fetch failed, using bundled regional reference data:', err.message);
+    }
     const mapped = processWibRecords([]);
 
     return {
       hospitals: mapped,
       isLive: false,
       totalFetched: SAMPLE_HOSPITALS.length,
-      source: `${WIB_API_CONFIG.sourceName} (endpoint unavailable; bundled reference data)`,
+      source: `${WIB_API_CONFIG.sourceName} (bundled reference data)`,
     };
   }
 }
@@ -248,6 +261,7 @@ export async function fetchWibHospitals() {
  * @returns {Promise<Array<Object>>}
  */
 export async function fetchOverpassHospitals(bbox = { south: 28.36, west: 76.98, north: 28.72, east: 77.59 }) {
+  if (isOffline()) return [];
   const query = `[out:json][timeout:25];(node["amenity"="hospital"](${bbox.south},${bbox.west},${bbox.north},${bbox.east});way["amenity"="hospital"](${bbox.south},${bbox.west},${bbox.north},${bbox.east});relation["amenity"="hospital"](${bbox.south},${bbox.west},${bbox.north},${bbox.east}););out center tags qt;`;
   const mirrors = [
     'https://overpass.osm.ch/api/interpreter',
@@ -257,6 +271,7 @@ export async function fetchOverpassHospitals(bbox = { south: 28.36, west: 76.98,
   ];
 
   for (const mirror of mirrors) {
+    if (isOffline()) break;
     try {
       const res = await fetch(mirror, {
         method: 'POST',
@@ -298,7 +313,8 @@ export async function fetchOverpassHospitals(bbox = { south: 28.36, west: 76.98,
           };
         })
         .filter(Boolean);
-    } catch {
+    } catch (err) {
+      markNetworkFailure(err);
       // try next mirror
     }
   }
@@ -313,6 +329,7 @@ export async function fetchOverpassHospitals(bbox = { south: 28.36, west: 76.98,
  * @returns {Promise<{ isLive: boolean, source: string, count: number }>}
  */
 export async function fetchDataGovInRecords(apiKey) {
+  if (isOffline()) return { isLive: false, source: DATA_GOV_IN_CONFIG.sourceName, count: 0 };
   const key =
     apiKey ||
     (typeof import.meta !== 'undefined' && import.meta.env?.VITE_DATA_GOV_IN_API_KEY) ||
@@ -330,7 +347,8 @@ export async function fetchDataGovInRecords(apiKey) {
       source: DATA_GOV_IN_CONFIG.sourceName,
       count: data.count || 0,
     };
-  } catch {
+  } catch (err) {
+    markNetworkFailure(err);
     return { isLive: false, source: DATA_GOV_IN_CONFIG.sourceName, count: 0 };
   }
 }

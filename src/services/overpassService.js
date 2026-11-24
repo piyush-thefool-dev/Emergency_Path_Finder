@@ -9,6 +9,7 @@
  */
 
 import { haversineDistance } from '../utils/geo.js';
+import { isOffline, markNetworkFailure } from '../utils/network.js';
 
 export const OVERPASS_MIRRORS = [
   'https://overpass.osm.ch/api/interpreter',
@@ -179,10 +180,14 @@ export function parseOverpassJsonToGraph(overpassJson) {
  * @returns {Promise<{ graph: Object, stats: Object, mirrorUsed: string }>}
  */
 export async function downloadOverpassGrid(bbox = GREATER_NOIDA_BBOX) {
+  if (isOffline()) {
+    throw new Error('Offline (Using bundled high-fidelity OSM graph)');
+  }
   const query = buildOverpassQuery(bbox);
   let lastError = null;
 
   for (const mirror of OVERPASS_MIRRORS) {
+    if (isOffline()) break;
     try {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 20000);
@@ -215,7 +220,10 @@ export async function downloadOverpassGrid(bbox = GREATER_NOIDA_BBOX) {
         isLive: true,
       };
     } catch (err) {
-      console.warn(`Overpass query failed on ${mirror}:`, err.message);
+      markNetworkFailure(err);
+      if (!isOffline()) {
+        console.warn(`Overpass query failed on ${mirror}:`, err.message);
+      }
       lastError = err;
     }
   }

@@ -5,6 +5,7 @@
  *
  * Each facility is mapped to exact GPS coordinates, road network intersection node,
  * emergency hotline numbers, clinical specialties, and capacity metrics.
+ * Calibrated against OpenStreetMap and Google Maps ground truth.
  */
 
 export const PAN_INDIA_HOSPITALS = [
@@ -13,8 +14,8 @@ export const PAN_INDIA_HOSPITALS = [
     "name": "Sharda Super Speciality Hospital",
     "shortName": "Sharda Hospital (Greater Noida)",
     "nodeId": "n_kp3_north",
-    "lat": 28.4682,
-    "lon": 77.4988,
+    "lat": 28.4745,
+    "lon": 77.4827,
     "specialties": [
       "trauma_center",
       "cardiology",
@@ -46,8 +47,8 @@ export const PAN_INDIA_HOSPITALS = [
     "name": "Kailash Hospital & Neuro Institute",
     "shortName": "Kailash Hospital (Greater Noida)",
     "nodeId": "n_pari_east",
-    "lat": 28.482,
-    "lon": 77.514,
+    "lat": 28.4708,
+    "lon": 77.5054,
     "specialties": [
       "cardiology",
       "general_emergency",
@@ -67,7 +68,7 @@ export const PAN_INDIA_HOSPITALS = [
       "source": "State Health Registry (Verified)",
       "lastUpdated": "2026-11-23T19:00:38.711Z"
     },
-    "address": "Plot 23, Sector Alpha II (Near Pari Chowk), Greater Noida, UP 201308",
+    "address": "Plot 23, Institutional Area, Knowledge Park I (Near Pari Chowk), Greater Noida, UP 201308",
     "phone": "+91 99902 22222",
     "alternatePhone": "+91 120 353 3333",
     "isLiveWibData": true,
@@ -77,10 +78,10 @@ export const PAN_INDIA_HOSPITALS = [
   {
     "id": "hosp_yatharth",
     "name": "Yatharth Super Speciality Hospital",
-    "shortName": "Yatharth Hospital (Alpha 1)",
+    "shortName": "Yatharth Hospital (Omega 1)",
     "nodeId": "n_alpha1_center",
-    "lat": 28.495,
-    "lon": 77.525,
+    "lat": 28.4516,
+    "lon": 77.51,
     "specialties": [
       "burn_unit",
       "trauma_center",
@@ -100,7 +101,7 @@ export const PAN_INDIA_HOSPITALS = [
       "source": "State Health Registry (Verified)",
       "lastUpdated": "2026-11-23T19:00:38.711Z"
     },
-    "address": "Sector Alpha I Commercial Belt, Greater Noida, UP 201308",
+    "address": "Plot 1, Sector Omega 1, Near Pari Chowk, Greater Noida, UP 201308",
     "phone": "+91 88004 47777",
     "alternatePhone": "1800 330 0000",
     "isLiveWibData": true,
@@ -112,8 +113,8 @@ export const PAN_INDIA_HOSPITALS = [
     "name": "Jaypee Healthcare Center & Hospital",
     "shortName": "Jaypee Hospital (Delta 1)",
     "nodeId": "n_delta1_east",
-    "lat": 28.488,
-    "lon": 77.545,
+    "lat": 28.4785,
+    "lon": 77.518,
     "specialties": [
       "general_emergency",
       "cardiology"
@@ -132,7 +133,7 @@ export const PAN_INDIA_HOSPITALS = [
       "source": "State Health Registry (Verified)",
       "lastUpdated": "2026-11-23T19:00:38.711Z"
     },
-    "address": "Sector Delta I Institutional Area, Greater Noida, UP 201315",
+    "address": "Jaypee Greens Complex, Surajpur-Kasna Road, Greater Noida, UP 201315",
     "phone": "+91 120 412 2222",
     "alternatePhone": "1800 102 9102",
     "isLiveWibData": true,
@@ -144,8 +145,8 @@ export const PAN_INDIA_HOSPITALS = [
     "name": "Government Institute of Medical Sciences (GIMS)",
     "shortName": "GIMS Hospital (Greater Noida)",
     "nodeId": "n_surajpur_south",
-    "lat": 28.512,
-    "lon": 77.482,
+    "lat": 28.4235,
+    "lon": 77.5305,
     "specialties": [
       "trauma_center",
       "burn_unit",
@@ -167,7 +168,7 @@ export const PAN_INDIA_HOSPITALS = [
       "source": "State Health Registry (Verified)",
       "lastUpdated": "2026-11-23T19:00:38.711Z"
     },
-    "address": "Surajpur-Kasna Institutional Road, Greater Noida, UP 201310",
+    "address": "Kasna, Near Gautam Buddha University, Greater Noida, UP 201310",
     "phone": "+91 73038 84224",
     "alternatePhone": "+91 120 234 1024",
     "isLiveWibData": true,
@@ -177,10 +178,10 @@ export const PAN_INDIA_HOSPITALS = [
   {
     "id": "hosp_bakson",
     "name": "Bakson Multi-Speciality Hospital",
-    "shortName": "Bakson Hospital (KP III)",
+    "shortName": "Bakson Hospital (KP I)",
     "nodeId": "osm_kp3_south",
-    "lat": 28.457,
-    "lon": 77.4975,
+    "lat": 28.4676,
+    "lon": 77.502,
     "specialties": [
       "general_emergency"
     ],
@@ -197,7 +198,7 @@ export const PAN_INDIA_HOSPITALS = [
       "source": "State Health Registry (Verified)",
       "lastUpdated": "2026-11-23T19:00:38.711Z"
     },
-    "address": "Plot 36B, Knowledge Park III, Greater Noida, UP 201310",
+    "address": "Plot 36B, Knowledge Park I, Near Pari Chowk, Greater Noida, UP 201310",
     "phone": "+91 92893 22162",
     "alternatePhone": "+91 120 232 1376",
     "isLiveWibData": true,
@@ -209,8 +210,8 @@ export const PAN_INDIA_HOSPITALS = [
     "name": "Navin Hospital & Critical Care",
     "shortName": "Navin Hospital (Alpha II)",
     "nodeId": "n_alpha2_navin",
-    "lat": 28.4891,
-    "lon": 77.5142,
+    "lat": 28.4775,
+    "lon": 77.5186,
     "specialties": [
       "cardiology",
       "general_emergency",
@@ -242,8 +243,8 @@ export const PAN_INDIA_HOSPITALS = [
     "name": "Promhex Amrapali Multi-Speciality Hospital",
     "shortName": "Promhex Amrapali (Omega 1)",
     "nodeId": "n_omega1_promhex",
-    "lat": 28.4682,
-    "lon": 77.5255,
+    "lat": 28.472,
+    "lon": 77.514,
     "specialties": [
       "trauma_center",
       "cardiology",
@@ -263,7 +264,7 @@ export const PAN_INDIA_HOSPITALS = [
       "source": "State Health Registry (Verified)",
       "lastUpdated": "2026-11-23T19:00:38.711Z"
     },
-    "address": "Sector Omega 1, Near Pari Chowk, Greater Noida, UP 201310",
+    "address": "Plot NH-34, Sector P-2 / Omega 1, Near Pari Chowk, Greater Noida, UP 201308",
     "phone": "+91 120 458 8888",
     "alternatePhone": "+91 93112 55555",
     "isLiveWibData": true,
@@ -275,8 +276,8 @@ export const PAN_INDIA_HOSPITALS = [
     "name": "Prakash Hospital Greater Noida",
     "shortName": "Prakash Hospital (Kasna Rd)",
     "nodeId": "n_omega1_prakash",
-    "lat": 28.4715,
-    "lon": 77.529,
+    "lat": 28.4559,
+    "lon": 77.5177,
     "specialties": [
       "general_emergency",
       "trauma_center"
@@ -295,7 +296,7 @@ export const PAN_INDIA_HOSPITALS = [
       "source": "State Health Registry (Verified)",
       "lastUpdated": "2026-11-23T19:00:38.711Z"
     },
-    "address": "Plot No. 04, Builders Area, Omega 1, Greater Noida, UP 201308",
+    "address": "Plot No. 04, Builders Area, Sector 20 / Omega 1, Greater Noida, UP 201308",
     "phone": "+91 120 232 6000",
     "alternatePhone": "+91 98111 23456",
     "isLiveWibData": true,
@@ -307,8 +308,8 @@ export const PAN_INDIA_HOSPITALS = [
     "name": "Apollo Spectra Hospital & Clinic",
     "shortName": "Apollo Spectra (Alpha 1)",
     "nodeId": "n_alpha1_spectra",
-    "lat": 28.4838,
-    "lon": 77.5118,
+    "lat": 28.4623,
+    "lon": 77.489,
     "specialties": [
       "general_emergency",
       "cardiology"
@@ -327,7 +328,7 @@ export const PAN_INDIA_HOSPITALS = [
       "source": "State Health Registry (Verified)",
       "lastUpdated": "2026-11-23T19:00:38.711Z"
     },
-    "address": "Plot Alpha 1 Commercial Belt, Greater Noida, UP 201308",
+    "address": "Pocket 7, NSG Chowk, Opposite Mitra Enclave, Greater Noida, UP 201310",
     "phone": "+91 120 435 0000",
     "alternatePhone": "1860 500 2244",
     "isLiveWibData": true,
@@ -339,8 +340,8 @@ export const PAN_INDIA_HOSPITALS = [
     "name": "Green City Hospital",
     "shortName": "Green City (Surajpur)",
     "nodeId": "n_surajpur_greencity",
-    "lat": 28.5215,
-    "lon": 77.4892,
+    "lat": 28.4837,
+    "lon": 77.527,
     "specialties": [
       "general_emergency",
       "trauma_center"
@@ -358,7 +359,7 @@ export const PAN_INDIA_HOSPITALS = [
       "source": "State Health Registry (Verified)",
       "lastUpdated": "2026-11-23T19:00:38.711Z"
     },
-    "address": "Near Surajpur Industrial Area, Ecotech II, Greater Noida, UP 201306",
+    "address": "Gail Society, Sector PI, Near Builders Area, Greater Noida, UP 201308",
     "phone": "+91 98114 11223",
     "alternatePhone": "+91 120 256 0000",
     "isLiveWibData": true,
@@ -370,8 +371,8 @@ export const PAN_INDIA_HOSPITALS = [
     "name": "Yatharth Super Speciality Hospital (GN West)",
     "shortName": "Yatharth GN West",
     "nodeId": "n_gnw_yatharth",
-    "lat": 28.6015,
-    "lon": 77.4385,
+    "lat": 28.6025,
+    "lon": 77.442,
     "specialties": [
       "trauma_center",
       "cardiology",
@@ -404,8 +405,8 @@ export const PAN_INDIA_HOSPITALS = [
     "name": "Sarvodaya Hospital & Research Centre (GN West)",
     "shortName": "Sarvodaya GN West",
     "nodeId": "n_gnw_sarvodaya",
-    "lat": 28.606,
-    "lon": 77.432,
+    "lat": 28.6085,
+    "lon": 77.4275,
     "specialties": [
       "cardiology",
       "general_emergency",
@@ -425,7 +426,7 @@ export const PAN_INDIA_HOSPITALS = [
       "source": "State Health Registry (Verified)",
       "lastUpdated": "2026-11-23T19:00:38.711Z"
     },
-    "address": "Near Char Murti Chowk, Gaur City 1, Greater Noida West, UP 201318",
+    "address": "Sector 16C, Gaur City 2, Greater Noida West, UP 201009",
     "phone": "+91 96545 01414",
     "alternatePhone": "1800 313 1414",
     "isLiveWibData": true,
@@ -437,8 +438,8 @@ export const PAN_INDIA_HOSPITALS = [
     "name": "Felix Multi-Speciality Hospital",
     "shortName": "Felix Hospital (Sec 137)",
     "nodeId": "n_noida_sec137_metro",
-    "lat": 28.504,
-    "lon": 77.404,
+    "lat": 28.5059,
+    "lon": 77.4086,
     "specialties": [
       "cardiology",
       "trauma_center",
@@ -470,8 +471,8 @@ export const PAN_INDIA_HOSPITALS = [
     "name": "Yatharth Super Speciality Hospital Sector 110",
     "shortName": "Yatharth Noida (Sec 110)",
     "nodeId": "n_noida_sec110_yatharth",
-    "lat": 28.5284,
-    "lon": 77.3872,
+    "lat": 28.5322,
+    "lon": 77.3844,
     "specialties": [
       "trauma_center",
       "cardiology",
@@ -504,8 +505,8 @@ export const PAN_INDIA_HOSPITALS = [
     "name": "Jaypee Hospital Noida",
     "shortName": "Jaypee Noida (Sec 128)",
     "nodeId": "n_noida_sec128_jaypee",
-    "lat": 28.518,
-    "lon": 77.368,
+    "lat": 28.5154,
+    "lon": 77.3714,
     "specialties": [
       "trauma_center",
       "cardiology",
@@ -538,8 +539,8 @@ export const PAN_INDIA_HOSPITALS = [
     "name": "Fortis Hospital Noida",
     "shortName": "Fortis Noida (Sec 62)",
     "nodeId": "n_noida_sec62_fortis",
-    "lat": 28.619,
-    "lon": 77.362,
+    "lat": 28.6187,
+    "lon": 77.3726,
     "specialties": [
       "trauma_center",
       "cardiology",
@@ -604,8 +605,8 @@ export const PAN_INDIA_HOSPITALS = [
     "name": "All India Institute of Medical Sciences (AIIMS New Delhi)",
     "shortName": "AIIMS New Delhi",
     "nodeId": "n_delhi_aiims",
-    "lat": 28.5672,
-    "lon": 77.21,
+    "lat": 28.5674,
+    "lon": 77.2096,
     "specialties": [
       "trauma_center",
       "cardiology",
@@ -638,8 +639,8 @@ export const PAN_INDIA_HOSPITALS = [
     "name": "Safdarjung Hospital & VMMC",
     "shortName": "Safdarjung Hospital (Delhi)",
     "nodeId": "n_delhi_aiims",
-    "lat": 28.57,
-    "lon": 77.2075,
+    "lat": 28.5672,
+    "lon": 77.2051,
     "specialties": [
       "burn_unit",
       "general_emergency",
@@ -737,8 +738,8 @@ export const PAN_INDIA_HOSPITALS = [
     "name": "Manipal Hospital Dwarka",
     "shortName": "Manipal Dwarka (West Delhi)",
     "nodeId": "n_delhi_dwarka_sec6",
-    "lat": 28.588,
-    "lon": 77.062,
+    "lat": 28.5929,
+    "lon": 77.0638,
     "specialties": [
       "cardiology",
       "trauma_center",
@@ -804,8 +805,8 @@ export const PAN_INDIA_HOSPITALS = [
     "name": "Fortis Memorial Research Institute (FMRI)",
     "shortName": "Fortis Gurugram (FMRI)",
     "nodeId": "n_gurgaon_fortis_fmri",
-    "lat": 28.457,
-    "lon": 77.074,
+    "lat": 28.4568,
+    "lon": 77.0729,
     "specialties": [
       "cardiology",
       "general_emergency",
@@ -837,8 +838,8 @@ export const PAN_INDIA_HOSPITALS = [
     "name": "Amrita Hospital Faridabad",
     "shortName": "Amrita Hospital (Faridabad)",
     "nodeId": "n_fbd_amrita_hosp",
-    "lat": 28.428,
-    "lon": 77.362,
+    "lat": 28.4256,
+    "lon": 77.3554,
     "specialties": [
       "trauma_center",
       "burn_unit",
@@ -971,8 +972,8 @@ export const PAN_INDIA_HOSPITALS = [
     "name": "Indraprastha Apollo Hospitals",
     "shortName": "Apollo Hospital (Sarita Vihar)",
     "nodeId": "n_delhi_ashram",
-    "lat": 28.5398,
-    "lon": 77.2831,
+    "lat": 28.5408,
+    "lon": 77.2835,
     "specialties": [
       "trauma_center",
       "cardiology",
@@ -1497,8 +1498,8 @@ export const PAN_INDIA_HOSPITALS = [
     "name": "Holy Family Hospital",
     "shortName": "Holy Family Hospital (Okhla)",
     "nodeId": "n_delhi_ashram",
-    "lat": 28.5636,
-    "lon": 77.2763,
+    "lat": 28.5622,
+    "lon": 77.2758,
     "specialties": [
       "cardiology",
       "general_emergency",
@@ -1530,8 +1531,8 @@ export const PAN_INDIA_HOSPITALS = [
     "name": "Batra Hospital & Medical Research Centre",
     "shortName": "Batra Hospital (South Delhi)",
     "nodeId": "n_delhi_saket_max",
-    "lat": 28.5147,
-    "lon": 77.2519,
+    "lat": 28.5139,
+    "lon": 77.2456,
     "specialties": [
       "cardiology",
       "trauma_center",
@@ -1563,8 +1564,8 @@ export const PAN_INDIA_HOSPITALS = [
     "name": "Moolchand Medcity Hospital",
     "shortName": "Moolchand Hospital (Lajpat Nagar)",
     "nodeId": "n_delhi_aiims",
-    "lat": 28.5684,
-    "lon": 77.2372,
+    "lat": 28.5667,
+    "lon": 77.2355,
     "specialties": [
       "cardiology",
       "general_emergency",
@@ -1988,8 +1989,8 @@ export const PAN_INDIA_HOSPITALS = [
     "name": "Sanjeevani Hospital Greater Noida",
     "shortName": "Sanjeevani Hospital (Alpha 1)",
     "nodeId": "n_alpha1_center",
-    "lat": 28.4912,
-    "lon": 77.5215,
+    "lat": 28.4884,
+    "lon": 77.5023,
     "specialties": [
       "general_emergency"
     ],
@@ -2007,7 +2008,7 @@ export const PAN_INDIA_HOSPITALS = [
       "source": "State Health Registry (Verified)",
       "lastUpdated": "2026-11-23T19:00:38.711Z"
     },
-    "address": "Commercial Complex, Sector Alpha 1, Greater Noida, UP 201308",
+    "address": "C-Block Commercial Complex, Sector Gamma 1, Greater Noida, UP 201308",
     "phone": "+91 120 232 0233",
     "alternatePhone": "+91 98114 88399",
     "isLiveWibData": true,
@@ -2019,8 +2020,8 @@ export const PAN_INDIA_HOSPITALS = [
     "name": "Shri Krishna Life Line Hospital",
     "shortName": "Shri Krishna Hospital (Beta 1)",
     "nodeId": "n_pari_east",
-    "lat": 28.489,
-    "lon": 77.509,
+    "lat": 28.4613,
+    "lon": 77.5287,
     "specialties": [
       "general_emergency",
       "trauma_center"
@@ -2039,7 +2040,7 @@ export const PAN_INDIA_HOSPITALS = [
       "source": "State Health Registry (Verified)",
       "lastUpdated": "2026-11-23T19:00:38.711Z"
     },
-    "address": "Plot 4, Institutional Area, Sector Beta 1, Greater Noida, UP 201308",
+    "address": "Sector 31 Tau / Sector 20 Commercial Area, Greater Noida, UP 201310",
     "phone": "+91 120 232 6666",
     "alternatePhone": "+91 98997 73333",
     "isLiveWibData": true,
@@ -2051,8 +2052,8 @@ export const PAN_INDIA_HOSPITALS = [
     "name": "Astha Hospital Greater Noida",
     "shortName": "Astha Hospital (Gamma 1)",
     "nodeId": "n_kp3_north",
-    "lat": 28.4825,
-    "lon": 77.498,
+    "lat": 28.4788,
+    "lon": 77.5197,
     "specialties": [
       "general_emergency"
     ],
@@ -2070,7 +2071,7 @@ export const PAN_INDIA_HOSPITALS = [
       "source": "State Health Registry (Verified)",
       "lastUpdated": "2026-11-23T19:00:38.711Z"
     },
-    "address": "Sector Gamma 1 Commercial Belt, Greater Noida, UP 201308",
+    "address": "Commercial Belt, Sector Gamma 1 / Alpha II, Greater Noida, UP 201308",
     "phone": "+91 120 232 2323",
     "alternatePhone": "+91 98110 33445",
     "isLiveWibData": true,
@@ -2114,8 +2115,8 @@ export const PAN_INDIA_HOSPITALS = [
     "name": "Paras Health Hospital Gurugram",
     "shortName": "Paras Hospital (Gurugram)",
     "nodeId": "n_gurgaon_fortis_fmri",
-    "lat": 28.4552,
-    "lon": 77.0945,
+    "lat": 28.451,
+    "lon": 77.0876,
     "specialties": [
       "trauma_center",
       "cardiology",
@@ -2278,8 +2279,8 @@ export const PAN_INDIA_HOSPITALS = [
     "name": "Sarvodaya Hospital & Research Centre Faridabad",
     "shortName": "Sarvodaya Hospital (Sec 8)",
     "nodeId": "n_fbd_bata_chowk",
-    "lat": 28.3752,
-    "lon": 77.3312,
+    "lat": 28.3679,
+    "lon": 77.3362,
     "specialties": [
       "trauma_center",
       "cardiology",
@@ -9454,10 +9455,6 @@ export const PAN_INDIA_HOSPITALS = [
   }
 ];
 
-/**
- * Official Pan-India & National Emergency Medical Dispatch Helplines.
- * Guaranteed 24/7 working lines for immediate medical transport and casualty dispatch.
- */
 export const NATIONAL_EMERGENCY_NUMBERS = [
   {
     "code": "108",
@@ -9478,3 +9475,5 @@ export const NATIONAL_EMERGENCY_NUMBERS = [
     "tel": "tel:102"
   }
 ];
+
+export default PAN_INDIA_HOSPITALS;

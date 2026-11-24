@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { getSearchRelevance } from '../utils/hospitalSearch.js';
+import { haversineDistance } from '../utils/geo.js';
 import { PAN_INDIA_HOSPITALS } from '../data/panIndiaHospitals.js';
 
 test('Smart Multi-Token Hospital Search Verification', async (t) => {
@@ -47,5 +48,26 @@ test('Smart Multi-Token Hospital Search Verification', async (t) => {
     const first = PAN_INDIA_HOSPITALS[0];
     assert.equal(getSearchRelevance(first, ''), 1);
     assert.equal(getSearchRelevance(first, '   '), 1);
+  });
+
+  await t.test('100 km radius filter: includes all reachable hospitals within 100 km and excludes distant facilities', () => {
+    const amb = { lat: 28.4625, lon: 77.4930 }; // Greater Noida
+    const SEARCH_MAX_RADIUS_M = 100 * 1000;
+
+    const reachable = PAN_INDIA_HOSPITALS.filter((h) => {
+      const d = haversineDistance(amb.lat, amb.lon, h.lat, h.lon);
+      return d <= SEARCH_MAX_RADIUS_M;
+    });
+
+    // Should include Greater Noida, Noida, Delhi, Gurugram, Faridabad apex centers
+    assert.ok(reachable.length >= 70, `Expected at least 70 hospitals within 100 km, got ${reachable.length}`);
+    assert.ok(reachable.some((h) => h.id === 'hosp_aiims_delhi'), 'AIIMS Delhi (~36 km) must be in 100 km search');
+    assert.ok(reachable.some((h) => h.id === 'hosp_kailash_noida_sec27'), 'Kailash Noida must be in 100 km search');
+    assert.ok(reachable.some((h) => h.id === 'hosp_max_saket'), 'Max Saket must be in 100 km search');
+
+    // Should strictly exclude distant national hospitals > 100 km (e.g. Mumbai, Bangalore, Kolkata)
+    assert.ok(!reachable.some((h) => h.city === 'Mumbai'), 'Mumbai hospitals (>1000 km) must be excluded from 100 km search');
+    assert.ok(!reachable.some((h) => h.city === 'Bengaluru'), 'Bengaluru hospitals (>1700 km) must be excluded from 100 km search');
+    assert.ok(!reachable.some((h) => h.city === 'Kolkata'), 'Kolkata hospitals (>1300 km) must be excluded from 100 km search');
   });
 });

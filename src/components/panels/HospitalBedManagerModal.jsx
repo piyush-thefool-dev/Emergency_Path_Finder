@@ -143,7 +143,7 @@ export function HospitalBedManagerModal({
     <div
       className={
         asPage
-          ? 'flex-1 min-h-0 flex flex-col'
+          ? 'flex-1 min-h-0 flex flex-col w-full h-full overflow-hidden'
           : 'fixed inset-0 z-[99999] flex items-center justify-center p-3 sm:p-5 bg-slate-950/70 backdrop-blur-md animate-in fade-in duration-150'
       }
       role={asPage ? undefined : 'dialog'}
@@ -153,7 +153,7 @@ export function HospitalBedManagerModal({
       <div
         className={
           asPage
-            ? 'flex-1 min-h-0 flex flex-col text-slate-800 dark:text-slate-100'
+            ? 'flex-1 min-h-0 flex flex-col w-full h-full text-slate-800 dark:text-slate-100 overflow-hidden'
             : 'bg-white/95 dark:bg-slate-900/95 backdrop-blur-2xl rounded-2xl border border-slate-200/90 dark:border-white/[0.08] shadow-2xl max-w-3xl w-full max-h-[92dvh] flex flex-col overflow-hidden text-slate-800 dark:text-slate-100 transition-colors'
         }
       >
@@ -204,8 +204,9 @@ export function HospitalBedManagerModal({
           </button>
         </div>
 
-        {/* Scrollable list */}
-        <form onSubmit={handleSave} className={`flex-1 overflow-y-auto p-3 sm:p-4 space-y-3 no-scrollbar ${asPage ? 'pb-0 sm:pb-0' : ''}`}>
+        {/* Scrollable list & Sticky Actions */}
+        <form onSubmit={handleSave} className="flex-1 min-h-0 flex flex-col overflow-hidden">
+          <div className="flex-1 min-h-0 overflow-y-auto p-3 sm:p-4 space-y-3 no-scrollbar overscroll-contain">
           {editedList
             .map((hosp, idx) => ({ hosp, idx, rel: getSearchRelevance(hosp, searchTerm) }))
             .filter(({ rel }) => rel > 0)
@@ -388,9 +389,10 @@ export function HospitalBedManagerModal({
               </div>
             );
           })}
+          </div>
 
           {/* Sticky Actions */}
-          <div className={`sticky bottom-0 z-10 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 pt-3 pb-2 flex items-center justify-between gap-3 ${asPage ? '-mx-3 sm:-mx-4 px-3 sm:px-4 pb-3' : ''}`}>
+          <div className="shrink-0 z-10 bg-white/95 dark:bg-slate-900/95 border-t border-slate-200/90 dark:border-white/[0.08] px-4 py-3 flex items-center justify-between gap-3 backdrop-blur-md shadow-md">
             {savedNotice ? (
               <span className="text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5">
                 <CheckCircle2 className="w-4 h-4" />
@@ -414,9 +416,9 @@ export function HospitalBedManagerModal({
               )}
               <button
                 type="submit"
-                className={`px-4 py-1.5 bg-slate-900 dark:bg-[#D62828] hover:bg-slate-800 dark:hover:bg-[#b52222] text-white rounded-lg text-xs font-mono font-bold flex items-center justify-center gap-1.5 shadow-xs cursor-pointer ${asPage ? 'flex-1 sm:flex-none' : ''}`}
+                className={`px-4 py-2 bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 text-white rounded-xl text-xs font-mono font-bold flex items-center justify-center gap-1.5 shadow-md active:scale-95 transition-all cursor-pointer ${asPage ? 'flex-1 sm:flex-none' : ''}`}
               >
-                <Save className="w-3.5 h-3.5" />
+                <Save className="w-4 h-4" />
                 <span>Save Parameters</span>
               </button>
             </div>

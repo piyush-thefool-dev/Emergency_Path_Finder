@@ -20,8 +20,8 @@ export function DispatchProvider({ children }) {
   const routing = useRouting(graph.weightedGraph, false);
   const apiHealth = useApiHealth({ tomtomKey: graph.trafficConfig?.tomtomApiKey || '' });
 
-  // Ambulance pin drag lock: locked by default to prevent accidental coordinate displacement
-  const [canDragAmbulance, setCanDragAmbulance] = useState(false);
+  // Ambulance pin drag lock: true by default so dispatcher can immediately drag/relocate pin
+  const [canDragAmbulance, setCanDragAmbulance] = useState(true);
 
   // Real-time road geometry and odometer telemetry resolved from OSRM
   const [roadTelemetry, setRoadTelemetry] = useState(null); // { distanceM, durationSec, status }

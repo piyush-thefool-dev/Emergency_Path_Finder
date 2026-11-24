@@ -8,6 +8,8 @@
  *   4. Municipal SUMO / NCR traffic simulation (integration work required).
  */
 
+import { isOffline, markNetworkFailure } from '../utils/network.js';
+
 const STORAGE_KEY = 'epf_traffic_provider_config';
 
 export const TRAFFIC_PROVIDERS = {
@@ -96,27 +98,41 @@ export function saveStoredTrafficConfig(config) {
  * @returns {Promise<{ durationSec: number, distanceM: number, effectiveSpeedKph: number, source: string }>}
  */
 export async function queryLiveOsrmSegment(fromLat, fromLon, toLat, toLon) {
+  if (isOffline()) {
+    return {
+      durationSec: 180,
+      distanceM: 2000,
+      effectiveSpeedKph: 40,
+      source: 'Offline road network baseline',
+      timestamp: new Date().toISOString(),
+    };
+  }
   const url = `https://router.project-osrm.org/route/v1/driving/${fromLon},${fromLat};${toLon},${toLat}?overview=false`;
-  const res = await fetch(url, { headers: { Accept: 'application/json' } });
-  if (!res.ok) {
-    throw new Error(`OSRM returned ${res.status}`);
-  }
-  const data = await res.json();
-  if (data.code !== 'Ok' || !data.routes || data.routes.length === 0) {
-    throw new Error('No route found in OSRM');
-  }
-  const route = data.routes[0];
-  const durationSec = Math.max(1, Math.round(route.duration));
-  const distanceM = Math.max(1, Math.round(route.distance));
-  const effectiveSpeedKph = Number(((distanceM / durationSec) * 3.6).toFixed(1));
+  try {
+    const res = await fetch(url, { headers: { Accept: 'application/json' } });
+    if (!res.ok) {
+      throw new Error(`OSRM returned ${res.status}`);
+    }
+    const data = await res.json();
+    if (data.code !== 'Ok' || !data.routes || data.routes.length === 0) {
+      throw new Error('No route found in OSRM');
+    }
+    const route = data.routes[0];
+    const durationSec = Math.max(1, Math.round(route.duration));
+    const distanceM = Math.max(1, Math.round(route.distance));
+    const effectiveSpeedKph = Number(((distanceM / durationSec) * 3.6).toFixed(1));
 
-  return {
-    durationSec,
-    distanceM,
-    effectiveSpeedKph,
-    source: 'OpenStreetMap OSRM route estimate',
-    timestamp: new Date().toISOString(),
-  };
+    return {
+      durationSec,
+      distanceM,
+      effectiveSpeedKph,
+      source: 'OpenStreetMap OSRM route estimate',
+      timestamp: new Date().toISOString(),
+    };
+  } catch (err) {
+    markNetworkFailure(err);
+    throw err;
+  }
 }
 
 /**
@@ -130,19 +146,34 @@ export async function queryTomTomFlow(lat, lon, apiKey) {
   if (!apiKey) {
     throw new Error('TomTom API key not provided');
   }
-  const url = `https://api.tomtom.com/traffic/services/4/flowSegmentData/relative0/10/json?point=${lat},${lon}&key=${apiKey}`;
-  const res = await fetch(url);
-  if (!res.ok) {
-    throw new Error(`TomTom API returned status ${res.status}`);
+  if (isOffline()) {
+    return {
+      currentSpeedKph: 40,
+      freeFlowSpeedKph: 50,
+      confidence: 0.9,
+      roadName: 'Dispatch Corridor',
+      source: 'Offline Traffic Model',
+      timestamp: new Date().toISOString(),
+    };
   }
-  const data = await res.json();
-  const flow = data.flowSegmentData || {};
-  return {
-    currentSpeedKph: flow.currentSpeed || 40,
-    freeFlowSpeedKph: flow.freeFlowSpeed || 50,
-    confidence: flow.confidence || 0.9,
-    roadName: flow.roadName || 'Dispatch Corridor',
-    source: 'TomTom Live Traffic Flow API',
-    timestamp: new Date().toISOString(),
-  };
+  const url = `https://api.tomtom.com/traffic/services/4/flowSegmentData/relative0/10/json?point=${lat},${lon}&key=${apiKey}`;
+  try {
+    const res = await fetch(url);
+    if (!res.ok) {
+      throw new Error(`TomTom API returned status ${res.status}`);
+    }
+    const data = await res.json();
+    const flow = data.flowSegmentData || {};
+    return {
+      currentSpeedKph: flow.currentSpeed || 40,
+      freeFlowSpeedKph: flow.freeFlowSpeed || 50,
+      confidence: flow.confidence || 0.9,
+      roadName: flow.roadName || 'Dispatch Corridor',
+      source: 'TomTom Live Traffic Flow API',
+      timestamp: new Date().toISOString(),
+    };
+  } catch (err) {
+    markNetworkFailure(err);
+    throw err;
+  }
 }

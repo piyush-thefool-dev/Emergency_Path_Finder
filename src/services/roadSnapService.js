@@ -24,6 +24,8 @@ export const VALHALLA_BASES = [
 
 export const ORS_BASE = 'https://api.openrouteservice.org/v2/directions/driving-car';
 
+import { isOffline, markNetworkFailure } from '../utils/network.js';
+
 const CLOSURE_RADIUS_M = 45;
 const DETOUR_OFFSETS_M = [350, 700];
 const cache = new Map();
@@ -119,6 +121,7 @@ export const STADIA_VALHALLA_BASE = 'https://api.stadiamaps.com/route/v1';
 
 /* ---------- Valhalla Emergency Priority Route Query ---------- */
 async function valhallaRoutes(points, signal) {
+  if (isOffline()) return [];
   const stadiaKey = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_STADIA_API_KEY) || '';
   const bases = [
     stadiaKey ? `${STADIA_VALHALLA_BASE}?api_key=${encodeURIComponent(stadiaKey)}` : null,
@@ -126,6 +129,7 @@ async function valhallaRoutes(points, signal) {
   ].filter(Boolean);
 
   for (const base of bases) {
+    if (isOffline()) break;
     try {
       const payload = {
         locations: points.map(([lat, lon]) => ({ lat, lon })),
@@ -162,6 +166,7 @@ async function valhallaRoutes(points, signal) {
       }
     } catch (err) {
       if (err?.name === 'AbortError') throw err;
+      markNetworkFailure(err);
     }
   }
   return [];
@@ -169,6 +174,7 @@ async function valhallaRoutes(points, signal) {
 
 /* ---------- OpenRouteService (ORS) Route Query (with avoid_polygons) ---------- */
 async function orsRoutes(points, closedSegments = [], signal) {
+  if (isOffline()) return [];
   const orsKey = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_ORS_API_KEY) || '';
   if (!orsKey) return [];
   try {
@@ -221,6 +227,7 @@ async function orsRoutes(points, closedSegments = [], signal) {
     }];
   } catch (err) {
     if (err?.name === 'AbortError') throw err;
+    markNetworkFailure(err);
     return [];
   }
 }
@@ -229,8 +236,10 @@ async function orsRoutes(points, closedSegments = [], signal) {
 const lonLat = ([lat, lon]) => `${lon.toFixed(6)},${lat.toFixed(6)}`;
 
 async function osrmJson(path, signal) {
+  if (isOffline()) throw new Error('Offline (Network disconnected)');
   let lastError;
   for (const base of OSRM_BASES) {
+    if (isOffline()) break;
     try {
       const res = await fetch(`${base}${path}`, { signal });
       if (!res.ok) throw new Error(`Routing HTTP ${res.status}`);
@@ -239,6 +248,7 @@ async function osrmJson(path, signal) {
       return data;
     } catch (err) {
       if (err?.name === 'AbortError') throw err;
+      markNetworkFailure(err);
       lastError = err;
     }
   }
@@ -260,7 +270,7 @@ async function osrmRoutes(points, signal, alternatives = false) {
 
 /** Snaps GPS coordinate traces to road centerlines using OSRM /match or /nearest. */
 export async function matchGpsCoordinates(points, signal) {
-  if (!points || points.length === 0) return null;
+  if (!points || points.length === 0 || isOffline()) return null;
   if (points.length === 1) {
     return snapToRoad(points[0], signal);
   }
@@ -279,6 +289,7 @@ export async function matchGpsCoordinates(points, signal) {
 
 /** Snap an arbitrary point to the nearest driveable road so detour via-points never create spurs. */
 async function snapToRoad(point, signal) {
+  if (isOffline()) return null;
   try {
     const data = await osrmJson(`/nearest/v1/driving/${lonLat(point)}?number=1`, signal);
     const loc = data?.waypoints?.[0]?.location;
@@ -317,6 +328,9 @@ function pickBest(routes) {
  * @returns {Promise<{coords:Array<[number,number]>, status:'ok'|'rerouted'|'blocked', distanceM:number, durationSec:number}>}
  */
 export async function fetchRoadRoute({ start, end, closed = [], slow = [] }, signal) {
+  if (isOffline()) {
+    throw new Error('Offline (Using local graph route)');
+  }
   const key = JSON.stringify([start, end, closed, slow.map((s) => [s.segment, s.factor])]);
   if (cache.has(key)) return cache.get(key);
 

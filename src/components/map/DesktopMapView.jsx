@@ -116,7 +116,9 @@ export function MapView({
   onAmbulanceMove,
   snappedSourceNode,
   hospitals = [],
+  searchHospitals = [],
   activeHospitalId,
+  activeHospital: activeHospitalProp = null,
   onSelectHospital,
   activePathNodeIds = [],
   incidents = new Map(),
@@ -146,8 +148,8 @@ export function MapView({
   const handleRecenter = () => setRecenterTrigger((t) => t + 1);
 
   const targetHospital = useMemo(
-    () => hospitals.find((h) => h.id === activeHospitalId) || null,
-    [hospitals, activeHospitalId]
+    () => activeHospitalProp || hospitals.find((h) => h.id === activeHospitalId) || null,
+    [activeHospitalProp, hospitals, activeHospitalId]
   );
 
   const defaultCenter = useMemo(() => {
@@ -209,7 +211,7 @@ export function MapView({
           onAddIncident={onAddIncident}
           onRemoveIncident={onRemoveIncident}
           routeStart={ambulancePos}
-          routeEnd={hospitals.find((h) => h.id === activeHospitalId) || null}
+          routeEnd={targetHospital}
           onRoadResolved={onRoadResolved}
           showAllNodes={showGraphNetwork}
           showGraphEdges={showGraphNetwork}
@@ -268,26 +270,15 @@ export function MapView({
 
       {/* Top Floating Bar: Unified non-overlapping flex row (Search Bar on Left, Map Utilities on Right) */}
       <div className="absolute top-2.5 left-14 right-2.5 z-30 flex items-center justify-between gap-2 pointer-events-none">
-        {/* Left: Clean 21st.dev Command Search Bar & Auto Corridor Status Badge */}
-        <div className="pointer-events-auto flex items-center gap-2 flex-1 max-w-xl min-w-0">
-          <div className="flex-1 min-w-[200px]">
-            <HospitalSearchBar
-              hospitals={hospitals}
-              selectedHospitalId={activeHospitalId}
-              activeHospital={targetHospital}
-              onSelectHospital={onSelectHospital}
-              ambulancePos={ambulancePos}
-            />
-          </div>
-          {effectiveRadiusKm && (
-            <div
-              className="hidden md:flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border border-slate-200/80 dark:border-white/[0.08] shadow-xs text-xs font-mono font-bold text-slate-700 dark:text-slate-300 shrink-0 select-none"
-              title={`Automatic corridor filtering: showing hospitals within ${effectiveRadiusKm} km`}
-            >
-              <span className={`w-2 h-2 rounded-full ${isRadiusFallback ? 'bg-amber-500' : 'bg-emerald-500'} animate-pulse`}></span>
-              <span>{effectiveRadiusKm} km auto</span>
-            </div>
-          )}
+        {/* Left: Clean 21st.dev Command Search Bar */}
+        <div className="pointer-events-auto flex-1 max-w-sm sm:max-w-md md:max-w-lg min-w-0">
+          <HospitalSearchBar
+            hospitals={searchHospitals && searchHospitals.length > 0 ? searchHospitals : hospitals}
+            selectedHospitalId={activeHospitalId}
+            activeHospital={targetHospital}
+            onSelectHospital={onSelectHospital}
+            ambulancePos={ambulancePos}
+          />
         </div>
 
         {/* Right: Map Utility Controls (Expand & Interactive Guide) */}

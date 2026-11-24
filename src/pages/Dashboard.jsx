@@ -194,6 +194,7 @@ export function Dashboard() {
                 : activeHospital
             }
             alternateHospitals={rankingResult.alternateCandidates}
+            searchHospitals={routing.searchHospitals}
             selectedHospitalId={selectedHospitalId}
             onSelectHospital={setSelectedHospitalId}
             sourceNode={snappedSourceNode}
@@ -271,7 +272,9 @@ export function Dashboard() {
               onAmbulanceMove={setAmbulanceCoordinates}
               snappedSourceNode={snappedSourceNode}
               hospitals={topHospitals && topHospitals.length > 0 ? topHospitals : availableHospitals.slice(0, 5)}
+              searchHospitals={routing.searchHospitals}
               activeHospitalId={activeHospital?.id}
+              activeHospital={activeHospital}
               onSelectHospital={setSelectedHospitalId}
               activePathNodeIds={activeHospital?.pathNodeIds || []}
               incidents={incidents}

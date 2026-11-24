@@ -124,6 +124,7 @@ export function MapView({
   snappedSourceNode,
   hospitals = [],
   activeHospitalId,
+  activeHospital: activeHospitalProp = null,
   onSelectHospital,
   activePathNodeIds = [],
   incidents = new Map(),
@@ -151,8 +152,8 @@ export function MapView({
   );
 
   const activeHospital = useMemo(
-    () => hospitals.find((h) => h.id === activeHospitalId) || null,
-    [hospitals, activeHospitalId]
+    () => activeHospitalProp || hospitals.find((h) => h.id === activeHospitalId) || null,
+    [activeHospitalProp, hospitals, activeHospitalId]
   );
 
   return (

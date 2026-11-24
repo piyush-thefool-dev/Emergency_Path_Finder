@@ -11,6 +11,7 @@
 
 import { haversineDistance } from '../utils/geo.js';
 import { OSRM_BASES } from './roadSnapService.js';
+import { isOffline, markNetworkFailure } from '../utils/network.js';
 
 export const AUTO_RADIUS_TIERS = [5, 10, 20];
 export const DEFAULT_RADIUS_KM = 5;
@@ -18,6 +19,38 @@ export const FALLBACK_RADIUS_KM = 20;
 export const MIN_HOSPITALS_THRESHOLD = 1;
 export const DEFAULT_ROAD_DISTANCE_CUTOFF_KM = 7;
 export const TOP_HOSPITALS_CAP = 15;
+
+/**
+ * Calibrated local geometric and graph fallback when offline or OSRM is unreachable.
+ */
+function computeLocalGeometricFallback(userPos, candidateHospitals) {
+  return candidateHospitals.map((h) => {
+    let roadDistM = h.distanceM;
+    let durSec = h.travelTimeSec;
+
+    if (!roadDistM || !durSec) {
+      // Calibrated urban tortuosity factor (~1.28x straight line for Indian arterials)
+      const haversineM = h.haversineM || haversineDistance(userPos.lat, userPos.lon, h.lat, h.lon);
+      roadDistM = Math.round(haversineM * 1.28);
+      // Average 38 km/h urban velocity = 10.55 m/s + 45s signal delay
+      durSec = Math.round(roadDistM / 10.55 + 45);
+    }
+
+    const durationMin = Number((durSec / 60).toFixed(1));
+    const roadDistanceKm = Number((roadDistM / 1000).toFixed(1));
+
+    return {
+      ...h,
+      osrmDurationSec: durSec,
+      osrmDistanceM: roadDistM,
+      durationSec: durSec,
+      durationMin,
+      roadDistanceM: roadDistM,
+      roadDistanceKm,
+      routingSource: 'Calibrated Road Network Model (Offline)',
+    };
+  });
+}
 
 /**
  * Stage 1: Filters hospitals by automatic straight-line Haversine radius tiers.
@@ -134,6 +167,11 @@ export function filterHospitalsByRadius(
 export async function computeOsrmTableMetrics(userPos, candidateHospitals = [], options = {}) {
   if (!userPos || candidateHospitals.length === 0) return [];
 
+  // Offline fast-path: use calibrated local road network model without triggering network fetches
+  if (isOffline()) {
+    return computeLocalGeometricFallback(userPos, candidateHospitals);
+  }
+
   const { signal, timeoutMs = 4000 } = options;
 
   // Format OSRM coordinates string: {userLon},{userLat};{hosp1Lon},{hosp1Lat}...
@@ -145,6 +183,7 @@ export async function computeOsrmTableMetrics(userPos, candidateHospitals = [], 
 
   // Try live OSRM mirrors
   for (const base of OSRM_BASES) {
+    if (isOffline()) break;
     try {
       const controller = new AbortController();
       const combinedSignal = signal || controller.signal;
@@ -180,39 +219,14 @@ export async function computeOsrmTableMetrics(userPos, candidateHospitals = [], 
           routingSource: 'Project-OSRM Driving Table API',
         };
       });
-    } catch {
+    } catch (err) {
+      markNetworkFailure(err);
       // Continue to next mirror or fallback
     }
   }
 
   // Graceful local graph / geometric fallback when offline or in sandboxed tests
-  return candidateHospitals.map((h) => {
-    // If the hospital already has graph road travelTimeSec and distanceM, use them
-    let roadDistM = h.distanceM;
-    let durSec = h.travelTimeSec;
-
-    if (!roadDistM || !durSec) {
-      // Calibrated urban tortuosity factor (~1.28x straight line for Indian arterials)
-      const haversineM = h.haversineM || haversineDistance(userPos.lat, userPos.lon, h.lat, h.lon);
-      roadDistM = Math.round(haversineM * 1.28);
-      // Average 38 km/h urban velocity = 10.55 m/s + 45s signal delay
-      durSec = Math.round(roadDistM / 10.55 + 45);
-    }
-
-    const durationMin = Number((durSec / 60).toFixed(1));
-    const roadDistanceKm = Number((roadDistM / 1000).toFixed(1));
-
-    return {
-      ...h,
-      osrmDurationSec: durSec,
-      osrmDistanceM: roadDistM,
-      durationSec: durSec,
-      durationMin,
-      roadDistanceM: roadDistM,
-      roadDistanceKm,
-      routingSource: 'Calibrated Road Network Model (Fallback)',
-    };
-  });
+  return computeLocalGeometricFallback(userPos, candidateHospitals);
 }
 
 /**

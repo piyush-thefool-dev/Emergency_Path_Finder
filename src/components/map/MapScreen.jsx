@@ -43,6 +43,7 @@ import { useTheme } from '../../context/ThemeContext.jsx';
 import { EMERGENCY_CATEGORIES } from '../../config/emergencyCategories.js';
 import { formatDistance } from '../../utils/geo.js';
 import { formatEtaShort } from '../../utils/time.js';
+import { isOffline, subscribeNetworkStatus } from '../../utils/network.js';
 
 function RoundButton({ label, onClick, active = false, children }) {
   return (
@@ -90,6 +91,14 @@ export function MapScreen() {
   const [searchModalOpen, setSearchModalOpen] = useState(false);
   // Graph network overlay: displays all road intersection nodes and directed edges (ON by default for Pan-India & NCR inspection)
   const [showGraphNetwork, setShowGraphNetwork] = useState(true);
+  const [isNetOffline, setIsNetOffline] = useState(() => isOffline());
+
+  useEffect(() => {
+    const unsub = subscribeNetworkStatus((online) => {
+      setIsNetOffline(!online);
+    });
+    return unsub;
+  }, []);
 
   // Lock body scrolling when search modal is open
   useEffect(() => {
@@ -142,6 +151,7 @@ export function MapScreen() {
           snappedSourceNode={snappedSourceNode}
           hospitals={routing.topHospitals && routing.topHospitals.length > 0 ? routing.topHospitals : availableHospitals.slice(0, 5)}
           activeHospitalId={activeHospital?.id}
+          activeHospital={activeHospital}
           onSelectHospital={setSelectedHospitalId}
           activePathNodeIds={activeHospital?.pathNodeIds || []}
           incidents={incidents}
@@ -189,6 +199,14 @@ export function MapScreen() {
                       : `Optimal Receiving · ${category?.shortLabel || ''}`
                     : 'No hospital reachable'}
                 </span>
+                {isNetOffline && (
+                  <span
+                    className="px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-500/30 text-[9px] font-bold"
+                    title="Operating in autonomous field mode with local graph and hospital registry"
+                  >
+                    Offline CAD
+                  </span>
+                )}
                 {routing.selectedHospitalId && (
                   <span
                     role="button"
@@ -292,11 +310,10 @@ export function MapScreen() {
                 setSearchModalOpen(true);
               }}
               className="pointer-events-auto flex-1 h-8 px-2.5 rounded-lg text-xs font-mono font-bold flex items-center justify-center gap-1.5 border shadow-xs cursor-pointer active:scale-95 transition-all bg-white/95 dark:bg-slate-900/95 text-slate-800 dark:text-slate-200 border-slate-200/90 dark:border-slate-800 truncate hover:border-slate-300 dark:hover:border-slate-700"
-              title={`Search all ${availableHospitals?.length || 280} Pan-India apex hospitals by name, city, or specialty`}
+              title={`Search hospitals within 100 km radius (${routing.searchHospitals?.length || 74} facilities)`}
             >
               <Search className="w-3.5 h-3.5 text-[#D62828] shrink-0" />
-              <span className="truncate">Search Registry</span>
-              <span className="text-[10px] opacity-70 font-normal hidden xs:inline">({routing.effectiveRadiusKm || 5}km auto)</span>
+              <span className="truncate">Search (100 km)</span>
             </button>
 
             {/* Quick Tools Button */}
@@ -474,7 +491,7 @@ export function MapScreen() {
                   </button>
                   <span className="font-bold text-xs uppercase tracking-wider text-slate-900 dark:text-slate-100 font-mono flex items-center gap-1.5 truncate">
                     <Hospital className="w-3.5 h-3.5 text-[#D62828] shrink-0" />
-                    <span className="truncate">Hospital Registry ({availableHospitals?.length || 280})</span>
+                    <span className="truncate">Hospital Registry ({routing.searchHospitals?.length || 74} within 100km)</span>
                   </span>
                 </div>
                 <button
@@ -488,7 +505,7 @@ export function MapScreen() {
               </div>
               <div className="p-2 sm:p-4 flex-1 min-h-0 flex flex-col overflow-hidden">
                 <HospitalSearchBar
-                  hospitals={availableHospitals}
+                  hospitals={routing.searchHospitals && routing.searchHospitals.length > 0 ? routing.searchHospitals : availableHospitals}
                   selectedHospitalId={routing.selectedHospitalId}
                   activeHospital={activeHospital}
                   onSelectHospital={(id) => {

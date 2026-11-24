@@ -76,10 +76,10 @@ const LOCAL_DELHI_NCR_NODES = [
   {
     "id": "n_kp3_north",
     "name": "Sharda Super Speciality Hospital (KP III Arterial)",
-    "lat": 28.4682,
-    "lon": 77.4988,
+    "lat": 28.4745,
+    "lon": 77.4827,
     "type": "healthcare_hub"
-  },
+},
   {
     "id": "osm_kp3_center",
     "name": "Knowledge Park III Central Avenue Junction",
@@ -89,11 +89,11 @@ const LOCAL_DELHI_NCR_NODES = [
   },
   {
     "id": "osm_kp3_south",
-    "name": "Bakson Multi-Speciality (KP III South Ring)",
-    "lat": 28.457,
-    "lon": 77.4975,
+    "name": "Bakson Multi-Speciality Hospital (KP I Hub)",
+    "lat": 28.4676,
+    "lon": 77.502,
     "type": "healthcare_hub"
-  },
+},
   {
     "id": "osm_kp3_west",
     "name": "KP III Technical Institutional Avenue",
@@ -222,11 +222,11 @@ const LOCAL_DELHI_NCR_NODES = [
   },
   {
     "id": "n_alpha1_center",
-    "name": "Sector Alpha 1 Yatharth Super Speciality",
-    "lat": 28.495,
-    "lon": 77.525,
+    "name": "Sector Omega 1 Yatharth Super Speciality",
+    "lat": 28.4516,
+    "lon": 77.51,
     "type": "healthcare_hub"
-  },
+},
   {
     "id": "osm_alpha1_60m",
     "name": "Alpha 1 60m Master Plan Road",
@@ -250,11 +250,11 @@ const LOCAL_DELHI_NCR_NODES = [
   },
   {
     "id": "n_pari_east",
-    "name": "Kailash Hospital Alpha II Corridor",
-    "lat": 28.482,
-    "lon": 77.514,
+    "name": "Kailash Hospital & Pari Chowk Corridor",
+    "lat": 28.4708,
+    "lon": 77.5054,
     "type": "healthcare_hub"
-  },
+},
   {
     "id": "n_alpha2_market",
     "name": "Sector Alpha 2 Central Shopping Spine",
@@ -334,11 +334,11 @@ const LOCAL_DELHI_NCR_NODES = [
   },
   {
     "id": "n_delta1_east",
-    "name": "Jaypee Healthcare Center & Hospital",
-    "lat": 28.488,
-    "lon": 77.545,
+    "name": "Jaypee Healthcare Center & Hospital (Jaypee Greens)",
+    "lat": 28.4785,
+    "lon": 77.518,
     "type": "healthcare_hub"
-  },
+},
   {
     "id": "osm_delta2_105m",
     "name": "Sector Delta 2 105m Arterial Expressway",
@@ -572,11 +572,11 @@ const LOCAL_DELHI_NCR_NODES = [
   },
   {
     "id": "n_surajpur_south",
-    "name": "GIMS Hospital Apex Center (Surajpur)",
-    "lat": 28.512,
-    "lon": 77.482,
+    "name": "GIMS Hospital Apex Center (Kasna / GBU)",
+    "lat": 28.4235,
+    "lon": 77.5305,
     "type": "healthcare_hub"
-  },
+},
   {
     "id": "osm_surajpur_mid",
     "name": "Surajpur Wetland Entrance Crossing",
@@ -726,11 +726,11 @@ const LOCAL_DELHI_NCR_NODES = [
   },
   {
     "id": "n_gnw_yatharth",
-    "name": "Yatharth Super Speciality GN West",
-    "lat": 28.6015,
-    "lon": 77.4385,
+    "name": "Yatharth Super Speciality GN West (Sector 1)",
+    "lat": 28.6025,
+    "lon": 77.442,
     "type": "healthcare_hub"
-  },
+},
   {
     "id": "n_gnw_gaur_city1",
     "name": "Gaur City 1 Commercial Hub",
@@ -747,11 +747,11 @@ const LOCAL_DELHI_NCR_NODES = [
   },
   {
     "id": "n_gnw_sarvodaya",
-    "name": "Sarvodaya Hospital GN West Hub",
-    "lat": 28.606,
-    "lon": 77.432,
+    "name": "Sarvodaya Hospital GN West Hub (Gaur City 2)",
+    "lat": 28.6085,
+    "lon": 77.4275,
     "type": "healthcare_hub"
-  },
+},
   {
     "id": "n_gnw_char_murti",
     "name": "Char Murti Chowk (Kisan Chowk GN West)",
@@ -1091,10 +1091,10 @@ const LOCAL_DELHI_NCR_NODES = [
   {
     "id": "n_noida_sec62_fortis",
     "name": "Fortis Hospital Noida (Sector 62 Institutional)",
-    "lat": 28.619,
-    "lon": 77.362,
+    "lat": 28.6187,
+    "lon": 77.3726,
     "type": "healthcare_hub"
-  },
+},
   {
     "id": "n_noida_sec51_metro",
     "name": "Sector 51 / Sector 52 Aqua-Blue Line Interchange",
@@ -1112,17 +1112,17 @@ const LOCAL_DELHI_NCR_NODES = [
   {
     "id": "n_noida_sec128_jaypee",
     "name": "Jaypee Hospital Noida (Sector 128 Expressway)",
-    "lat": 28.518,
-    "lon": 77.368,
+    "lat": 28.5154,
+    "lon": 77.3714,
     "type": "healthcare_hub"
-  },
+},
   {
     "id": "n_noida_sec137_metro",
-    "name": "Sector 137 Metro / Felix Healthcare Spine",
-    "lat": 28.504,
-    "lon": 77.404,
+    "name": "Felix Hospital & Sector 137 Metro",
+    "lat": 28.5059,
+    "lon": 77.4086,
     "type": "residential"
-  },
+},
   {
     "id": "n_noida_sec142_advant",
     "name": "Sector 142 Advant Navis Tech Park Crossing",
@@ -1301,38 +1301,38 @@ const LOCAL_DELHI_NCR_NODES = [
   {
     "id": "n_alpha2_navin",
     "name": "Navin Hospital Sector Alpha 2 Corridor",
-    "lat": 28.4891,
-    "lon": 77.5142,
+    "lat": 28.4775,
+    "lon": 77.5186,
     "type": "healthcare_hub"
-  },
+},
   {
     "id": "n_omega1_promhex",
     "name": "Promhex Amrapali Hospital Omega 1 Radial",
-    "lat": 28.4682,
-    "lon": 77.5255,
+    "lat": 28.472,
+    "lon": 77.514,
     "type": "healthcare_hub"
-  },
+},
   {
     "id": "n_omega1_prakash",
     "name": "Prakash Hospital Kasna Road / Omega 1",
-    "lat": 28.4715,
-    "lon": 77.5290,
+    "lat": 28.4559,
+    "lon": 77.5177,
     "type": "healthcare_hub"
-  },
+},
   {
     "id": "n_alpha1_spectra",
-    "name": "Apollo Clinic & Spectra Alpha 1 Commercial Belt",
-    "lat": 28.4838,
-    "lon": 77.5118,
+    "name": "Apollo Spectra Hospital (NSG Chowk / Pocket 7)",
+    "lat": 28.4623,
+    "lon": 77.489,
     "type": "commercial_hub"
-  },
+},
   {
     "id": "n_noida_sec110_yatharth",
     "name": "Yatharth Super Speciality Hospital (Sector 110 Noida)",
-    "lat": 28.5284,
-    "lon": 77.3872,
+    "lat": 28.5322,
+    "lon": 77.3844,
     "type": "healthcare_hub"
-  },
+},
   {
     "id": "n_noida_sec39_district",
     "name": "District Combined Hospital (Sector 39 Noida)",
@@ -1342,11 +1342,11 @@ const LOCAL_DELHI_NCR_NODES = [
   },
   {
     "id": "n_surajpur_greencity",
-    "name": "Green City Hospital (Ecotech II / Surajpur Road)",
-    "lat": 28.5215,
-    "lon": 77.4892,
+    "name": "Green City Hospital (Gail Society / Sector PI)",
+    "lat": 28.4837,
+    "lon": 77.527,
     "type": "healthcare_hub"
-  },
+},
   {
     "id": "n_kasna_industrial_hub",
     "name": "Kasna Institutional & Industrial Corridor",

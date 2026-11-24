@@ -13,6 +13,7 @@
 import { OVERPASS_MIRRORS } from './overpassService.js';
 import { OSRM_BASES } from './roadSnapService.js';
 import { WIB_API_CONFIG } from './wibHospitalService.js';
+import { isOffline, markNetworkFailure } from '../utils/network.js';
 
 export const SLOW_MS = 3000;
 export const TIMEOUT_MS = 8000;
@@ -22,12 +23,18 @@ const LON = 77.509;
 
 /** Fetch with a timeout. Resolves with the Response; the body is cancelled. */
 async function ping(url, init = {}) {
+  if (isOffline()) {
+    throw new Error('Offline (Network disconnected)');
+  }
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
   try {
     const res = await fetch(url, { ...init, signal: controller.signal });
     res.body?.cancel?.().catch(() => {});
     return res;
+  } catch (err) {
+    // Observational ping failure should not take down global app network status
+    throw err;
   } finally {
     clearTimeout(timer);
   }
@@ -42,6 +49,9 @@ function hostOf(url) {
 }
 
 async function checkTiles() {
+  if (isOffline()) {
+    return { state: 'down', detail: 'Offline (No internet connection)' };
+  }
   await new Promise((resolve, reject) => {
     const img = new Image();
     const timer = setTimeout(() => reject(new Error('Timed out')), TIMEOUT_MS);
@@ -59,6 +69,9 @@ async function checkTiles() {
 }
 
 async function checkOsrm(ctx = {}) {
+  if (isOffline()) {
+    return { state: 'down', detail: 'Offline (In-memory graph routing active)' };
+  }
   const orsKey =
     ctx?.orsKey ||
     (typeof import.meta !== 'undefined' && import.meta.env?.VITE_ORS_API_KEY) ||
@@ -90,6 +103,9 @@ async function checkOsrm(ctx = {}) {
 }
 
 async function checkOverpass() {
+  if (isOffline()) {
+    return { state: 'ok', detail: 'Bundled Pan-India & Delhi-NCR High-Fidelity Graph (Active)' };
+  }
   for (const mirror of OVERPASS_MIRRORS) {
     try {
       // Use status endpoint where available for near-instant health check without query interpreter load
@@ -106,12 +122,18 @@ async function checkOverpass() {
 }
 
 async function checkWeather() {
+  if (isOffline()) {
+    return { state: 'down', detail: 'Offline (Manual / Model Weather Active)' };
+  }
   const res = await ping(`https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&current=temperature_2m`);
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   return { detail: 'api.open-meteo.com' };
 }
 
 async function checkWib(ctx = {}) {
+  if (isOffline()) {
+    return { state: 'ok', detail: 'Bundled Pan-India 280-Hospital Registry (Active)' };
+  }
   const dataGovKey =
     ctx?.dataGovKey ||
     (typeof import.meta !== 'undefined' && (import.meta.env?.VITE_DATA_GOV_IN_API_KEY || import.meta.env?.DATA_GOV_IN_API_KEY)) ||
@@ -144,6 +166,9 @@ async function checkWib(ctx = {}) {
 }
 
 async function checkTraffic(ctx = {}) {
+  if (isOffline()) {
+    return { state: 'off', detail: 'Offline (Diurnal & incident model active)' };
+  }
   const key =
     ctx?.tomtomKey ||
     (typeof import.meta !== 'undefined' && import.meta.env?.VITE_TOMTOM_API_KEY) ||

@@ -18,6 +18,7 @@ import { fetchLiveWeather } from '../services/weatherService.js';
 import { getStoredTrafficConfig, saveStoredTrafficConfig, TRAFFIC_PROVIDERS } from '../services/trafficService.js';
 import { downloadOverpassGrid } from '../services/overpassService.js';
 import { resolveLevel, REPORTERS } from '../config/trafficLevels.js';
+import { isOffline, subscribeNetworkStatus } from '../utils/network.js';
 
 export function useGraph() {
   // Graph Mode: 'real_osm' (Full Real OSM Grid) | 'synthetic' (46 nodes) | 'figure_2' (Report Demo)
@@ -42,6 +43,7 @@ export function useGraph() {
 
   // Fetch live Open-Meteo weather for Greater Noida
   const refreshLiveWeather = useCallback(async () => {
+    if (isOffline()) return;
     setIsFetchingWeather(true);
     try {
       const data = await fetchLiveWeather();
@@ -50,7 +52,9 @@ export function useGraph() {
         setWeather(data.weatherId);
       }
     } catch (err) {
-      console.warn('Open-Meteo fetch failed:', err);
+      if (!isOffline()) {
+        console.warn('Open-Meteo fetch failed:', err);
+      }
     } finally {
       setIsFetchingWeather(false);
     }
@@ -58,6 +62,14 @@ export function useGraph() {
 
   useEffect(() => {
     refreshLiveWeather();
+  }, [refreshLiveWeather]);
+
+  // Re-fetch weather when network reconnects
+  useEffect(() => {
+    const unsub = subscribeNetworkStatus((online) => {
+      if (online) refreshLiveWeather();
+    });
+    return unsub;
   }, [refreshLiveWeather]);
 
   // Update weather when live weather toggle changes

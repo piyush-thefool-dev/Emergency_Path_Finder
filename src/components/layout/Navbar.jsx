@@ -8,10 +8,19 @@ import { NavLink } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { useTheme } from '../../context/ThemeContext.jsx';
 import { Activity, Sun, Moon, Radio, Shield, Sparkles } from 'lucide-react';
+import { isOffline, subscribeNetworkStatus } from '../../utils/network.js';
 
 export function Navbar() {
   const { isDark, toggleTheme } = useTheme();
   const [timeStr, setTimeStr] = useState('');
+  const [isNetOffline, setIsNetOffline] = useState(() => isOffline());
+
+  useEffect(() => {
+    const unsub = subscribeNetworkStatus((online) => {
+      setIsNetOffline(!online);
+    });
+    return unsub;
+  }, []);
 
   // Live operational telemetry clock (IST)
   useEffect(() => {
@@ -98,11 +107,26 @@ export function Navbar() {
             </span>
           </div>
 
-          {/* OSM Online Pill */}
-          <span className="hidden xl:inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-[11px] font-mono font-medium bg-slate-100/80 dark:bg-slate-900/80 text-slate-700 dark:text-slate-300 border border-slate-200/80 dark:border-white/[0.08] backdrop-blur-md">
-            <Radio className="w-3 h-3 text-sky-500 animate-pulse" />
-            <span>OSM Active</span>
-          </span>
+          {/* Online / Offline Status Capsule */}
+          {isNetOffline ? (
+            <button
+              type="button"
+              onClick={() => resetNetworkStatus()}
+              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-[11px] font-mono font-medium bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/25 backdrop-blur-md hover:bg-amber-500/20 cursor-pointer transition-colors"
+              title="Click to reconnect and switch to live OSM mode"
+            >
+              <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+              <span>Offline • Local CAD Mode</span>
+            </button>
+          ) : (
+            <span
+              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-[11px] font-mono font-medium bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25 backdrop-blur-md"
+              title="OpenStreetMap live tiles & OSRM routing active"
+            >
+              <Radio className="w-3 h-3 text-emerald-500 animate-pulse" />
+              <span>OSM Active</span>
+            </span>
+          )}
 
           {/* 21st.dev style Theme Toggle Button */}
           <motion.button

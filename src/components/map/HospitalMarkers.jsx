@@ -20,13 +20,13 @@ export function HospitalMarkers({ hospitals = [], activeHospitalId, onSelectHosp
   useMapEvents({ zoomend: () => setZoom(map.getZoom()) });
 
   // Custom SVG DivIcon factory for hospitals
-  const createHospitalIcon = (isTarget) => {
+  const createHospitalIcon = (isTarget, displayName = '') => {
     if (isTarget) {
       // Recommended Hospital: Bright Emerald Pin with Gold "BEST" Banner and pulsing glow
       return L.divIcon({
         className: 'custom-hospital-pin',
         html: `
-          <div style="width: 44px; height: 52px; display: flex; flex-direction: column; align-items: center; cursor: pointer; filter: drop-shadow(0 4px 10px rgba(22, 163, 74, 0.55));">
+          <div title="${displayName}" style="width: 44px; height: 52px; display: flex; flex-direction: column; align-items: center; cursor: pointer; filter: drop-shadow(0 4px 10px rgba(22, 163, 74, 0.55));">
             <svg width="44" height="50" viewBox="0 0 44 50" fill="none" xmlns="http://www.w3.org/2000/svg">
               <!-- Pin Outer Body -->
               <path
@@ -64,7 +64,7 @@ export function HospitalMarkers({ hospitals = [], activeHospitalId, onSelectHosp
     return L.divIcon({
       className: 'custom-hospital-pin',
       html: `
-        <div style="width: 38px; height: 46px; display: flex; flex-direction: column; align-items: center; cursor: pointer; filter: drop-shadow(0 3px 8px rgba(31, 60, 109, 0.45));">
+        <div title="${displayName}" style="width: 38px; height: 46px; display: flex; flex-direction: column; align-items: center; cursor: pointer; filter: drop-shadow(0 3px 8px rgba(31, 60, 109, 0.45));">
           <svg width="38" height="44" viewBox="0 0 38 44" fill="none" xmlns="http://www.w3.org/2000/svg">
             <!-- Pin Outer Body -->
             <path
@@ -98,8 +98,8 @@ export function HospitalMarkers({ hospitals = [], activeHospitalId, onSelectHosp
     <>
       {hospitals.map((hosp) => {
         const isTarget = hosp.id === activeHospitalId;
-        const icon = createHospitalIcon(isTarget);
         const displayName = hosp.shortName || hosp.name;
+        const icon = createHospitalIcon(isTarget, displayName);
         const durationMin = hosp.durationMin != null
           ? hosp.durationMin
           : hosp.travelTimeSec != null
@@ -113,42 +113,39 @@ export function HospitalMarkers({ hospitals = [], activeHospitalId, onSelectHosp
 
         return (
           <Marker
-            key={`${hosp.id}-${isTarget ? 'target' : 'regular'}`}
+            key={hosp.id}
             position={[hosp.lat, hosp.lon]}
             icon={icon}
             zIndexOffset={isTarget ? 1500 : 100}
             eventHandlers={{
-              click: () => onSelectHospital && onSelectHospital(hosp.id),
+              click: (e) => {
+                if (e?.originalEvent) {
+                  L.DomEvent.stopPropagation(e.originalEvent);
+                }
+                if (onSelectHospital) {
+                  onSelectHospital(hosp.id);
+                }
+              },
             }}
           >
-            {/* On-map callout label: permanent on active recommendation, hover on alternates to eliminate label collisions */}
-            <Tooltip
-              permanent={isTarget}
-              direction="top"
-              offset={[0, isTarget ? -52 : -46]}
-              className={isTarget ? 'custom-hospital-label-recommended' : 'custom-hospital-label'}
-            >
-              <div className="flex items-center gap-1.5 text-2xs select-none">
-                <span className="font-bold whitespace-nowrap">
-                  {isTarget && '★ '}
-                  {displayName}
-                </span>
-                {durationMin != null && (
-                  <span className={`text-3xs font-mono font-bold px-1 rounded ${
-                    isTarget ? 'bg-white/20 text-white' : 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300'
-                  }`}>
-                    ⚡ {durationMin}m
+            {/* On-map callout label: rendered ONLY for the active recommendation to eliminate label collisions */}
+            {isTarget && (
+              <Tooltip
+                permanent={true}
+                direction="top"
+                offset={[0, -52]}
+                className="custom-hospital-label-recommended"
+              >
+                <div className="flex items-center gap-1.5 text-2xs select-none">
+                  <span className="font-bold whitespace-nowrap">
+                    ★ {displayName}
                   </span>
-                )}
-                {roadDistanceKm != null && (
-                  <span className={`text-3xs font-mono px-1 rounded ${
-                    isTarget ? 'bg-white/10 text-white/90' : 'text-slate-500 dark:text-slate-400'
-                  }`}>
-                    📍 {roadDistanceKm}km
+                  <span className="text-3xs font-mono font-bold bg-white/20 px-1 rounded text-white">
+                    RECOMMENDED
                   </span>
-                )}
-              </div>
-            </Tooltip>
+                </div>
+              </Tooltip>
+            )}
 
             {/* Click Popup with Clinical & Telemetry Details */}
             <Popup autoPan={true} autoPanPaddingTopLeft={[24, 150]} autoPanPaddingBottomRight={[24, 100]}>

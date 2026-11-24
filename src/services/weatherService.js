@@ -17,12 +17,35 @@
  *   - 95-99: Severe Thunderstorm / Squall (0.50x speed)
  */
 
+import { isOffline, markNetworkFailure } from '../utils/network.js';
+
 export const OPEN_METEO_CONFIG = {
   latitude: 28.4795,
   longitude: 77.5090,
   city: 'Greater Noida, Uttar Pradesh',
   endpoint: 'https://api.open-meteo.com/v1/forecast',
 };
+
+/**
+ * Returns deterministic fallback weather when offline or in sandboxed tests.
+ */
+export function getOfflineFallbackWeather(targetLat = OPEN_METEO_CONFIG.latitude, targetLon = OPEN_METEO_CONFIG.longitude) {
+  return {
+    isLive: false,
+    temperatureC: 24,
+    humidityPercent: 55,
+    precipitationMm: 0,
+    windSpeedKph: 8,
+    visibilityKm: 10,
+    wmoCode: 0,
+    weatherId: 'clear',
+    label: 'Clear / Dry Conditions (Offline Mode)',
+    description: 'Clear sky, high visibility, nominal dry pavement friction.',
+    frictionFactor: 1.0,
+    timestamp: new Date().toISOString(),
+    source: `Local Atmospheric Model (${targetLat.toFixed(2)}°N, ${targetLon.toFixed(2)}°E)`,
+  };
+}
 
 /**
  * Maps WMO weather code and atmospheric visibility directly to project weatherId,
@@ -117,37 +140,47 @@ export function mapWmoCodeToWeather(code, visibilityMetres = 10000) {
 export async function fetchLiveWeather(lat = OPEN_METEO_CONFIG.latitude, lon = OPEN_METEO_CONFIG.longitude) {
   const targetLat = typeof lat === 'number' ? lat : OPEN_METEO_CONFIG.latitude;
   const targetLon = typeof lon === 'number' ? lon : OPEN_METEO_CONFIG.longitude;
-  const url = `${OPEN_METEO_CONFIG.endpoint}?latitude=${targetLat}&longitude=${targetLon}&current=temperature_2m,relative_humidity_2m,precipitation,rain,weather_code,wind_speed_10m,visibility`;
 
-  const res = await fetch(url, {
-    method: 'GET',
-    headers: {
-      Accept: 'application/json',
-    },
-  });
-
-  if (!res.ok) {
-    throw new Error(`Open-Meteo returned status ${res.status}`);
+  if (isOffline()) {
+    return getOfflineFallbackWeather(targetLat, targetLon);
   }
 
-  const data = await res.json();
-  const current = data.current || {};
-  const visibilityM = current.visibility !== undefined ? current.visibility : 10000;
-  const weatherMapping = mapWmoCodeToWeather(current.weather_code, visibilityM);
+  const url = `${OPEN_METEO_CONFIG.endpoint}?latitude=${targetLat}&longitude=${targetLon}&current=temperature_2m,relative_humidity_2m,precipitation,rain,weather_code,wind_speed_10m,visibility`;
 
-  return {
-    isLive: true,
-    temperatureC: current.temperature_2m ?? 24,
-    humidityPercent: current.relative_humidity_2m ?? 60,
-    precipitationMm: current.precipitation ?? 0,
-    windSpeedKph: current.wind_speed_10m ?? 8,
-    visibilityKm: Number((visibilityM / 1000).toFixed(1)),
-    wmoCode: current.weather_code ?? 0,
-    weatherId: weatherMapping.weatherId,
-    label: weatherMapping.label,
-    description: weatherMapping.description,
-    frictionFactor: weatherMapping.frictionFactor,
-    timestamp: current.time || new Date().toISOString(),
-    source: `Open-Meteo Live API (${targetLat.toFixed(2)}°N, ${targetLon.toFixed(2)}°E)`,
-  };
+  try {
+    const res = await fetch(url, {
+      method: 'GET',
+      headers: {
+        Accept: 'application/json',
+      },
+    });
+
+    if (!res.ok) {
+      throw new Error(`Open-Meteo returned status ${res.status}`);
+    }
+
+    const data = await res.json();
+    const current = data.current || {};
+    const visibilityM = current.visibility !== undefined ? current.visibility : 10000;
+    const weatherMapping = mapWmoCodeToWeather(current.weather_code, visibilityM);
+
+    return {
+      isLive: true,
+      temperatureC: current.temperature_2m ?? 24,
+      humidityPercent: current.relative_humidity_2m ?? 60,
+      precipitationMm: current.precipitation ?? 0,
+      windSpeedKph: current.wind_speed_10m ?? 8,
+      visibilityKm: Number((visibilityM / 1000).toFixed(1)),
+      wmoCode: current.weather_code ?? 0,
+      weatherId: weatherMapping.weatherId,
+      label: weatherMapping.label,
+      description: weatherMapping.description,
+      frictionFactor: weatherMapping.frictionFactor,
+      timestamp: current.time || new Date().toISOString(),
+      source: `Open-Meteo Live API (${targetLat.toFixed(2)}°N, ${targetLon.toFixed(2)}°E)`,
+    };
+  } catch (err) {
+    markNetworkFailure(err);
+    return getOfflineFallbackWeather(targetLat, targetLon);
+  }
 }

@@ -11,21 +11,22 @@ import { useDispatch } from '../context/DispatchContext.jsx';
 
 export function BedsPage() {
   const { routing } = useDispatch();
-  const { availableHospitals, saveCustomHospitals, resetCustomHospitals } = routing;
+  const { availableHospitals, searchHospitals, saveCustomHospitals, resetCustomHospitals } = routing;
+  const hospitalsToDisplay = searchHospitals && searchHospitals.length > 0 ? searchHospitals : availableHospitals;
   const [version, setVersion] = useState(0);
 
   return (
-    <div className="page-shell h-full flex flex-col">
+    <div className="h-full w-full flex-1 min-h-0 flex flex-col overflow-hidden bg-slate-50 dark:bg-slate-950">
       <PageHeader
         icon={Bed}
         title="Bed Capacity Registry"
-        subtitle={`${availableHospitals.length} Regional Facilities · Verified Clinical Telemetry`}
+        subtitle={`${hospitalsToDisplay.length} Regional Facilities · Verified Clinical Telemetry`}
       />
       <HospitalBedManagerModal
         key={version}
         asPage
         isOpen
-        hospitals={availableHospitals}
+        hospitals={hospitalsToDisplay}
         onSaveHospitals={saveCustomHospitals}
         onResetToDefaults={() => {
           resetCustomHospitals();

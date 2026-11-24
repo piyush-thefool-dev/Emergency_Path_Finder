@@ -12,6 +12,7 @@ import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import L from 'leaflet';
 import { Polyline, CircleMarker, Tooltip, Marker, Popup } from 'react-leaflet';
 import { fetchRoadRoute } from '../../services/roadSnapService.js';
+import { isOffline } from '../../utils/network.js';
 import { TRAFFIC_LEVEL_LIST, levelOfIncident } from '../../config/trafficLevels.js';
 import { edgeDisplayName, timeAgo } from '../../utils/incidents.js';
 
@@ -97,14 +98,36 @@ export function RouteLayer({
   // Start = the ambulance's live position (not its snapped graph node); end = the hospital.
   // Quantised to ~11 m so GPS jitter does not trigger a request for every tiny movement.
   const q = (v) => Math.round(v * 1e4) / 1e4;
-  const startPt = routeStart?.lat != null ? [q(routeStart.lat), q(routeStart.lon)] : activeRouteCoords[0];
-  const endPt = routeEnd?.lat != null ? [routeEnd.lat, routeEnd.lon] : activeRouteCoords[activeRouteCoords.length - 1];
+  const startPt = routeStart?.lat != null ? [q(routeStart.lat), q(routeStart.lon)] : activeRouteCoords[0] || null;
+  const endPt = routeEnd?.lat != null ? [routeEnd.lat, routeEnd.lon] : activeRouteCoords[activeRouteCoords.length - 1] || null;
 
-  const hasRoute = Boolean(startPt && endPt && activeRouteCoords.length > 1);
+  // Active route exists as long as startPt and endPt (or at least 2 path points) are defined
+  const hasRoute = Boolean(startPt && endPt);
   const routeKey = hasRoute ? JSON.stringify([startPt, endPt, incidentKey]) : '';
 
   // Last good road route is kept while a new one loads, so the line never flickers while moving.
   const [roadRoute, setRoadRoute] = useState(null); // { coords, status, distanceM, durationSec } | null
+
+  // High-fidelity fallback coordinates connecting ambulance to destination
+  const fallbackCoords = useMemo(() => {
+    if (activeRouteCoords.length > 1) {
+      const pts = [...activeRouteCoords];
+      if (startPt && (Math.abs(pts[0][0] - startPt[0]) > 0.0001 || Math.abs(pts[0][1] - startPt[1]) > 0.0001)) {
+        pts.unshift(startPt);
+      }
+      if (endPt && (Math.abs(pts[pts.length - 1][0] - endPt[0]) > 0.0001 || Math.abs(pts[pts.length - 1][1] - endPt[1]) > 0.0001)) {
+        pts.push(endPt);
+      }
+      return pts;
+    }
+    if (startPt && endPt) {
+      return [startPt, endPt];
+    }
+    return [];
+  }, [activeRouteCoords, startPt, endPt]);
+
+  // Use OSRM road-following geometry when resolved, falling back seamlessly to graph road coordinates
+  const displayCoords = (roadRoute?.coords && roadRoute.coords.length > 1) ? roadRoute.coords : fallbackCoords;
 
   // Throttled (not debounced): while the ambulance is moving the route is refreshed at most
   // every ~1.5 s using the latest position, instead of waiting for movement to stop.
@@ -115,7 +138,7 @@ export function RouteLayer({
   latest.current = { start: startPt, end: endPt, closed: closedSegs, slow: slowSegs };
 
   useEffect(() => {
-    if (!routeKey || timer.current) return;
+    if (!routeKey || timer.current || isOffline()) return;
     const wait = Math.max(300, 1500 - (Date.now() - lastFired.current));
     timer.current = setTimeout(() => {
       timer.current = null;
@@ -209,22 +232,42 @@ export function RouteLayer({
       })}
 
       {/* 2. Primary Optimal Route Polyline (road-following & incident-aware; strictly following paved road geometry) */}
-      {activeRouteCoords.length > 1 && (
+      {displayCoords.length > 1 && (
         <>
+          {/* Contrast shadow casing for razor-sharp visibility on both light and dark tiles */}
           <Polyline
-            positions={routeCoords || activeRouteCoords}
-            pathOptions={{ color: '#FFFFFF', weight: 9, opacity: routeCoords ? 0.9 : 0.4, lineCap: 'round', lineJoin: 'round' }}
+            positions={displayCoords}
+            pathOptions={{
+              color: '#0F172A',
+              weight: 10,
+              opacity: 0.85,
+              lineCap: 'round',
+              lineJoin: 'round',
+            }}
             interactive={false}
           />
+          {/* Crisp white outer border outline */}
           <Polyline
-            positions={routeCoords || activeRouteCoords}
+            positions={displayCoords}
             pathOptions={{
-              color: isBlocked ? '#F59E0B' : '#D62828',
-              weight: 6,
+              color: '#FFFFFF',
+              weight: 7,
               opacity: 0.95,
               lineCap: 'round',
               lineJoin: 'round',
-              dashArray: !routeCoords ? '3, 8' : isBlocked ? '10, 8' : null,
+            }}
+            interactive={false}
+          />
+          {/* High-visibility Emergency Red (#D62828) or Amber (#F59E0B) core line */}
+          <Polyline
+            positions={displayCoords}
+            pathOptions={{
+              color: isBlocked ? '#F59E0B' : '#D62828',
+              weight: 4.5,
+              opacity: 1,
+              lineCap: 'round',
+              lineJoin: 'round',
+              dashArray: isBlocked ? '10, 8' : (!roadRoute?.coords && activeRouteCoords.length <= 1) ? '6, 6' : null,
             }}
             interactive={false}
           >

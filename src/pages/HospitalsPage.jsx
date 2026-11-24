@@ -42,6 +42,7 @@ export function HospitalsPage() {
         <ResultCard
           hospital={activeHospital}
           alternateHospitals={rankingResult.alternateCandidates}
+          searchHospitals={routing.searchHospitals}
           selectedHospitalId={selectedHospitalId}
           onSelectHospital={setSelectedHospitalId}
           sourceNode={snappedSourceNode}
