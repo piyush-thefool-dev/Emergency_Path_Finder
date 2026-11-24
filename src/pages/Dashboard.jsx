@@ -17,6 +17,8 @@ import HospitalBedManagerModal from '../components/panels/HospitalBedManagerModa
 import ApiStatusPanel from '../components/panels/ApiStatusPanel.jsx';
 import KpiStatCard from '../components/ui/KpiStatCard.jsx';
 import Badge from '../components/ui/Badge.jsx';
+import TrafficSpeedFrictionGraph from '../components/charts/TrafficSpeedFrictionGraph.jsx';
+import RegionalBedCapacityGraph from '../components/charts/RegionalBedCapacityGraph.jsx';
 import { useDispatch } from '../context/DispatchContext.jsx';
 import { useBedManager } from '../context/BedManagerContext.jsx';
 import { formatDistance } from '../utils/geo.js';
@@ -85,7 +87,7 @@ export function Dashboard() {
         <KpiStatCard
           title="Optimal Facility"
           value={activeHospital?.shortName || activeHospital?.name || 'Searching...'}
-          subtitle={activeDistance > 0 ? `${formatDistance(activeDistance)} · Green Corridor` : 'Pan-India Grid'}
+          subtitle={activeDistance > 0 ? `${formatDistance(activeDistance)} · Priority Corridor` : 'Pan-India Grid'}
           icon={Hospital}
           tint="red"
           trend={activeHospital?.nabhAccredited ? 'NABH' : 'LEVEL-1'}
@@ -107,10 +109,10 @@ export function Dashboard() {
         <KpiStatCard
           title="Projected ETA"
           value={activeEta}
-          subtitle={signalPriority ? 'Signal Preempted' : 'Friction Scaled'}
+          subtitle={signalPriority ? 'Signal Preempted' : 'Friction Calibrated'}
           icon={Clock}
           tint="emerald"
-          trend={algorithm === 'compare' ? 'DUAL OPTIMAL' : `${algorithm.toUpperCase()} OPTIMAL`}
+          trend={algorithm === 'compare' ? 'A* / DIJKSTRA' : `${algorithm.toUpperCase()} OPTIMAL`}
           trendPositive={true}
         />
 
@@ -359,6 +361,15 @@ export function Dashboard() {
           {/* External Telemetry Feeds & Health Monitoring */}
           <ApiStatusPanel health={apiHealth} />
         </div>
+      </div>
+
+      {/* ──────────────── 21st.dev VISUAL TELEMETRY & REGIONAL CAPACITY ANALYTICS ──────────────── */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 pt-2">
+        <RegionalBedCapacityGraph hospitals={availableHospitals} />
+        <TrafficSpeedFrictionGraph
+          activeTimeOfDay={timeOfDay}
+          activeWeather={weather}
+        />
       </div>
 
       {/* Hospital Bed Estimate Manager Modal */}

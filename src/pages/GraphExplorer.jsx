@@ -7,6 +7,7 @@ import { useState } from 'react';
 import { getDefaultGraph } from '../services/graphLoader.js';
 import { kphToMps } from '../utils/geo.js';
 import { Network, Calculator, Layers, Search, Filter, ShieldCheck, Zap } from 'lucide-react';
+import NetworkTopologyGraph from '../components/charts/NetworkTopologyGraph.jsx';
 
 export function GraphExplorer() {
   const defaultGraph = getDefaultGraph();
@@ -55,6 +56,9 @@ export function GraphExplorer() {
           Nodes represent intersections; directed edges represent roadway segments; weights w(e) represent predicted travel times in seconds.
         </p>
       </div>
+
+      {/* Interactive Network Topology Graph Vector Inspector */}
+      <NetworkTopologyGraph graph={defaultGraph} />
 
       {/* Live Formula Calculator: t(e) = L / v + penalties */}
       <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200/90 dark:border-slate-800/80 p-4 sm:p-5 shadow-xs space-y-3.5">

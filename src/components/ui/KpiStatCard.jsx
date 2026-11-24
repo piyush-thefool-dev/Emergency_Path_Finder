@@ -51,10 +51,23 @@ export function KpiStatCard({
       className={`relative rounded-2xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200/90 dark:border-white/[0.08] p-4 sm:p-5 shadow-xs ${style.glow} flex flex-col justify-between select-none ${className}`}
     >
       <div className="flex items-start justify-between gap-3">
-        <div className="space-y-1 min-w-0">
-          <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 block truncate">
-            {title}
-          </span>
+        <div className="space-y-1 min-w-0 flex-1">
+          <div className="flex items-center gap-2 flex-wrap min-w-0">
+            <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 truncate">
+              {title}
+            </span>
+            {trend && (
+              <span
+                className={`px-1.5 py-0.5 rounded font-bold font-mono text-[9px] uppercase tracking-wider shrink-0 ${
+                  trendPositive
+                    ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'
+                    : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20'
+                }`}
+              >
+                {trend}
+              </span>
+            )}
+          </div>
           <div className="text-xl sm:text-2xl font-black font-mono tracking-tight text-slate-900 dark:text-slate-100 tabular-nums truncate">
             {value}
           </div>
@@ -69,24 +82,13 @@ export function KpiStatCard({
         )}
       </div>
 
-      {/* Bottom Subtitle, Trend Badge & Action */}
-      <div className="mt-3 pt-3 border-t border-slate-100 dark:border-white/[0.06] flex items-center justify-between gap-2 min-w-0 text-2xs font-mono text-slate-500 dark:text-slate-400">
+      {/* Bottom Subtitle & Action (Zero Overlap Guaranteed) */}
+      <div className="mt-3 pt-3 border-t border-slate-100 dark:border-white/[0.06] flex flex-wrap items-center justify-between gap-x-2 gap-y-1 min-w-0 text-2xs font-mono text-slate-500 dark:text-slate-400">
         <span className="truncate min-w-0 flex-1" title={typeof subtitle === 'string' ? subtitle : undefined}>
           {subtitle}
         </span>
-        {(trend || action) && (
-          <div className="flex items-center gap-1.5 shrink-0">
-            {trend && (
-              <span
-                className={`px-1.5 py-0.5 rounded font-bold font-mono text-[10px] whitespace-nowrap ${
-                  trendPositive
-                    ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'
-                    : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20'
-                }`}
-              >
-                {trend}
-              </span>
-            )}
+        {action && (
+          <div className="flex items-center shrink-0">
             {action}
           </div>
         )}

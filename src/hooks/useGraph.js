@@ -4,7 +4,15 @@
  */
 
 import { useState, useMemo, useEffect, useCallback } from 'react';
-import { getDefaultGraph, getFigure2Graph, getRealOsmGraph } from '../services/graphLoader.js';
+import {
+  getDefaultGraph,
+  getFigure2Graph,
+  getRealOsmGraph,
+  getWesternCorridorGraph,
+  getSouthernCorridorGraph,
+  getDelhiNcrUrbanGraph,
+  GRAPH_MODES_CATALOG,
+} from '../services/graphLoader.js';
 import { computeGraphWeights } from '../services/edgeWeights.js';
 import { fetchLiveWeather } from '../services/weatherService.js';
 import { getStoredTrafficConfig, saveStoredTrafficConfig, TRAFFIC_PROVIDERS } from '../services/trafficService.js';
@@ -82,10 +90,21 @@ export function useGraph() {
     if (customOverpassGraph) {
       return customOverpassGraph;
     }
-    if (graphMode === 'synthetic') {
-      return getDefaultGraph(false);
+    switch (graphMode) {
+      case 'figure_2':
+        return getFigure2Graph();
+      case 'synthetic':
+        return getDefaultGraph(false);
+      case 'western_corridor':
+        return getWesternCorridorGraph();
+      case 'southern_corridor':
+        return getSouthernCorridorGraph();
+      case 'delhi_ncr':
+        return getDelhiNcrUrbanGraph();
+      case 'real_osm':
+      default:
+        return getRealOsmGraph();
     }
-    return getRealOsmGraph();
   }, [graphMode, customOverpassGraph]);
 
   // Dynamically weighted graph based on time, weather, signal priority, and incidents

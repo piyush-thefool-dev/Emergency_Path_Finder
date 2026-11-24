@@ -285,12 +285,15 @@ export function MapScreen() {
             {/* Quick Hospital Search Button */}
             <button
               type="button"
-              onClick={() => setSearchModalOpen(true)}
+              onClick={() => {
+                setTrafficOpen(false);
+                setSearchModalOpen(true);
+              }}
               className="pointer-events-auto flex-1 h-8 px-2.5 rounded-lg text-xs font-mono font-bold flex items-center justify-center gap-1.5 border shadow-xs cursor-pointer active:scale-95 transition-all bg-white/95 dark:bg-slate-900/95 text-slate-800 dark:text-slate-200 border-slate-200/90 dark:border-slate-800 truncate hover:border-slate-300 dark:hover:border-slate-700"
-              title={`Search all ${availableHospitals?.length || 155} Pan-India apex hospitals by name, city, or specialty`}
+              title={`Search all ${availableHospitals?.length || 280} Pan-India apex hospitals by name, city, or specialty`}
             >
               <Search className="w-3.5 h-3.5 text-[#D62828] shrink-0" />
-              <span className="truncate">Search ({availableHospitals?.length || 155})</span>
+              <span className="truncate">Search ({availableHospitals?.length || 280})</span>
             </button>
 
             {/* Quick Tools Button */}
@@ -456,7 +459,7 @@ export function MapScreen() {
             aria-label="Search Hospitals"
           >
             <div className="bg-white dark:bg-slate-900 w-full h-full sm:h-[85dvh] sm:max-w-lg sm:rounded-2xl border-0 sm:border border-slate-200 dark:border-slate-800 shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150">
-              <div className="px-3 py-2 sm:p-3.5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between shrink-0 bg-slate-50/90 dark:bg-slate-950/90">
+              <div className="px-3.5 py-2.5 sm:p-3.5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between shrink-0 bg-slate-50/90 dark:bg-slate-950/90">
                 <div className="flex items-center gap-2 min-w-0">
                   <button
                     type="button"
@@ -468,7 +471,7 @@ export function MapScreen() {
                   </button>
                   <span className="font-bold text-xs uppercase tracking-wider text-slate-900 dark:text-slate-100 font-mono flex items-center gap-1.5 truncate">
                     <Hospital className="w-3.5 h-3.5 text-[#D62828] shrink-0" />
-                    <span className="truncate">Pan-India Search ({availableHospitals?.length || 155})</span>
+                    <span className="truncate">Pan-India Registry ({availableHospitals?.length || 280})</span>
                   </span>
                 </div>
                 <button
@@ -596,27 +599,45 @@ export function MapScreen() {
         document.body
       )}
 
-      {/* Telemetry Feeds Status Modal */}
+      {/* Telemetry Feeds Status Modal (Clean scroll with sticky header and fixed close button) */}
       {panel === 'api' && typeof document !== 'undefined' && createPortal(
         <div
-          className="fixed inset-0 z-[99999] bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150"
+          className="fixed inset-0 z-[99999] bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 animate-in fade-in duration-150"
           onClick={() => setPanel(null)}
           role="dialog"
           aria-modal="true"
           aria-label="Telemetry Feeds Status"
         >
           <div
-            className="pointer-events-auto w-[min(22rem,calc(100vw-2rem))] max-h-[85dvh] overflow-y-auto rounded-xl bg-white/98 dark:bg-slate-900/98 backdrop-blur-md border border-slate-200 dark:border-slate-800 shadow-2xl p-4 font-mono text-xs"
+            className="pointer-events-auto w-[min(26rem,calc(100vw-2rem))] max-h-[80dvh] flex flex-col rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl p-4 sm:p-5 font-mono text-xs overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
-            <ApiStatusPanel health={apiHealth} bare />
-            <button
-              type="button"
-              onClick={() => setPanel(null)}
-              className="mt-3 w-full py-2 rounded-lg border border-slate-200 dark:border-slate-800 text-xs font-mono font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer transition-colors"
-            >
-              Close Telemetry Panel
-            </button>
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-white/[0.06] shrink-0">
+              <span className="font-bold text-xs uppercase tracking-wider text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                <Activity className="w-4 h-4 text-[#D62828]" />
+                <span>External Telemetry Feeds</span>
+              </span>
+              <button
+                type="button"
+                onClick={() => setPanel(null)}
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                aria-label="Close"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto overscroll-contain py-3 pr-1 space-y-2">
+              <ApiStatusPanel health={apiHealth} bare />
+            </div>
+            <div className="pt-3 border-t border-slate-100 dark:border-white/[0.06] shrink-0">
+              <button
+                type="button"
+                onClick={() => setPanel(null)}
+                className="w-full py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-mono font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 cursor-pointer transition-colors"
+              >
+                Close Telemetry Panel
+              </button>
+            </div>
           </div>
         </div>,
         document.body

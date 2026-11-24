@@ -43,7 +43,7 @@ export function AppShell() {
             <div
               ref={scrollRef}
               key={pathname}
-              className="page-enter absolute inset-0 z-[900] overflow-y-auto overscroll-contain bg-slate-100/95 dark:bg-[#090D16]/95 backdrop-blur-xs"
+              className="page-enter absolute inset-0 z-[900] overflow-y-auto overscroll-contain bg-slate-100/95 dark:bg-[#090D16]/95 backdrop-blur-xs pb-24 sm:pb-28"
             >
               <AppRoutes />
             </div>

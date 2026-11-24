@@ -31,7 +31,7 @@ export function useRouting(weightedGraph, isFigure2Mode) {
         if (stored) {
           const parsed = JSON.parse(stored);
           if (Array.isArray(parsed) && parsed.length > 0) {
-            // Always ensure the complete 155-hospital registry is loaded, merging any user bed edits
+            // Always ensure the complete 280-hospital registry is loaded, merging any user bed edits
             const customMap = new Map(parsed.map((h) => [h.id, h]));
             return SAMPLE_HOSPITALS.map((base) => {
               const custom = customMap.get(base.id);

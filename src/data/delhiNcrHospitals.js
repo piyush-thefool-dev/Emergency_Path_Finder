@@ -1,6 +1,6 @@
 /**
  * Pan-India & Delhi-NCR Apex Hospital Emergency Registry Dataset.
- * Re-exports the complete Pan-India Apex Hospital Registry (155 verified facilities, 73 in Delhi-NCR)
+ * Re-exports the complete Pan-India Apex Hospital Registry (280 verified facilities across all Indian macro-zones)
  * for backward compatibility across all existing modules.
  */
 

@@ -154,3 +154,132 @@ export function getFigure2Graph() {
     ...FIGURE_2_DEMO_GRAPH,
   };
 }
+
+/**
+ * Returns the Western Emergency Corridor Subgraph
+ * (Mumbai, Pune, Nashik, Aurangabad, Ahmedabad, Surat, Vadodara, Rajkot, Goa).
+ */
+export function getWesternCorridorGraph() {
+  const master = getRealGreaterNoidaOsmGraph();
+  const westPrefixes = ['n_mum', 'n_pun', 'n_nsk', 'n_abn', 'n_ahd', 'n_srt', 'n_vdr', 'n_rjt', 'n_goa'];
+  const nodes = master.nodes.filter((n) => westPrefixes.some((p) => String(n.id).startsWith(p)));
+  const nodeSet = new Set(nodes.map((n) => n.id));
+  const edges = master.edges.filter((e) => nodeSet.has(e.from) && nodeSet.has(e.to));
+  return {
+    id: 'western_corridor_graph_v1',
+    name: 'Western Emergency Corridor (Mumbai-Pune-Gujarat-Goa)',
+    disclaimer: 'Extracted Western India arterial and expressway corridors.',
+    nodes,
+    edges,
+    unit: 'seconds',
+    isSchematic: false,
+  };
+}
+
+/**
+ * Returns the Southern Peninsular Trauma Grid Subgraph
+ * (Bengaluru, Mysuru, Mangaluru, Chennai, Coimbatore, Madurai, Trichy, Hyderabad, Vizag, Vijayawada, Kochi, Trivandrum).
+ */
+export function getSouthernCorridorGraph() {
+  const master = getRealGreaterNoidaOsmGraph();
+  const southPrefixes = [
+    'n_blr', 'n_mys', 'n_mng', 'n_hbl', 'n_chn', 'n_cbe', 'n_mdu', 'n_trc',
+    'n_cok', 'n_trv', 'n_ccj', 'n_tsr', 'n_hyd', 'n_bbn', 'n_wgl', 'n_vzg',
+    'n_bza', 'n_gnt', 'n_tpt', 'n_pny'
+  ];
+  const nodes = master.nodes.filter((n) => southPrefixes.some((p) => String(n.id).startsWith(p)));
+  const nodeSet = new Set(nodes.map((n) => n.id));
+  const edges = master.edges.filter((e) => nodeSet.has(e.from) && nodeSet.has(e.to));
+  return {
+    id: 'southern_corridor_graph_v1',
+    name: 'Southern Peninsular Trauma Grid (Bengaluru-Chennai-Hyderabad-Kochi)',
+    disclaimer: 'Extracted Southern India healthcare and highway networks.',
+    nodes,
+    edges,
+    unit: 'seconds',
+    isSchematic: false,
+  };
+}
+
+/**
+ * Returns the High-Density Delhi-NCR Metropolitan Road Graph.
+ */
+export function getDelhiNcrUrbanGraph() {
+  const master = getRealGreaterNoidaOsmGraph();
+  const ncrNodes = master.nodes.filter(
+    (n) =>
+      !String(n.id).startsWith('n_') ||
+      n.id.includes('pari') ||
+      n.id.includes('delhi') ||
+      n.id.includes('noida') ||
+      n.id.includes('gzb') ||
+      n.id.includes('fbd') ||
+      n.id.includes('gurgaon')
+  );
+  const ncrNodeSet = new Set(ncrNodes.map((n) => n.id));
+  const edges = master.edges.filter((e) => ncrNodeSet.has(e.from) && ncrNodeSet.has(e.to));
+  return {
+    id: 'delhi_ncr_urban_graph_v1',
+    name: 'Delhi-NCR Metropolitan High-Density Urban Grid',
+    disclaimer: 'Dense urban street network for Greater Noida, Noida, Delhi, Gurugram, and Ghaziabad.',
+    nodes: ncrNodes,
+    edges,
+    unit: 'seconds',
+    isSchematic: false,
+  };
+}
+
+/**
+ * Graph Mode catalog for multi-graph selection.
+ */
+export const GRAPH_MODES_CATALOG = [
+  {
+    id: 'real_osm',
+    name: 'Pan-India National Highway & Metropolitan Grid',
+    description: 'Complete nationwide 371-node topology connecting all 280 apex healthcare facilities.',
+    nodeCount: 371,
+    edgeCount: 902,
+    badge: 'ALL INDIA',
+  },
+  {
+    id: 'western_corridor',
+    name: 'Western Emergency Corridor',
+    description: 'High-speed coastal and industrial expressway corridor (Mumbai, Pune, Ahmedabad, Surat, Goa).',
+    nodeCount: 34,
+    edgeCount: 66,
+    badge: 'WEST ZONE',
+  },
+  {
+    id: 'southern_corridor',
+    name: 'Southern Peninsular Trauma Grid',
+    description: 'Inter-state emergency network linking Bengaluru, Chennai, Hyderabad, and Kerala medical hubs.',
+    nodeCount: 47,
+    edgeCount: 98,
+    badge: 'SOUTH ZONE',
+  },
+  {
+    id: 'delhi_ncr',
+    name: 'Delhi-NCR Metropolitan Urban Grid',
+    description: 'High-density urban street topology with grade separators, flyovers, and local expressways.',
+    nodeCount: 104,
+    edgeCount: 258,
+    badge: 'NCR METRO',
+  },
+  {
+    id: 'synthetic',
+    name: 'Synthetic 46-Node Benchmark Grid',
+    description: 'Calibrated urban road graph with known theoretical shortest path benchmarks.',
+    nodeCount: 46,
+    edgeCount: 136,
+    badge: 'SYNTHETIC',
+  },
+  {
+    id: 'figure_2',
+    name: 'Figure 2 Algorithmic Proof Demonstration Graph',
+    description: 'The exact 6-node pedagogical graph from Figure 2 for algorithm validation.',
+    nodeCount: 6,
+    edgeCount: 7,
+    badge: 'ACADEMIC',
+  },
+];
+
