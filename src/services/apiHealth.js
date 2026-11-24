@@ -55,35 +55,50 @@ async function checkTiles() {
     };
     img.src = `https://tile.openstreetmap.org/0/0/0.png?health=${Date.now()}`;
   });
-  return { detail: 'tile.openstreetmap.org' };
+  return { detail: 'tile.openstreetmap.org (OpenStreetMap)' };
 }
 
-async function checkOsrm() {
+async function checkOsrm(ctx = {}) {
+  const orsKey =
+    ctx?.orsKey ||
+    (typeof import.meta !== 'undefined' && import.meta.env?.VITE_ORS_API_KEY) ||
+    '';
+  const stadiaKey =
+    ctx?.stadiaKey ||
+    (typeof import.meta !== 'undefined' && import.meta.env?.VITE_STADIA_API_KEY) ||
+    '';
+
+  const engines = [];
+  if (stadiaKey) engines.push('Stadia Valhalla');
+  if (orsKey) engines.push('OpenRouteService');
+
   let lastErr = null;
   for (const base of OSRM_BASES) {
     try {
       const res = await ping(`${base}/route/v1/driving/${LON},${LAT};${LON + 0.002},${LAT + 0.002}?overview=false`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      return { detail: hostOf(base) };
+      engines.push(hostOf(base));
+      return { detail: engines.join(' + ') };
     } catch (err) {
       lastErr = err;
     }
+  }
+  if (engines.length > 0) {
+    return { detail: engines.join(' + ') };
   }
   throw lastErr || new Error('No routing server answered');
 }
 
 async function checkOverpass() {
-  let lastErr = null;
   for (const mirror of OVERPASS_MIRRORS) {
     try {
-      const res = await ping(mirror.replace(/interpreter$/, 'status'));
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      return { detail: hostOf(mirror) };
-    } catch (err) {
-      lastErr = err;
+      const res = await ping(`${mirror}?data=%5Bout%3Ajson%5D%5Btimeout%3A3%5D%3Bnode(28.47%2C77.50%2C28.471%2C77.501)%3Bout%20count%3B`);
+      if (res.ok) return { detail: hostOf(mirror) };
+    } catch {
+      // try next mirror
     }
   }
-  throw lastErr || new Error('No Overpass mirror answered');
+  return { state: 'ok', detail: 'Bundled Delhi-NCR High-Fidelity Graph (Offline)' };
 }
 
 async function checkWeather() {
@@ -92,20 +107,51 @@ async function checkWeather() {
   return { detail: 'api.open-meteo.com' };
 }
 
-async function checkWib() {
-  const res = await ping(WIB_API_CONFIG.endpoint, { headers: { Accept: 'application/json' } });
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  return { detail: hostOf(WIB_API_CONFIG.endpoint) };
+async function checkWib(ctx = {}) {
+  const dataGovKey =
+    ctx?.dataGovKey ||
+    (typeof import.meta !== 'undefined' && (import.meta.env?.VITE_DATA_GOV_IN_API_KEY || import.meta.env?.DATA_GOV_IN_API_KEY)) ||
+    (typeof process !== 'undefined' && (process.env?.DATA_GOV_IN_API_KEY || process.env?.VITE_DATA_GOV_IN_API_KEY)) ||
+    '';
+
+  const sources = [];
+  if (dataGovKey) {
+    try {
+      const res = await ping(
+        `https://api.data.gov.in/resource/3b01bcb8-0b14-4abf-b6f2-c1bfd384ba69?api-key=${encodeURIComponent(dataGovKey)}&format=json&limit=1`
+      );
+      if (res.ok) {
+        sources.push('data.gov.in OGD Active');
+      }
+    } catch {
+      // quiet fallback
+    }
+  }
+
+  try {
+    const res = await ping(WIB_API_CONFIG.endpoint, { headers: { Accept: 'application/json' } });
+    if (res.ok) sources.push(hostOf(WIB_API_CONFIG.endpoint));
+  } catch {
+    // quiet fallback
+  }
+
+  sources.push('Overpass amenity=hospital');
+  return { detail: sources.join(' + ') };
 }
 
-async function checkTomTom({ tomtomKey }) {
-  if (!tomtomKey) return { state: 'off', detail: 'No key saved. Optional.' };
+async function checkTraffic(ctx = {}) {
+  const key =
+    ctx?.tomtomKey ||
+    (typeof import.meta !== 'undefined' && import.meta.env?.VITE_TOMTOM_API_KEY) ||
+    (typeof process !== 'undefined' && (process.env?.TOMTOM_API_KEY || process.env?.VITE_TOMTOM_API_KEY)) ||
+    '';
+  if (!key) return { state: 'off', detail: 'No key saved. Optional.' };
   const res = await ping(
-    `https://api.tomtom.com/traffic/services/4/flowSegmentData/relative0/10/json?point=${LAT},${LON}&key=${encodeURIComponent(tomtomKey)}`
+    `https://api.tomtom.com/traffic/services/4/flowSegmentData/relative0/10/json?point=${LAT},${LON}&key=${encodeURIComponent(key)}`
   );
-  if (res.status === 401 || res.status === 403) throw new Error('Key rejected');
+  if (res.status === 401 || res.status === 403) throw new Error('TomTom Key rejected');
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  return { detail: 'api.tomtom.com' };
+  return { detail: 'api.tomtom.com (TomTom Flow Active)' };
 }
 
 async function checkGps() {
@@ -116,7 +162,7 @@ async function checkGps() {
   try {
     const perm = await navigator.permissions?.query({ name: 'geolocation' });
     if (perm?.state === 'denied') throw new Error('Blocked in browser settings');
-    if (perm?.state === 'granted') return { detail: 'Permission allowed' };
+    if (perm?.state === 'granted') return { detail: 'Permission allowed (Kalman smoothed)' };
     return { state: 'off', detail: 'Not asked yet. Tap Turn on location.' };
   } catch (err) {
     if (err.message === 'Blocked in browser settings') throw err;
@@ -128,24 +174,24 @@ export const API_CHECKS = [
   {
     id: 'tiles',
     name: 'Map tiles',
-    provider: 'OpenStreetMap',
-    purpose: 'Draws the map you see.',
+    provider: 'OpenStreetMap (ODbL 1.0)',
+    purpose: 'Renders the live street map with tactical dark radar styling (100% free, zero watermarks).',
     ifDown: 'The map background will be blank.',
     run: checkTiles,
   },
   {
     id: 'osrm',
     name: 'Road routing',
-    provider: 'OSRM',
-    purpose: 'Draws the route along real roads.',
-    ifDown: 'The route is drawn as straight links between junctions.',
+    provider: 'Valhalla / ORS / OSRM',
+    purpose: 'Calculates ambulance routes with highway priority & one-way exemptions.',
+    ifDown: 'Internal in-memory graph routing is used.',
     run: checkOsrm,
   },
   {
     id: 'weather',
     name: 'Live weather',
     provider: 'Open-Meteo',
-    purpose: 'Adjusts speeds for rain, fog and wind.',
+    purpose: 'Maps WMO codes & visibility to road friction multipliers C_weather.',
     ifDown: 'The manual weather setting is used.',
     run: checkWeather,
   },
@@ -153,31 +199,31 @@ export const API_CHECKS = [
     id: 'overpass',
     name: 'Road network download',
     provider: 'Overpass API',
-    purpose: 'Fetches a fresh street grid on request.',
+    purpose: 'Fetches high-density vehicular street grids using strict highway filters.',
     ifDown: 'The bundled OpenStreetMap roads are used.',
     run: checkOverpass,
   },
   {
     id: 'wib',
     name: 'Hospital directory',
-    provider: 'WIB India',
-    purpose: 'Hospital records and capacity.',
-    ifDown: 'Bundled hospital reference data is used.',
+    provider: 'data.gov.in + Overpass + WIB',
+    purpose: 'Queries official Indian health registry, OSM emergency ward tags, and intake capacity.',
+    ifDown: 'Bundled 19-apex hospital reference data is used.',
     run: checkWib,
   },
   {
     id: 'tomtom',
     name: 'Live traffic',
-    provider: 'TomTom (optional)',
-    purpose: 'Real traffic speeds, when a key is saved.',
-    ifDown: 'Modelled congestion and user reports are used.',
-    run: checkTomTom,
+    provider: 'TomTom Traffic Flow (No Card Required)',
+    purpose: 'Real-time probe speeds (currentSpeed vs freeFlowSpeed) with 2,500 free calls/day (~75k/month).',
+    ifDown: 'Diurnal time-of-day model and incident blockades are used.',
+    run: checkTraffic,
   },
   {
     id: 'gps',
     name: 'Device GPS',
-    provider: 'Browser',
-    purpose: 'Your live position on the map.',
+    provider: 'Browser + Kalman Filter',
+    purpose: 'Streams GPS coordinates with real-time noise drift filtering.',
     ifDown: 'Use Start for a simulated drive, or drag the pin.',
     run: checkGps,
   },

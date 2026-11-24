@@ -124,6 +124,7 @@ export function MapView({
         scrollWheelZoom={true}
         className="w-full h-full z-10"
       >
+        {/* OpenStreetMap TileLayer with compulsory ODbL attribution */}
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"

@@ -92,8 +92,8 @@ export function AmbulanceMarker({
       eventHandlers={eventHandlers}
     >
       <Popup>
-        <div className="text-xs p-1 font-sans space-y-2">
-          <div className="font-bold uppercase tracking-wider text-2xs flex items-center justify-between text-slate-900 border-b border-slate-100 pb-1">
+        <div className="text-xs p-1 font-sans space-y-2 text-slate-900 dark:text-slate-100">
+          <div className="font-bold uppercase tracking-wider text-2xs flex items-center justify-between text-slate-900 dark:text-slate-100 border-b border-slate-100 dark:border-slate-800 pb-1">
             <span className="flex items-center gap-1.5">
               <span
                 className={`w-2 h-2 rounded-full inline-block ${
@@ -107,8 +107,8 @@ export function AmbulanceMarker({
             <span
               className={`px-1.5 py-0.2 rounded text-3xs font-mono font-bold ${
                 canDragPin
-                  ? 'bg-amber-100 text-amber-900 border border-amber-300'
-                  : 'bg-slate-100 text-slate-700 border border-slate-200'
+                  ? 'bg-amber-100 dark:bg-amber-950/80 text-amber-900 dark:text-amber-300 border border-amber-300 dark:border-amber-800'
+                  : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700'
               }`}
             >
               {canDragPin ? 'UNLOCKED' : 'FIXED'}
@@ -116,14 +116,14 @@ export function AmbulanceMarker({
           </div>
 
           <div className="space-y-0.5">
-            <p className="text-slate-800 text-xs">
+            <p className="text-slate-800 dark:text-slate-200 text-xs">
               <strong>Nearest junction:</strong> {snappedNode?.name || 'On road network'}
             </p>
-            <p className="text-slate-500 font-mono text-3xs">
+            <p className="text-slate-500 dark:text-slate-400 font-mono text-3xs">
               Coordinates: {position.lat.toFixed(5)}°N, {position.lon.toFixed(5)}°E
             </p>
             {speedKph > 0 && (
-              <p className="text-emerald-700 font-mono text-3xs font-bold">
+              <p className="text-emerald-700 dark:text-emerald-400 font-mono text-3xs font-bold">
                 Current Speed: {Math.round(speedKph)} km/h
               </p>
             )}
@@ -131,14 +131,14 @@ export function AmbulanceMarker({
 
           {/* Lock / Unlock Toggle Button in Popup */}
           {!isMoving && (
-            <div className="pt-1 border-t border-slate-100">
+            <div className="pt-1 border-t border-slate-100 dark:border-slate-800">
               <button
                 type="button"
                 onClick={() => onTogglePinLock && onTogglePinLock(!canDragPin)}
                 className={`w-full py-1 px-2 rounded text-3xs font-semibold flex items-center justify-center gap-1.5 border transition-all cursor-pointer ${
                   canDragPin
-                    ? 'bg-amber-50 text-amber-900 border-amber-300 hover:bg-amber-100'
-                    : 'bg-slate-100 text-slate-700 border-slate-300 hover:bg-slate-200'
+                    ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-900 dark:text-amber-300 border-amber-300 dark:border-amber-800 hover:bg-amber-100 dark:hover:bg-amber-900/50'
+                    : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700'
                 }`}
               >
                 <span>{canDragPin ? '🔒 Fix Position (Lock)' : '🔓 Unlock to Drag Ambulance'}</span>

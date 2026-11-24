@@ -309,6 +309,14 @@
   background-color: #0f172a !important;
 }
 
+.dark .leaflet-popup-close-button {
+  color: #94a3b8 !important;
+}
+
+.dark .leaflet-popup-close-button:hover {
+  color: #f1f5f9 !important;
+}
+
 .dark .leaflet-control-zoom a {
   background-color: #0f172a !important;
   color: #f1f5f9 !important;

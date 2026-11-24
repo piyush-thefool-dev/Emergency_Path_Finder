@@ -55,7 +55,7 @@ function CameraController({ ambulancePos, destination, recenterKey, followVehicl
         map.fitBounds(points, {
           paddingTopLeft: FIT_PADDING_TOP_LEFT,
           paddingBottomRight: FIT_PADDING_BOTTOM_RIGHT,
-          maxZoom: 16,
+          maxZoom: 15,
           animate: true,
         });
       } else {

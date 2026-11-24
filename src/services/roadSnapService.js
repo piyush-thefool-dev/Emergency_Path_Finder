@@ -17,6 +17,13 @@ export const OSRM_BASES = [
   'https://routing.openstreetmap.de/routed-car',
 ];
 
+export const VALHALLA_BASES = [
+  (typeof import.meta !== 'undefined' && import.meta.env?.VITE_VALHALLA_URL) || '',
+  'https://valhalla1.openstreetmap.de',
+].filter(Boolean);
+
+export const ORS_BASE = 'https://api.openrouteservice.org/v2/directions/driving-car';
+
 const CLOSURE_RADIUS_M = 45;
 const DETOUR_OFFSETS_M = [350, 700];
 const cache = new Map();
@@ -74,6 +81,150 @@ function segmentLengthM(seg) {
   return Math.hypot(bx - ax, by - ay);
 }
 
+/* ---------- Polyline Decoder (Precision 5 and 6) ---------- */
+export function decodePolyline(str, precision = 6) {
+  let index = 0;
+  let lat = 0;
+  let lng = 0;
+  const coordinates = [];
+  const factor = Math.pow(10, precision);
+  while (index < str.length) {
+    let b;
+    let shift = 0;
+    let result = 0;
+    do {
+      b = str.charCodeAt(index++) - 63;
+      result |= (b & 0x1f) << shift;
+      shift += 5;
+    } while (b >= 0x20);
+    const dlat = (result & 1) ? ~(result >> 1) : (result >> 1);
+    lat += dlat;
+
+    shift = 0;
+    result = 0;
+    do {
+      b = str.charCodeAt(index++) - 63;
+      result |= (b & 0x1f) << shift;
+      shift += 5;
+    } while (b >= 0x20);
+    const dlng = (result & 1) ? ~(result >> 1) : (result >> 1);
+    lng += dlng;
+
+    coordinates.push([lat / factor, lng / factor]);
+  }
+  return coordinates;
+}
+
+export const STADIA_VALHALLA_BASE = 'https://api.stadiamaps.com/route/v1';
+
+/* ---------- Valhalla Emergency Priority Route Query ---------- */
+async function valhallaRoutes(points, signal) {
+  const stadiaKey = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_STADIA_API_KEY) || '';
+  const bases = [
+    stadiaKey ? `${STADIA_VALHALLA_BASE}?api_key=${encodeURIComponent(stadiaKey)}` : null,
+    ...VALHALLA_BASES,
+  ].filter(Boolean);
+
+  for (const base of bases) {
+    try {
+      const payload = {
+        locations: points.map(([lat, lon]) => ({ lat, lon })),
+        costing: 'auto',
+        costing_options: {
+          auto: {
+            ignore_oneways: true,        // Emergency ambulance priority exemption
+            ignore_restrictions: true,   // Emergency ambulance priority exemption
+            use_highways: 1.0,           // Prioritize fast arterial corridors
+          },
+        },
+        directions_options: { units: 'kilometers' },
+      };
+      const endpoint = base.includes('?') ? base : `${base}/route`;
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+        signal,
+      });
+      if (!res.ok) continue;
+      const data = await res.json();
+      const trip = data.trip;
+      if (!trip || !trip.legs) continue;
+      const leg = trip.legs[0];
+      const coords = decodePolyline(leg.shape, 6);
+      if (coords.length >= 2) {
+        return [{
+          coords,
+          duration: trip.summary.time || 0,
+          distance: (trip.summary.length || 0) * 1000,
+          engine: stadiaKey ? 'Stadia Maps Valhalla (Ambulance Priority)' : 'Valhalla (Ambulance Priority Costing)',
+        }];
+      }
+    } catch (err) {
+      if (err?.name === 'AbortError') throw err;
+    }
+  }
+  return [];
+}
+
+/* ---------- OpenRouteService (ORS) Route Query (with avoid_polygons) ---------- */
+async function orsRoutes(points, closedSegments = [], signal) {
+  const orsKey = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_ORS_API_KEY) || '';
+  if (!orsKey) return [];
+  try {
+    const coords = points.map(([lat, lon]) => [lon, lat]);
+    const body = {
+      coordinates: coords,
+      radiuses: [-1, -1],
+    };
+
+    // If manual incident closures exist, route directly around them using avoid_polygons
+    if (closedSegments.length > 0) {
+      const delta = 0.0004; // ~45m bounding box
+      const polygons = closedSegments.map((seg) => {
+        const [a, b] = seg;
+        return [
+          [Math.min(a[1], b[1]) - delta, Math.min(a[0], b[0]) - delta],
+          [Math.max(a[1], b[1]) + delta, Math.min(a[0], b[0]) - delta],
+          [Math.max(a[1], b[1]) + delta, Math.max(a[0], b[0]) + delta],
+          [Math.min(a[1], b[1]) - delta, Math.max(a[0], b[0]) + delta],
+          [Math.min(a[1], b[1]) - delta, Math.min(a[0], b[0]) - delta],
+        ];
+      });
+      body.options = {
+        avoid_polygons: {
+          type: 'MultiPolygon',
+          coordinates: polygons.map((poly) => [poly]),
+        },
+      };
+    }
+
+    const res = await fetch(ORS_BASE, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: orsKey,
+      },
+      body: JSON.stringify(body),
+      signal,
+    });
+    if (!res.ok) return [];
+    const data = await res.json();
+    const route = data.routes?.[0];
+    if (!route?.geometry) return [];
+    const decoded = decodePolyline(route.geometry, 5);
+    return [{
+      coords: decoded,
+      duration: route.summary?.duration || 0,
+      distance: route.summary?.distance || 0,
+      engine: 'OpenRouteService (avoid_polygons)',
+    }];
+  } catch (err) {
+    if (err?.name === 'AbortError') throw err;
+    return [];
+  }
+}
+
 /* ---------- OSRM calls ---------- */
 const lonLat = ([lat, lon]) => `${lon.toFixed(6)},${lat.toFixed(6)}`;
 
@@ -103,7 +254,27 @@ async function osrmRoutes(points, signal, alternatives = false) {
       coords: r.geometry.coordinates.map(([lon, lat]) => [lat, lon]),
       duration: r.duration,
       distance: r.distance,
+      engine: 'OSRM',
     }));
+}
+
+/** Snaps GPS coordinate traces to road centerlines using OSRM /match or /nearest. */
+export async function matchGpsCoordinates(points, signal) {
+  if (!points || points.length === 0) return null;
+  if (points.length === 1) {
+    return snapToRoad(points[0], signal);
+  }
+  try {
+    const path = `/match/v1/driving/${points.map(lonLat).join(';')}?overview=full&geometries=geojson`;
+    const data = await osrmJson(path, signal);
+    const matchedCoords = data?.matchings?.[0]?.geometry?.coordinates;
+    if (matchedCoords && matchedCoords.length > 0) {
+      return matchedCoords.map(([lon, lat]) => [lat, lon]);
+    }
+  } catch (err) {
+    if (err?.name === 'AbortError') throw err;
+  }
+  return null;
 }
 
 /** Snap an arbitrary point to the nearest driveable road so detour via-points never create spurs. */
@@ -150,7 +321,34 @@ export async function fetchRoadRoute({ start, end, closed = [], slow = [] }, sig
   if (cache.has(key)) return cache.get(key);
 
   const hasIncidents = closed.length > 0 || slow.length > 0;
-  const base = (await osrmRoutes([start, end], signal, hasIncidents)).map((r) => scoreRoute(r, closed, slow));
+  let rawRoutes = [];
+
+  const orsKey = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_ORS_API_KEY) || '';
+
+  // Tier 1: Try Valhalla emergency priority routing (handles one-way exemptions & expressway preference)
+  try {
+    const vRoutes = await valhallaRoutes([start, end], signal);
+    rawRoutes.push(...vRoutes);
+  } catch (e) {
+    if (e?.name === 'AbortError') throw e;
+  }
+
+  // Tier 2: Try OpenRouteService if API key configured (native avoid_polygons around closed roads)
+  if (orsKey && (rawRoutes.length === 0 || closed.length > 0)) {
+    try {
+      const oRoutes = await orsRoutes([start, end], closed, signal);
+      rawRoutes.push(...oRoutes);
+    } catch (e) {
+      if (e?.name === 'AbortError') throw e;
+    }
+  }
+
+  // Tier 3: OSRM primary & mirrors (with alternatives for incident rerouting)
+  if (rawRoutes.length === 0) {
+    rawRoutes = await osrmRoutes([start, end], signal, hasIncidents);
+  }
+
+  const base = rawRoutes.map((r) => scoreRoute(r, closed, slow));
 
   if (base.length === 0) throw new Error('No route found');
 

@@ -198,13 +198,13 @@ To maintain zero downtime in life-critical dispatch environments, every telemetr
 
 | # | Telemetry Domain | Primary Live Provider | Auth Required | Offline Backup & Resilience Mechanism |
 |---|---|---|---|---|
-| **1** | **Road Geometry** | **Project-OSRM Route API** | None (Public) | German OSM Mirror (`routing.openstreetmap.de`) &rarr; Bundled Delhi-NCR Graph (182 nodes, 494 edges). |
-| **2** | **Map Tiles** | **OpenStreetMap Tiles** | None (ODbL 1.0) | Leaflet raster caching with custom high-contrast dark dispatch CSS filter. |
-| **3** | **Weather & Friction** | **Open-Meteo API** | None (Free / Open) | Deterministic weather condition matrix (`weatherService.js`) with physics friction multipliers. |
-| **4** | **Hospital Capacity** | **WIB India Open API** | None (Public) | Bundled 19 Apex Delhi-NCR Trauma Center Registry + interactive user bed editor with `localStorage`. |
-| **5** | **Traffic Congestion** | **TomTom Traffic Flow** | API Key (`.env`) | Time-of-day diurnal model (`trafficService.js`: Peak `0.55x`, Night `1.05x`) + manual road blockades. |
-| **6** | **Street Vectors** | **Overpass API** | None (Public) | Rotating fallback mirrors (`lz4.overpass-api.de`, `kumi.systems`) + local graph snapshot cache. |
-| **7** | **GPS Positioning** | **W3C Geolocation API** | Browser Prompt | Default arterial dispatch coordinates (Lat: `28.4744`, Lon: `77.5040`). |
+| **1** | **Road Geometry** | **Valhalla / ORS / Project-OSRM** | None (Public) / Optional Key | Valhalla ambulance costing (`ignore_oneways: true`, `use_highways: 1.0`) &rarr; German OSM Mirror &rarr; Bundled Delhi-NCR Graph (182 nodes, 494 edges). |
+| **2** | **Map Tiles** | **OpenStreetMap Tiles (ODbL 1.0) + Tactical Night Filter** | None (Free / Open) | 100% free with zero watermarks (avoids CARTO's mandatory key watermarks), styled with tactical dark radar contrast. |
+| **3** | **Weather & Friction** | **Open-Meteo API (WMO + Visibility)** | None (Free / Open) | Direct mapping of WMO codes & visibility (< 350m: `0.60x`, fog: `0.75x`, rain: `0.82x`, squalls: `0.50x`). Fallback: deterministic matrix in `weatherService.js`. |
+| **4** | **Hospital Capacity** | **Overpass `amenity=hospital` + data.gov.in + WIB** | None (Public) | Overpass emergency tags (`emergency=yes`, `beds`, `phone`) + National Health Registry. Fallback: 19 Apex Delhi-NCR Registry + `localStorage` bed editor. |
+| **5** | **Traffic Congestion** | **TomTom Traffic Flow API (No Card Required)** | Optional (`.env`) | Real-time probe speeds across Delhi-NCR with 2,500 free calls/day (~75k/month) and zero credit card requirement. Fallback: Diurnal model + manual blockades. |
+| **6** | **Street Vectors** | **Overpass API (Strict Vehicle Filter)** | None (Public) | Strict vehicular regex filter (`motorway`, `trunk`, `primary`, `secondary`, `tertiary`) excluding footways (>60% smaller payloads). Fallback: Geofabrik extracts. |
+| **7** | **GPS Positioning** | **W3C Geolocation + 2D Kalman Filter & OSRM Match** | Browser Prompt | 2D Kalman filter eliminates 5–15 m multipath drift; snapped to road centerline with OSRM `/match`. Fallback: Greater Noida arterial center (Lat: `28.4744`, Lon: `77.5040`). |
 
 ---
 

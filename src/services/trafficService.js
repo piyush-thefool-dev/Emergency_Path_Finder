@@ -20,10 +20,10 @@ export const TRAFFIC_PROVIDERS = {
   },
   TOMTOM: {
     id: 'tomtom',
-    name: 'TomTom Traffic Flow API',
-    description: 'Commercial real-time probe speed telemetry (currentSpeed vs freeFlowSpeed in km/h)',
+    name: 'TomTom Traffic Flow API (No Credit Card Required)',
+    description: 'Real-time probe speed telemetry (currentSpeed vs freeFlowSpeed in km/h). Free email sign-up with 2,500 calls/day (~75,000 calls/month) and zero credit card requirement.',
     requiresKey: true,
-    keyPlaceholder: 'Enter TomTom Traffic API Key...',
+    keyPlaceholder: 'Enter TomTom Traffic API Key (from developer.tomtom.com)...',
     status: 'KEY_CONFIGURABLE',
   },
   GOOGLE_MAPS: {
@@ -44,32 +44,29 @@ export const TRAFFIC_PROVIDERS = {
 };
 
 export function getStoredTrafficConfig() {
-  const envKey =
+  const envTomtomKey =
     (typeof process !== 'undefined' && (process.env?.TOMTOM_API_KEY || process.env?.VITE_TOMTOM_API_KEY)) ||
     (typeof import.meta !== 'undefined' && import.meta.env?.VITE_TOMTOM_API_KEY) ||
     '';
 
+  const defaultState = {
+    providerId: envTomtomKey ? 'tomtom' : 'osrm',
+    tomtomApiKey: envTomtomKey,
+    googleApiKey: '',
+    isKeyConnected: Boolean(envTomtomKey),
+  };
+
   if (typeof localStorage === 'undefined') {
-    return {
-      providerId: envKey ? 'tomtom' : 'osrm',
-      tomtomApiKey: envKey,
-      googleApiKey: '',
-      isKeyConnected: Boolean(envKey),
-    };
+    return defaultState;
   }
 
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) {
-      return {
-        providerId: envKey ? 'tomtom' : 'osrm',
-        tomtomApiKey: envKey,
-        googleApiKey: '',
-        isKeyConnected: Boolean(envKey),
-      };
+      return defaultState;
     }
     const parsed = JSON.parse(raw);
-    const effectiveTomtomKey = parsed.tomtomApiKey || envKey;
+    const effectiveTomtomKey = parsed.tomtomApiKey || envTomtomKey;
     return {
       ...parsed,
       tomtomApiKey: effectiveTomtomKey,
@@ -77,12 +74,7 @@ export function getStoredTrafficConfig() {
       isKeyConnected: Boolean(effectiveTomtomKey),
     };
   } catch {
-    return {
-      providerId: envKey ? 'tomtom' : 'osrm',
-      tomtomApiKey: envKey,
-      googleApiKey: '',
-      isKeyConnected: Boolean(envKey),
-    };
+    return defaultState;
   }
 }
 

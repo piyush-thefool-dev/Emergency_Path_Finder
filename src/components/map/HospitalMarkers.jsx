@@ -15,12 +15,11 @@ import { Phone, PhoneCall } from 'lucide-react';
 import { PlaceholderBadge } from '../panels/PlaceholderBadge.jsx';
 
 export function HospitalMarkers({ hospitals = [], activeHospitalId, onSelectHospital }) {
-  // On a phone-sized map, permanent labels on every pin cover the whole screen.
-  // Always label the recommended hospital; label the others only when zoomed in.
+  // Prominently highlight and label all nearby hospitals in the active map corridor
   const map = useMap();
   const [zoom, setZoom] = useState(() => map.getZoom());
   useMapEvents({ zoomend: () => setZoom(map.getZoom()) });
-  const showAllLabels = zoom >= 15 || map.getSize().x > 700; // wide (desktop) maps have room for every label
+  const showAllLabels = zoom >= 13 || map.getSize().x > 600; // Always label nearby hospitals at standard dispatch zoom
 
   // Custom SVG DivIcon factory for hospitals
   const createHospitalIcon = (isTarget) => {
@@ -131,7 +130,7 @@ export function HospitalMarkers({ hospitals = [], activeHospitalId, onSelectHosp
                     RECOMMENDED
                   </span>
                 ) : (
-                  <span className="text-3xs font-mono text-slate-500 bg-slate-100 px-1 rounded">
+                  <span className="text-3xs font-mono text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800/90 px-1 rounded border border-transparent dark:border-slate-700">
                     {hosp.bedAvailability?.status || 'Active'}
                   </span>
                 )}
@@ -139,21 +138,21 @@ export function HospitalMarkers({ hospitals = [], activeHospitalId, onSelectHosp
             </Tooltip>
             )}
 
-            {/* Click Popup with Clinical & Telemetry Details */}
+                {/* Click Popup with Clinical & Telemetry Details */}
             <Popup>
-              <div className="text-xs p-1 font-sans space-y-2 max-w-xs">
-                <div className="flex items-center justify-between gap-2 border-b border-slate-100 pb-1.5">
+              <div className="text-xs p-1 font-sans space-y-2 max-w-xs text-slate-900 dark:text-slate-100">
+                <div className="flex items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-800 pb-1.5">
                   <div>
-                    <h4 className="font-bold text-slate-900 text-xs leading-tight">
+                    <h4 className="font-bold text-slate-900 dark:text-slate-100 text-xs leading-tight">
                       {hosp.name}
                     </h4>
-                    <span className="text-3xs text-slate-500 block mt-0.5">
+                    <span className="text-3xs text-slate-500 dark:text-slate-400 block mt-0.5">
                       {hosp.address}
                     </span>
                   </div>
                   {isTarget ? (
                     <div className="flex items-center gap-1 shrink-0">
-                      <span className="text-3xs px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold border border-emerald-300">
+                      <span className="text-3xs px-2 py-0.5 rounded bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 font-bold border border-emerald-300 dark:border-emerald-800">
                         ★ ACTIVE DESTINATION
                       </span>
                       {activeHospitalId && (
@@ -165,7 +164,7 @@ export function HospitalMarkers({ hospitals = [], activeHospitalId, onSelectHosp
                               onSelectHospital(null);
                             }
                           }}
-                          className="text-3xs px-1.5 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 font-medium cursor-pointer"
+                          className="text-3xs px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700 font-medium cursor-pointer"
                           title="Reset to automated CAD recommendation"
                         >
                           Auto
@@ -189,16 +188,16 @@ export function HospitalMarkers({ hospitals = [], activeHospitalId, onSelectHosp
                 </div>
 
                 {/* Illustrative bed estimate readout */}
-                <div className="bg-slate-50 border border-slate-200/80 rounded-lg p-2 space-y-1.5">
+                <div className="bg-slate-50 dark:bg-slate-900/80 border border-slate-200/80 dark:border-slate-800 rounded-lg p-2 space-y-1.5">
                   <div className="flex items-center justify-between">
-                    <span className="font-bold text-3xs uppercase tracking-wide text-slate-700">Demo Bed Estimates</span>
+                    <span className="font-bold text-3xs uppercase tracking-wide text-slate-700 dark:text-slate-300">Demo Bed Estimates</span>
                     <span
                       className={`px-1.5 py-0.2 rounded text-3xs font-mono font-bold ${
                         (hosp.bedAvailability?.icuBedsFree ?? 0) > 0
-                          ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                          ? 'bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800'
                           : (hosp.bedAvailability?.emergencyWardFree ?? 0) > 0
-                          ? 'bg-amber-100 text-amber-900 border border-amber-300'
-                          : 'bg-red-100 text-red-800 border border-red-300'
+                          ? 'bg-amber-100 dark:bg-amber-950/80 text-amber-900 dark:text-amber-300 border border-amber-300 dark:border-amber-800'
+                          : 'bg-red-100 dark:bg-red-950/80 text-red-800 dark:text-red-300 border border-red-300 dark:border-red-800'
                       }`}
                     >
                       {(hosp.bedAvailability?.icuBedsFree ?? 0) > 0
@@ -210,33 +209,33 @@ export function HospitalMarkers({ hospitals = [], activeHospitalId, onSelectHosp
                   </div>
 
                   <div className="grid grid-cols-2 gap-1.5 text-2xs font-mono">
-                    <div className="bg-white p-1 rounded border border-slate-200 text-center">
-                      <span className="text-3xs text-slate-500 block">ICU Est.</span>
+                    <div className="bg-white dark:bg-slate-950/90 p-1.5 rounded-md border border-slate-200 dark:border-slate-800 text-center">
+                      <span className="text-3xs text-slate-500 dark:text-slate-400 block">ICU Est.</span>
                       <span className={`text-xs font-bold ${
-                        (hosp.bedAvailability?.icuBedsFree ?? 0) > 0 ? 'text-emerald-700' : 'text-red-600'
+                        (hosp.bedAvailability?.icuBedsFree ?? 0) > 0 ? 'text-emerald-700 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'
                       }`}>
                         {hosp.bedAvailability?.icuBedsFree ?? 0}
                       </span>
                     </div>
-                    <div className="bg-white p-1 rounded border border-slate-200 text-center">
-                      <span className="text-3xs text-slate-500 block">Ward Est.</span>
-                      <span className="text-xs font-bold text-[#1F3C6D]">
+                    <div className="bg-white dark:bg-slate-950/90 p-1.5 rounded-md border border-slate-200 dark:border-slate-800 text-center">
+                      <span className="text-3xs text-slate-500 dark:text-slate-400 block">Ward Est.</span>
+                      <span className="text-xs font-bold text-[#1F3C6D] dark:text-sky-400">
                         {hosp.bedAvailability?.emergencyWardFree ?? 0}
                       </span>
                     </div>
                   </div>
 
                   {hosp.bedAvailability?.traumaBedsFree !== undefined && (
-                    <div className="text-3xs text-slate-600 flex items-center justify-between px-1">
+                    <div className="text-3xs text-slate-600 dark:text-slate-400 flex items-center justify-between px-1">
                       <span>Trauma Est.:</span>
-                      <span className="font-mono font-bold text-slate-800">{hosp.bedAvailability.traumaBedsFree}</span>
+                      <span className="font-mono font-bold text-slate-800 dark:text-slate-200">{hosp.bedAvailability.traumaBedsFree}</span>
                     </div>
                   )}
                 </div>
 
-                <div className="text-3xs text-slate-600 space-y-0.5">
+                <div className="text-3xs text-slate-600 dark:text-slate-400 space-y-0.5">
                   <div>
-                    <span className="font-semibold text-slate-700">Specialties: </span>
+                    <span className="font-semibold text-slate-700 dark:text-slate-300">Specialties: </span>
                     {(hosp.specialtyLabels || hosp.specialties || []).join(' · ')}
                   </div>
                 </div>
@@ -257,7 +256,7 @@ export function HospitalMarkers({ hospitals = [], activeHospitalId, onSelectHosp
                   <a
                     href="tel:108"
                     onClick={(e) => e.stopPropagation()}
-                    className="w-full flex items-center justify-center gap-1.5 py-1 px-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-mono font-semibold text-[10px] transition-all cursor-pointer no-underline"
+                    className="w-full flex items-center justify-center gap-1.5 py-1 px-2 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-mono font-semibold text-[10px] transition-all cursor-pointer no-underline border border-transparent dark:border-slate-700"
                     title="Direct 24/7 Government Emergency Ambulance Dispatch (Toll-Free 108)"
                   >
                     <Phone className="w-3 h-3 text-red-600 shrink-0" />
@@ -266,12 +265,12 @@ export function HospitalMarkers({ hospitals = [], activeHospitalId, onSelectHosp
                 </div>
 
                 {/* Data limitation note */}
-                <div className="pt-1.5 border-t border-slate-100 flex items-center justify-between text-3xs font-mono">
-                  <span className="inline-flex items-center gap-1 text-amber-700 font-semibold">
+                <div className="pt-1.5 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-3xs font-mono">
+                  <span className="inline-flex items-center gap-1 text-amber-700 dark:text-amber-400 font-semibold">
                     <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
                     Illustrative values
                   </span>
-                  <span className="text-slate-600 font-mono">Confirm with hospital</span>
+                  <span className="text-slate-600 dark:text-slate-400 font-mono">Confirm with hospital</span>
                 </div>
               </div>
             </Popup>

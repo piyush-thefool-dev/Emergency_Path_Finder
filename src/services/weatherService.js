@@ -25,53 +25,75 @@ export const OPEN_METEO_CONFIG = {
 };
 
 /**
- * Maps WMO weather code to project weatherId and human-readable label.
+ * Maps WMO weather code and atmospheric visibility directly to project weatherId,
+ * human-readable label, and the physical road friction multiplier C_weather.
+ *
  * @param {number} code WMO code
  * @param {number} visibilityMetres
- * @returns {{ weatherId: 'clear'|'rain'|'fog'|'storm', label: string, description: string }}
+ * @returns {{
+ *   weatherId: 'clear'|'rain'|'fog'|'storm',
+ *   label: string,
+ *   description: string,
+ *   frictionFactor: number
+ * }}
  */
 export function mapWmoCodeToWeather(code, visibilityMetres = 10000) {
-  // If visibility is severely impaired (< 300m), classify as dense fog/smog
+  // If visibility is severely impaired (< 350m), classify as dense fog/smog
   if (visibilityMetres < 350) {
     return {
       weatherId: 'fog',
       label: 'Dense NCR Fog / Smog',
       description: `Visibility severely restricted (${(visibilityMetres / 1000).toFixed(1)} km)`,
+      frictionFactor: 0.60,
     };
   }
 
-  // Thunderstorms
+  // Thunderstorms & severe convective squalls (WMO 95-99)
   if (code >= 95 && code <= 99) {
     return {
       weatherId: 'storm',
       label: 'Thunderstorm & High Winds',
       description: 'Severe weather with localized waterlogging and high braking risk',
+      frictionFactor: 0.50,
     };
   }
 
-  // Rain, drizzle, showers
+  // Heavy rain or violent showers (WMO 65, 67, 81, 82)
+  if (code === 65 || code === 67 || code === 81 || code === 82) {
+    return {
+      weatherId: 'rain',
+      label: 'Heavy Downpour / Waterlogged',
+      description: 'High hydroplaning risk and severely lengthened emergency braking distance',
+      frictionFactor: 0.65,
+    };
+  }
+
+  // Active rain, drizzle, showers (WMO 51-64, 80)
   if ((code >= 51 && code <= 67) || (code >= 80 && code <= 82)) {
     return {
       weatherId: 'rain',
       label: 'Active Rain / Wet Surface',
       description: 'Reduced friction coefficient and increased braking distances',
+      frictionFactor: 0.82,
     };
   }
 
-  // Fog / mist
-  if (code === 45 || code === 48) {
+  // Fog / morning mist (WMO 45, 48 or visibility < 1000m)
+  if (code === 45 || code === 48 || visibilityMetres < 1000) {
     return {
       weatherId: 'fog',
       label: 'Fog / Morning Mist',
-      description: 'Low visibility along expressway and arterial roads',
+      description: `Low visibility (${(visibilityMetres / 1000).toFixed(1)} km) along expressway and arterial roads`,
+      frictionFactor: 0.75,
     };
   }
 
-  // Clear / partly cloudy
+  // Clear / partly cloudy (WMO 0-3)
   return {
     weatherId: 'clear',
     label: 'Clear / Dry Conditions',
     description: 'Normal visibility and optimal road friction',
+    frictionFactor: 1.00,
   };
 }
 
@@ -122,6 +144,7 @@ export async function fetchLiveWeather() {
     weatherId: weatherMapping.weatherId,
     label: weatherMapping.label,
     description: weatherMapping.description,
+    frictionFactor: weatherMapping.frictionFactor,
     timestamp: current.time || new Date().toISOString(),
     source: 'Open-Meteo Live API (Greater Noida Station 28.4795°N, 77.5090°E)',
   };
