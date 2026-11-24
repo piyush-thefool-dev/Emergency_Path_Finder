@@ -43,10 +43,10 @@ export function CompareTable({ comparisonData }) {
         <table className="w-full text-xs text-left">
           <thead>
             <tr className="border-b border-slate-200/80 dark:border-slate-800 text-[10px] font-mono font-bold uppercase text-slate-500 dark:text-slate-400">
-              <th className="py-2.5 pr-3">Operational Metric</th>
-              <th className="py-2.5 px-3 text-[#1F3C6D] dark:text-blue-300">Dijkstra (Exhaustive)</th>
-              <th className="py-2.5 px-3 text-[#D62828] dark:text-red-400">A* (Euclidean Lower Bound)</th>
-              <th className="py-2.5 pl-3">Algorithmic Variance</th>
+              <th className="py-2.5 pr-2 sm:pr-3 whitespace-nowrap">Metric</th>
+              <th className="py-2.5 px-2 sm:px-3 text-[#1F3C6D] dark:text-blue-300 whitespace-nowrap">Dijkstra</th>
+              <th className="py-2.5 px-2 sm:px-3 text-[#D62828] dark:text-red-400 whitespace-nowrap">A* Heuristic</th>
+              <th className="py-2.5 pl-2 sm:pl-3 whitespace-nowrap">Variance</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 dark:divide-slate-800/80 font-mono text-xs text-slate-700 dark:text-slate-300">

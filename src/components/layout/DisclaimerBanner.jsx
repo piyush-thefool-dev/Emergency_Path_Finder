@@ -32,9 +32,6 @@ export function DisclaimerBanner({ compact = false }) {
               <span className="font-bold text-amber-900 dark:text-amber-300 tracking-tight">
                 Academic Decision-Support Prototype
               </span>
-              <span className="px-1.5 py-0.2 rounded text-[10px] font-mono font-semibold bg-amber-500/20 text-amber-800 dark:text-amber-300">
-                ACTIVE TESTING
-              </span>
             </div>
             <button
               type="button"

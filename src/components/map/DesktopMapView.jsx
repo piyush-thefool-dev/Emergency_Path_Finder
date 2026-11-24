@@ -99,9 +99,7 @@ export function MapView({
   onTogglePinLock,
   onRoadResolved = null,
 }) {
-  const [legendOpen, setLegendOpen] = useState(() => {
-    return typeof window !== 'undefined' ? window.innerWidth >= 768 : true;
-  });
+  const [legendOpen, setLegendOpen] = useState(false);
   const [helpModalOpen, setHelpModalOpen] = useState(false);
   const [showQuickHint, setShowQuickHint] = useState(true);
   const [isMapExpanded, setIsMapExpanded] = useState(false);
@@ -190,43 +188,12 @@ export function MapView({
         )}
       </MapContainer>
 
-      {/* Top Telemetry & Interactive Tip Ribbon */}
-      {showQuickHint && (
-        <div className="absolute top-3 left-14 right-[13.5rem] z-20 hidden md:flex min-w-0 items-center justify-between gap-2 px-3 py-1.5 rounded-lg bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-slate-200/90 dark:border-slate-800 shadow-sm text-xs font-mono text-slate-800 dark:text-slate-200">
-          <div className="flex items-center gap-2 truncate min-w-0">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#D62828] animate-pulse shrink-0"></span>
-            <span className="truncate">
-              {canDragPin
-                ? 'AMBULANCE UNLOCKED: Drag pin across street intersections'
-                : 'POSITION PIN LOCKED: Click "Lock Pin" in telemetry panel to drag origin'}
-            </span>
-          </div>
-          <div className="flex items-center gap-1.5 shrink-0">
-            <button
-              type="button"
-              onClick={() => setHelpModalOpen(true)}
-              className="text-[#D62828] dark:text-red-400 font-bold underline cursor-pointer text-[11px]"
-            >
-              Dispatch Guide
-            </button>
-            <button
-              type="button"
-              onClick={() => setShowQuickHint(false)}
-              className="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 p-0.5 cursor-pointer"
-              aria-label="Dismiss hint"
-            >
-              <X className="w-3.5 h-3.5" />
-            </button>
-          </div>
-        </div>
-      )}
-
       {/* Top-Right Quick Map Action Bar */}
-      <div className="absolute top-3 right-3 z-20 flex items-center gap-1.5">
+      <div className="absolute top-2.5 right-2.5 sm:top-3 sm:right-3 z-20 flex items-center gap-1 sm:gap-1.5">
         <button
           type="button"
           onClick={() => setShowGraphNetwork((prev) => !prev)}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg backdrop-blur-md border shadow-sm text-xs font-mono font-bold transition-all cursor-pointer min-h-[36px] active:scale-95 ${
+          className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1.5 rounded-lg backdrop-blur-md border shadow-xs text-xs font-mono font-bold transition-all cursor-pointer min-h-[34px] active:scale-95 ${
             showGraphNetwork
               ? 'bg-[#1F3C6D] text-white border-blue-900 shadow-md ring-1 ring-blue-400'
               : 'bg-white/95 dark:bg-slate-900/95 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800'
@@ -235,13 +202,13 @@ export function MapView({
           aria-pressed={showGraphNetwork}
         >
           <Network className="w-3.5 h-3.5 text-[#D62828]" />
-          <span>Graph Nodes: {showGraphNetwork ? 'ON' : 'OFF'}</span>
+          <span>Nodes: {showGraphNetwork ? 'ON' : 'OFF'}</span>
         </button>
 
         <button
           type="button"
           onClick={() => setIsMapExpanded(!isMapExpanded)}
-          className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-slate-200 dark:border-slate-800 shadow-sm text-xs font-mono font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer min-h-[36px]"
+          className="flex items-center gap-1 px-2 sm:px-2.5 py-1.5 rounded-lg bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-slate-200 dark:border-slate-800 shadow-xs text-xs font-mono font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer min-h-[34px] active:scale-95"
           title={isMapExpanded ? 'Collapse map' : 'Expand map'}
           aria-label={isMapExpanded ? 'Collapse map' : 'Expand map'}
         >
@@ -252,17 +219,48 @@ export function MapView({
         <button
           type="button"
           onClick={() => setHelpModalOpen(true)}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-slate-200 dark:border-slate-800 shadow-sm text-xs font-mono font-bold text-slate-800 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer select-none min-h-[36px]"
+          className="flex items-center gap-1 px-2 sm:px-2.5 py-1.5 rounded-lg bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-slate-200 dark:border-slate-800 shadow-xs text-xs font-mono font-bold text-slate-800 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer select-none min-h-[34px] active:scale-95"
           title="Interactive CAD Map Guide"
           aria-label="Interactive CAD Map Guide"
         >
           <HelpCircle className="w-3.5 h-3.5 text-[#D62828]" />
-          <span className="hidden sm:inline">CAD Guide</span>
+          <span className="hidden sm:inline">Guide</span>
         </button>
       </div>
 
+      {/* Top Telemetry & Interactive Tip Ribbon - Positioned vertically below top buttons (never overlaps) */}
+      {showQuickHint && (
+        <div className="absolute top-13 left-14 right-2.5 sm:right-auto sm:max-w-md z-20 flex min-w-0 items-center justify-between gap-2 px-2.5 py-1 rounded-lg bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-slate-200/90 dark:border-slate-800 shadow-xs text-[11px] font-mono text-slate-800 dark:text-slate-200 animate-in fade-in duration-200">
+          <div className="flex items-center gap-1.5 truncate min-w-0">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#D62828] animate-pulse shrink-0"></span>
+            <span className="truncate">
+              {canDragPin
+                ? 'AMBULANCE UNLOCKED: Drag pin to reposition'
+                : 'PIN LOCKED: Toggle "Lock Pin" to reposition'}
+            </span>
+          </div>
+          <div className="flex items-center gap-1.5 shrink-0">
+            <button
+              type="button"
+              onClick={() => setHelpModalOpen(true)}
+              className="text-[#D62828] dark:text-red-400 font-bold underline cursor-pointer text-[10px]"
+            >
+              Guide
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowQuickHint(false)}
+              className="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 p-0.5 cursor-pointer"
+              aria-label="Dismiss hint"
+            >
+              <X className="w-3 h-3" />
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Floating Tactical Map Legend */}
-      <div className="absolute bottom-3 left-3 z-20 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-slate-200/90 dark:border-slate-800 rounded-lg shadow-sm w-[min(18rem,calc(100%-1.5rem))] transition-all">
+      <div className="absolute bottom-3 left-3 z-20 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-slate-200/90 dark:border-slate-800 rounded-lg shadow-sm w-[min(16rem,calc(100%-1.5rem))] transition-all">
         <button
           type="button"
           onClick={() => setLegendOpen((open) => !open)}

@@ -93,11 +93,11 @@ export function ResultCard({
                 {hospital.phone && (
                   <a
                     href={`tel:${hospital.phone.replace(/[^0-9+]/g, '')}`}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-mono text-xs font-bold transition-all shadow-xs cursor-pointer active:scale-95 no-underline"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-mono text-xs font-bold transition-all shadow-xs cursor-pointer active:scale-95 no-underline max-w-full truncate"
                     title={`Call ${hospital.name} emergency desk to confirm seat/bed occupancy (${hospital.phone})`}
                   >
                     <PhoneCall className="w-3.5 h-3.5 shrink-0" />
-                    <span>Call to Confirm Seat: {hospital.phone}</span>
+                    <span className="truncate">Call: {hospital.phone}</span>
                   </a>
                 )}
                 <a
