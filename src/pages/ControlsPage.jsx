@@ -4,7 +4,7 @@
  */
 
 import { Sliders } from 'lucide-react';
-import PageHeader from '../components/layout/PageHeader.jsx';
+import MobilePageHeader from '../components/layout/MobilePageHeader.jsx';
 import ControlPanel from '../components/panels/ControlPanel.jsx';
 import IncidentTool from '../components/map/IncidentTool.jsx';
 import ApiStatusPanel from '../components/panels/ApiStatusPanel.jsx';
@@ -15,10 +15,11 @@ export function ControlsPage() {
 
   return (
     <div className="page-shell">
-      <PageHeader
+      <MobilePageHeader
         icon={Sliders}
         title="Dispatch Controls"
         subtitle="Triage Specialty, Weather & Road Incidents"
+        backTo="/"
       />
       <div className="px-3.5 pt-3.5 pb-8 space-y-4 font-mono">
         <ControlPanel

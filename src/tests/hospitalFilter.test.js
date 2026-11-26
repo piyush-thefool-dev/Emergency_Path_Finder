@@ -9,6 +9,7 @@ import {
   DEFAULT_ROAD_DISTANCE_CUTOFF_KM,
   TOP_HOSPITALS_CAP,
 } from '../services/hospitalFilterService.js';
+import { EMERGENCY_CATEGORIES } from '../config/emergencyCategories.js';
 import { PAN_INDIA_HOSPITALS } from '../data/panIndiaHospitals.js';
 
 describe('Two-Stage Hospital Distance & ETA Filtering', () => {
@@ -153,5 +154,50 @@ describe('Two-Stage Hospital Distance & ETA Filtering', () => {
         `Hospital ${i} ETA ${res.topHospitals[i].durationMin} should be >= hospital ${i - 1} ETA ${res.topHospitals[i - 1].durationMin}`
       );
     }
+  });
+
+  it('targets and filters hospitals accurately across all 4 emergency categories (Trauma, Cardiac, Burn, General)', async () => {
+    for (const category of Object.values(EMERGENCY_CATEGORIES)) {
+      const res = await filterAndRankHospitalsByOsrmEta(userPos, PAN_INDIA_HOSPITALS, {
+        radiusKm: 10,
+        requiredSpecialty: category.requiredSpecialty,
+      });
+
+      assert.ok(res.topHospitals.length > 0, `Category ${category.id} must return matching hospitals`);
+      for (const hosp of res.topHospitals) {
+        assert.ok(
+          Array.isArray(hosp.specialties) && hosp.specialties.includes(category.requiredSpecialty),
+          `Category ${category.id} returned ${hosp.name} without specialty ${category.requiredSpecialty}`
+        );
+      }
+
+      if (category.id === 'TRAUMA') {
+        assert.strictEqual(
+          res.topHospitals.some((h) => h.id === 'hosp_apollo_spectra_gn' || h.id === 'hosp_bakson'),
+          false,
+          'Trauma filter must exclude Apollo Spectra & Bakson'
+        );
+      }
+      if (category.id === 'BURN') {
+        assert.ok(
+          res.topHospitals.every((h) => h.specialties.includes('burn_unit')),
+          'Burn filter must return only Burn Unit facilities'
+        );
+      }
+    }
+  });
+
+  it('shows ALL matching hospitals inside the 10 km range without dropping valid facilities at cap 15', async () => {
+    const generalRes = await filterAndRankHospitalsByOsrmEta(userPos, PAN_INDIA_HOSPITALS, {
+      radiusKm: 10,
+    });
+    assert.strictEqual(generalRes.topHospitals.length, 16, 'Must return all 16 facilities within 10 km (including Felix Noida)');
+    assert.ok(generalRes.topHospitals.some((h) => h.id === 'hosp_felix_noida'), 'Must include Felix Hospital within 10 km');
+
+    const traumaRes = await filterAndRankHospitalsByOsrmEta(userPos, PAN_INDIA_HOSPITALS, {
+      radiusKm: 10,
+      requiredSpecialty: 'trauma_center',
+    });
+    assert.strictEqual(traumaRes.topHospitals.length, 11, 'Must return all 11 trauma facilities within 10 km');
   });
 });

@@ -6,6 +6,7 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert';
 import { PAN_INDIA_HOSPITALS } from '../data/panIndiaHospitals.js';
+import { INDIAN_STATES_AND_UTS, groupHospitalsByState } from '../utils/hospitalState.js';
 import { getRealGreaterNoidaOsmGraph } from '../data/delhiNcrRoadGraph.js';
 import { dijkstra } from '../algorithms/dijkstra.js';
 import { astar } from '../algorithms/astar.js';
@@ -15,10 +16,16 @@ describe('Pan-India Healthcare Registry & Road Graph Invariants', () => {
   const fullGraph = getRealGreaterNoidaOsmGraph();
   const nodeMap = new Map(fullGraph.nodes.map((n) => [n.id, n]));
 
-  it('contains 280 verified apex hospitals across India', () => {
-    assert.strictEqual(PAN_INDIA_HOSPITALS.length, 280);
+  it('contains 360 verified apex hospitals covering all 36 Indian States and Union Territories', () => {
+    assert.strictEqual(PAN_INDIA_HOSPITALS.length, 360);
     const uniqueIds = new Set(PAN_INDIA_HOSPITALS.map((h) => h.id));
-    assert.strictEqual(uniqueIds.size, 280, 'Every hospital must have a unique ID');
+    assert.strictEqual(uniqueIds.size, 360, 'Every hospital must have a unique ID');
+    const stateGroups = groupHospitalsByState(PAN_INDIA_HOSPITALS);
+    assert.strictEqual(
+      stateGroups.length,
+      INDIAN_STATES_AND_UTS.length,
+      'Must cover all 28 States and 8 Union Territories (36 jurisdictions)'
+    );
   });
 
   it('every hospital maps to an existing node in the road graph with valid GPS coordinates', () => {
@@ -69,6 +76,10 @@ describe('Pan-India Healthcare Registry & Road Graph Invariants', () => {
       { name: 'SMS Jaipur', nodeId: 'n_jpr_sms_jlnmarg' },
       { name: 'AIIMS Bhopal', nodeId: 'n_bpl_saketnagar_aiims' },
       { name: 'GMCH Guwahati', nodeId: 'n_gwh_gmch_bhangagarh' },
+      { name: 'STNM Gangtok (Sikkim)', nodeId: 'n_gtg_stnm_gangtok' },
+      { name: 'TRIHMS Naharlagun (Arunachal)', nodeId: 'n_ita_trhims_naharlagun' },
+      { name: 'SNM Leh (Ladakh)', nodeId: 'n_leh_snm_skara' },
+      { name: 'GB Pant Port Blair (A&N)', nodeId: 'n_pbl_gbpant_portblair' },
     ];
 
     for (const target of testTargets) {

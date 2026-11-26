@@ -1,39 +1,35 @@
 /**
- * Interactive Leaflet Map View Component: Tactical CAD Situational Awareness Display.
- * Supports dark mode night radar, vehicle tracking, draggable ambulance pin, and incident overlay.
+ * Interactive 2D Leaflet Map View Component (Desktop) with 3D Ambulance & 3D Hospital markers.
  */
 
 import { useState, useEffect, useMemo } from 'react';
-import { MapContainer, TileLayer, Circle, useMap, useMapEvents } from 'react-leaflet';
+import { MapContainer, Circle, useMap, useMapEvents } from 'react-leaflet';
 import AmbulanceMarker from './AmbulanceMarker.jsx';
 import HospitalMarkers from './HospitalMarkers.jsx';
 import RouteLayer from './RouteLayer.jsx';
 import MapHelpModal from './MapHelpModal.jsx';
 import HospitalSearchBar from './HospitalSearchBar.jsx';
+import { MapTileLayers, MapZoomDock } from './MapLayersControl.jsx';
+import { computeBearingDeg } from '../../utils/geo.js';
 import {
   Ambulance,
   Hospital,
   Navigation,
-  AlertOctagon,
   Flame,
+  TriangleAlert,
   ChevronDown,
   ChevronUp,
   Layers,
   HelpCircle,
-  Sparkles,
   X,
   Maximize2,
   Minimize2,
-  Radio,
   Network,
   Locate,
   Lock,
   Unlock,
 } from 'lucide-react';
 
-/**
- * Panning controller when vehicle is in active transit.
- */
 function VehicleFollower({ position, followVehicle }) {
   const map = useMap();
 
@@ -46,9 +42,6 @@ function VehicleFollower({ position, followVehicle }) {
   return null;
 }
 
-/**
- * Bounds fitting controller.
- */
 function MapRecenter({ center, zoom, bounds }) {
   const map = useMap();
 
@@ -67,9 +60,6 @@ function MapRecenter({ center, zoom, bounds }) {
   return null;
 }
 
-/**
- * Camera controller triggered on manual recenter action.
- */
 function CameraActionHandler({ trigger, ambulancePos, targetHospital }) {
   const map = useMap();
 
@@ -97,7 +87,6 @@ function CameraActionHandler({ trigger, ambulancePos, targetHospital }) {
   return null;
 }
 
-/** Relocates the ambulance pin when user clicks anywhere on the Greater Noida map. */
 function MapClickHandler({ onAmbulanceMove, canDragPin, isMoving }) {
   useMapEvents({
     click(e) {
@@ -130,29 +119,51 @@ export function MapView({
   isRealGps = false,
   gpsAccuracy = null,
   gpsSpeedKph = 0,
+  gpsHeading = null,
   followVehicle = true,
   canDragPin = false,
   onTogglePinLock,
   onRoadResolved = null,
-  algorithm = 'astar',
-  searchRadiusKm = 10,
-  onRadiusChange = null,
   effectiveRadiusKm = 10,
   isRadiusFallback = false,
+  mapStyle = 'auto',
+  showGraphNetwork: controlledGraph,
+  roadReportMode: controlledRoadReport,
+  bare = false,
+  zoomExtraContent = null,
+  zoomBottomClass = 'bottom-5',
+  heightClass = null,
 }) {
   const [legendOpen, setLegendOpen] = useState(false);
   const [helpModalOpen, setHelpModalOpen] = useState(false);
-  const [showQuickHint, setShowQuickHint] = useState(false);
   const [isMapExpanded, setIsMapExpanded] = useState(false);
-  // Graph network overlay: displays all road intersection nodes and directed edges (OFF by default)
-  const [showGraphNetwork, setShowGraphNetwork] = useState(false);
+  const [localShowGraph, setLocalShowGraph] = useState(false);
+  const [localRoadReport, setLocalRoadReport] = useState(false);
   const [recenterTrigger, setRecenterTrigger] = useState(0);
+  const [routeCoords, setRouteCoords] = useState([]);
+
+  const showGraphNetwork = controlledGraph !== undefined ? controlledGraph : localShowGraph;
+  const setShowGraphNetwork = (v) => setLocalShowGraph(typeof v === 'function' ? v(localShowGraph) : v);
+  const roadReportMode = controlledRoadReport !== undefined ? controlledRoadReport : localRoadReport;
+  const setRoadReportMode = (v) => setLocalRoadReport(typeof v === 'function' ? v(localRoadReport) : v);
   const handleRecenter = () => setRecenterTrigger((t) => t + 1);
 
   const targetHospital = useMemo(
     () => activeHospitalProp || hospitals.find((h) => h.id === activeHospitalId) || null,
     [activeHospitalProp, hospitals, activeHospitalId]
   );
+
+  const vehicleBearing = useMemo(() => {
+    if (gpsHeading != null && Number.isFinite(gpsHeading) && isMoving) return gpsHeading;
+    if (routeCoords.length >= 2) {
+      const look = routeCoords[Math.min(3, routeCoords.length - 1)];
+      return computeBearingDeg(routeCoords[0][0], routeCoords[0][1], look[0], look[1]);
+    }
+    if (ambulancePos && targetHospital) {
+      return computeBearingDeg(ambulancePos.lat, ambulancePos.lon, targetHospital.lat, targetHospital.lon);
+    }
+    return 0;
+  }, [gpsHeading, isMoving, routeCoords, ambulancePos, targetHospital]);
 
   const defaultCenter = useMemo(() => {
     if (ambulancePos?.lat && ambulancePos?.lon) {
@@ -173,25 +184,32 @@ export function MapView({
 
   return (
     <div
-      className={`relative w-full rounded-xl overflow-hidden border border-slate-200/90 dark:border-slate-800/80 shadow-xs bg-slate-100 dark:bg-[#080D1A] transition-all duration-200 ${isMapExpanded ? 'h-[75dvh]' : 'h-[440px] sm:h-[500px] lg:h-[580px]'
-        }`}
+      className={`relative w-full overflow-hidden bg-slate-100 dark:bg-[#080D1A] transition-all duration-200 map-${mapStyle} ${
+        heightClass
+          ? heightClass
+          : isMapExpanded
+          ? 'h-[75dvh] rounded-xl border border-slate-200/90 dark:border-slate-800/80 shadow-xs'
+          : 'h-[440px] sm:h-[500px] lg:h-[580px] rounded-xl border border-slate-200/90 dark:border-slate-800/80 shadow-xs'
+      }`}
     >
       <MapContainer
         center={defaultCenter}
         zoom={defaultZoom}
+        zoomControl={false}
         scrollWheelZoom={true}
         className="w-full h-full z-10"
       >
-        {/* OpenStreetMap TileLayer with compulsory ODbL attribution */}
-        <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          maxZoom={19}
+        <MapTileLayers mapStyle={mapStyle} />
+        <MapZoomDock
+          onLocate={handleRecenter}
+          bottomClass={zoomBottomClass}
+          rightClass="right-3.5"
+          extraTopContent={zoomExtraContent}
         />
 
         <MapClickHandler
           onAmbulanceMove={onAmbulanceMove}
-          canDragPin={canDragPin}
+          canDragPin={canDragPin && !roadReportMode}
           isMoving={isMoving}
         />
 
@@ -214,8 +232,11 @@ export function MapView({
           routeStart={ambulancePos}
           routeEnd={targetHospital}
           onRoadResolved={onRoadResolved}
+          onDisplayCoordsChange={setRouteCoords}
           showAllNodes={showGraphNetwork}
           showGraphEdges={showGraphNetwork}
+          canDragPin={canDragPin}
+          roadReportMode={roadReportMode}
         />
 
         <HospitalMarkers
@@ -240,7 +261,6 @@ export function MapView({
           />
         )}
 
-        {/* Dynamic semi-transparent search radius circle (5km, 10km, 25km, 100km - hidden when All/0) */}
         {ambulancePos && effectiveRadiusKm > 0 && (
           <Circle
             center={[ambulancePos.lat, ambulancePos.lon]}
@@ -263,244 +283,158 @@ export function MapView({
             isMoving={isMoving}
             isRealGps={isRealGps}
             speedKph={gpsSpeedKph}
+            bearing={vehicleBearing}
             canDragPin={canDragPin}
             onTogglePinLock={onTogglePinLock}
           />
         )}
       </MapContainer>
 
-      {/* Top Floating Bar: Unified non-overlapping flex row (Search Bar on Left, Map Utilities on Right) */}
-      <div className="absolute top-2.5 left-14 right-2.5 z-30 flex items-center justify-between gap-2 pointer-events-none">
-        {/* Left: Clean 21st.dev Command Search Bar */}
-        <div className="pointer-events-auto flex-1 max-w-sm sm:max-w-md md:max-w-lg min-w-0">
-          <HospitalSearchBar
-            hospitals={searchHospitals && searchHospitals.length > 0 ? searchHospitals : hospitals}
-            selectedHospitalId={activeHospitalId}
-            activeHospital={targetHospital}
-            onSelectHospital={onSelectHospital}
-            ambulancePos={ambulancePos}
-          />
-        </div>
+      {!bare && (
+        <>
+          <div className="absolute top-2.5 left-14 right-2.5 z-30 flex items-center justify-between gap-2 pointer-events-none">
+            <div className="pointer-events-auto flex-1 max-w-sm sm:max-w-md md:max-w-lg min-w-0">
+              <HospitalSearchBar
+                hospitals={searchHospitals && searchHospitals.length > 0 ? searchHospitals : hospitals}
+                selectedHospitalId={activeHospitalId}
+                activeHospital={targetHospital}
+                onSelectHospital={onSelectHospital}
+                ambulancePos={ambulancePos}
+              />
+            </div>
 
-        {/* Right: Map Utility Controls (Expand & Interactive Guide) */}
-        <div className="pointer-events-auto flex items-center gap-1.5 shrink-0">
-          <button
-            type="button"
-            onClick={() => setIsMapExpanded(!isMapExpanded)}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border border-slate-200/80 dark:border-white/[0.08] shadow-xs text-xs font-mono font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer min-h-[36px] active:scale-95"
-            title={isMapExpanded ? 'Collapse map' : 'Expand map'}
-            aria-label={isMapExpanded ? 'Collapse map' : 'Expand map'}
-          >
-            {isMapExpanded ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
-            <span className="hidden sm:inline">{isMapExpanded ? 'Restore' : 'Expand'}</span>
-          </button>
+            <div className="pointer-events-auto flex items-center gap-1.5 shrink-0">
+              <button
+                type="button"
+                onClick={() => setIsMapExpanded(!isMapExpanded)}
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border border-slate-200/80 dark:border-white/[0.08] shadow-xs text-xs font-mono font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer min-h-[36px] active:scale-95"
+                title={isMapExpanded ? 'Collapse map' : 'Expand map'}
+                aria-label={isMapExpanded ? 'Collapse map' : 'Expand map'}
+              >
+                {isMapExpanded ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
+                <span className="hidden sm:inline">{isMapExpanded ? 'Restore' : 'Expand'}</span>
+              </button>
 
-          <button
-            type="button"
-            onClick={() => setHelpModalOpen(true)}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border border-slate-200/80 dark:border-white/[0.08] shadow-xs text-xs font-mono font-bold text-slate-800 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer select-none min-h-[36px] active:scale-95"
-            title="Interactive CAD Map Guide"
-            aria-label="Interactive CAD Map Guide"
-          >
-            <HelpCircle className="w-3.5 h-3.5 text-[#D62828]" />
-            <span className="hidden sm:inline">Guide</span>
-          </button>
-        </div>
-      </div>
-
-      {/* Top Telemetry & Interactive Tip Ribbon - Positioned below search bar */}
-      {showQuickHint && (
-        <div className="absolute top-[52px] left-14 z-20 flex min-w-0 items-center justify-between gap-2 px-2.5 py-1 rounded-lg bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-slate-200/90 dark:border-slate-800 shadow-xs text-[11px] font-mono text-slate-800 dark:text-slate-200 animate-in fade-in duration-200 max-w-sm">
-          <div className="flex items-center gap-1.5 truncate min-w-0">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#D62828] animate-pulse shrink-0"></span>
-            <span className="truncate">
-              {canDragPin
-                ? 'PIN UNLOCKED: Drag pin to move'
-                : 'PIN LOCKED: Toggle "Lock Pin" below'}
-            </span>
+              <button
+                type="button"
+                onClick={() => setHelpModalOpen(true)}
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border border-slate-200/80 dark:border-white/[0.08] shadow-xs text-xs font-mono font-bold text-slate-800 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer select-none min-h-[36px] active:scale-95"
+                title="Interactive CAD Map Guide"
+                aria-label="Interactive CAD Map Guide"
+              >
+                <HelpCircle className="w-3.5 h-3.5 text-[#D62828]" />
+                <span className="hidden sm:inline">Guide</span>
+              </button>
+            </div>
           </div>
-          <div className="flex items-center gap-1.5 shrink-0">
+
+          <div className="absolute bottom-3 right-3 z-20 flex items-center gap-1.5 flex-wrap justify-end">
+            {onAddIncident && (
+              <button
+                type="button"
+                onClick={() => setRoadReportMode((prev) => !prev)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl backdrop-blur-xl border shadow-xs text-xs font-mono font-bold transition-all cursor-pointer min-h-[36px] active:scale-95 ${
+                  roadReportMode
+                    ? 'bg-amber-500 text-slate-950 border-amber-400 shadow-md ring-1 ring-amber-300'
+                    : 'bg-white/90 dark:bg-slate-900/90 text-slate-700 dark:text-slate-200 border-slate-200/80 dark:border-white/[0.08] hover:bg-slate-100 dark:hover:bg-slate-800'
+                }`}
+                aria-pressed={roadReportMode}
+              >
+                <TriangleAlert className={`w-3.5 h-3.5 ${roadReportMode ? 'text-slate-950' : 'text-amber-500'}`} />
+                <span>{roadReportMode ? 'Click Road: ON' : 'Report Road'}</span>
+              </button>
+            )}
+
+            {onTogglePinLock && (
+              <button
+                type="button"
+                onClick={() => onTogglePinLock(!canDragPin)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl backdrop-blur-xl border shadow-xs text-xs font-mono font-bold transition-all cursor-pointer min-h-[36px] active:scale-95 ${
+                  canDragPin
+                    ? 'bg-amber-500/20 text-amber-700 dark:text-amber-300 border-amber-500/40 ring-1 ring-amber-400'
+                    : 'bg-white/90 dark:bg-slate-900/90 text-slate-700 dark:text-slate-200 border-slate-200/80 dark:border-white/[0.08] hover:bg-slate-100 dark:hover:bg-slate-800'
+                }`}
+                aria-pressed={canDragPin}
+              >
+                {canDragPin ? <Unlock className="w-3.5 h-3.5 text-amber-500" /> : <Lock className="w-3.5 h-3.5 text-slate-400" />}
+                <span className="hidden sm:inline">{canDragPin ? 'Pin: Free' : 'Pin: Locked'}</span>
+              </button>
+            )}
+
             <button
               type="button"
-              onClick={() => setHelpModalOpen(true)}
-              className="text-[#D62828] dark:text-red-400 font-bold underline cursor-pointer text-[10px]"
+              onClick={handleRecenter}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border border-slate-200/80 dark:border-white/[0.08] shadow-xs text-xs font-mono font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer min-h-[36px] active:scale-95"
+              aria-label="Recenter camera"
             >
-              Guide
+              <Locate className="w-3.5 h-3.5 text-[#D62828]" />
+              <span className="hidden sm:inline">Recenter</span>
             </button>
+
             <button
               type="button"
-              onClick={() => setShowQuickHint(false)}
-              className="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 p-0.5 cursor-pointer"
-              aria-label="Dismiss hint"
-            >
-              <X className="w-3 h-3" />
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Bottom-Right Tactical Map Controls Dock (Google Maps Style) */}
-      <div className="absolute bottom-3 right-3 z-20 flex items-center gap-1.5 flex-wrap justify-end">
-        {onTogglePinLock && (
-          <button
-            type="button"
-            onClick={() => onTogglePinLock(!canDragPin)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl backdrop-blur-xl border shadow-xs text-xs font-mono font-bold transition-all cursor-pointer min-h-[36px] active:scale-95 ${canDragPin
-                ? 'bg-amber-500/20 text-amber-700 dark:text-amber-300 border-amber-500/40 ring-1 ring-amber-400'
-                : 'bg-white/90 dark:bg-slate-900/90 text-slate-700 dark:text-slate-200 border-slate-200/80 dark:border-white/[0.08] hover:bg-slate-100 dark:hover:bg-slate-800'
+              onClick={() => setShowGraphNetwork((prev) => !prev)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl backdrop-blur-xl border shadow-xs text-xs font-mono font-bold transition-all cursor-pointer min-h-[36px] active:scale-95 ${
+                showGraphNetwork
+                  ? 'bg-[#1F3C6D] text-white border-blue-900 shadow-md ring-1 ring-blue-400'
+                  : 'bg-white/90 dark:bg-slate-900/90 text-slate-700 dark:text-slate-200 border-slate-200/80 dark:border-white/[0.08] hover:bg-slate-100 dark:hover:bg-slate-800'
               }`}
-            title={canDragPin ? 'Ambulance pin is unlocked (drag on map to reposition). Click to lock.' : 'Ambulance pin is locked. Click to unlock.'}
-            aria-pressed={canDragPin}
-          >
-            {canDragPin ? <Unlock className="w-3.5 h-3.5 text-amber-500" /> : <Lock className="w-3.5 h-3.5 text-slate-400" />}
-            <span className="hidden sm:inline">{canDragPin ? 'Pin: Free' : 'Pin: Locked'}</span>
-          </button>
-        )}
-
-        <button
-          type="button"
-          onClick={handleRecenter}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border border-slate-200/80 dark:border-white/[0.08] shadow-xs text-xs font-mono font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer min-h-[36px] active:scale-95"
-          title="Recenter camera on ambulance and route corridor"
-          aria-label="Recenter camera on ambulance and route corridor"
-        >
-          <Locate className="w-3.5 h-3.5 text-[#D62828]" />
-          <span className="hidden sm:inline">Recenter</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setShowGraphNetwork((prev) => !prev)}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl backdrop-blur-xl border shadow-xs text-xs font-mono font-bold transition-all cursor-pointer min-h-[36px] active:scale-95 ${showGraphNetwork
-              ? 'bg-[#1F3C6D] text-white border-blue-900 shadow-md ring-1 ring-blue-400'
-              : 'bg-white/90 dark:bg-slate-900/90 text-slate-700 dark:text-slate-200 border-slate-200/80 dark:border-white/[0.08] hover:bg-slate-100 dark:hover:bg-slate-800'
-            }`}
-          title={showGraphNetwork ? 'Hide graph network & nodes' : 'Show road graph network & intersection nodes (default: OFF)'}
-          aria-pressed={showGraphNetwork}
-        >
-          <Network className="w-3.5 h-3.5 text-[#D62828]" />
-          <span>Nodes: {showGraphNetwork ? `ON (${nodes.length})` : 'OFF'}</span>
-        </button>
-      </div>
-
-      {/* Floating Tactical Map Legend */}
-      <div className="absolute bottom-3 left-3 z-20 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-slate-200/90 dark:border-slate-800 rounded-lg shadow-sm w-[min(16rem,calc(100%-1.5rem))] transition-all">
-        <button
-          type="button"
-          onClick={() => setLegendOpen((open) => !open)}
-          aria-expanded={legendOpen}
-          className="w-full flex items-center justify-between gap-3 px-3 py-2 cursor-pointer border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/60 rounded-t-lg transition-colors select-none text-left"
-        >
-          <div className="flex items-center gap-1.5 text-slate-800 dark:text-slate-200 font-bold text-[11px] font-mono uppercase tracking-wider">
-            <Layers className="w-3.5 h-3.5 text-[#D62828]" />
-            <span>Map Symbology</span>
+              aria-pressed={showGraphNetwork}
+            >
+              <Network className="w-3.5 h-3.5 text-[#D62828]" />
+              <span>Nodes: {showGraphNetwork ? `ON (${nodes.length})` : 'OFF'}</span>
+            </button>
           </div>
-          <span className="text-slate-400" aria-hidden="true">
-            {legendOpen ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronUp className="w-3.5 h-3.5" />}
-          </span>
-        </button>
 
-        {legendOpen && (
-          <div id="map-legend-items" className="p-3 space-y-2.5 text-xs font-mono max-h-[min(15rem,40dvh)] overflow-y-auto overscroll-contain">
-            {/* 1. Ambulance Pin */}
-            <div className="flex items-center gap-2.5">
-              <div className="w-5 h-5 rounded-full bg-[#D62828] border border-white shadow-2xs flex items-center justify-center text-white shrink-0">
-                <Ambulance className="w-3 h-3 stroke-[2.2]" />
+          <div className="absolute bottom-3 left-3 z-20 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-slate-200/90 dark:border-slate-800 rounded-lg shadow-sm w-[min(16rem,calc(100%-1.5rem))] transition-all">
+            <button
+              type="button"
+              onClick={() => setLegendOpen((open) => !open)}
+              aria-expanded={legendOpen}
+              className="w-full flex items-center justify-between gap-3 px-3 py-2 cursor-pointer border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/60 rounded-t-lg transition-colors select-none text-left"
+            >
+              <div className="flex items-center gap-1.5 text-slate-800 dark:text-slate-200 font-bold text-[11px] font-mono uppercase tracking-wider">
+                <Layers className="w-3.5 h-3.5 text-[#D62828]" />
+                <span>Map Symbology</span>
               </div>
-              <div>
-                <span className="font-bold text-slate-900 dark:text-slate-100 block text-[11px] leading-tight">
-                  Emergency Unit (Ambulance)
-                </span>
-                <span className="text-[10px] text-slate-500 dark:text-slate-400 leading-none">
-                  Snaps to nearest graph intersection
-                </span>
-              </div>
-            </div>
+              <span className="text-slate-400" aria-hidden="true">
+                {legendOpen ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronUp className="w-3.5 h-3.5" />}
+              </span>
+            </button>
 
-            {/* 2. Recommended Hospital */}
-            <div className="flex items-center gap-2.5">
-              <div className="w-5 h-5 rounded-md bg-[#16A34A] border border-white shadow-2xs flex items-center justify-center text-white shrink-0">
-                <Hospital className="w-3 h-3 stroke-[2.2]" />
-              </div>
-              <div>
-                <div className="flex items-center gap-1">
-                  <span className="font-bold text-slate-900 dark:text-slate-100 text-[11px] leading-tight">
-                    Recommended Receiving Facility
-                  </span>
+            {legendOpen && (
+              <div className="p-3 space-y-2.5 text-xs font-mono max-h-[min(15rem,40dvh)] overflow-y-auto overscroll-contain">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-5 h-5 rounded-full bg-[#D62828] border border-white flex items-center justify-center text-white shrink-0">
+                    <Ambulance className="w-3 h-3" />
+                  </div>
+                  <span className="font-bold text-slate-900 dark:text-slate-100 text-[11px]">Emergency Unit (3D)</span>
                 </div>
-                <span className="text-[10px] text-slate-500 dark:text-slate-400 leading-none">
-                  Lowest t(P) travel time with specialty match
-                </span>
-              </div>
-            </div>
-
-            {/* 3. Alternate Hospital */}
-            <div className="flex items-center gap-2.5">
-              <div className="w-5 h-5 rounded-md bg-slate-700 dark:bg-slate-800 border border-white/60 shadow-2xs flex items-center justify-center text-white shrink-0">
-                <Hospital className="w-3 h-3 stroke-[2.2]" />
-              </div>
-              <div>
-                <span className="font-bold text-slate-900 dark:text-slate-100 block text-[11px] leading-tight">
-                  Contingency Hospital
-                </span>
-                <span className="text-[10px] text-slate-500 dark:text-slate-400 leading-none">
-                  Click pin on map to redirect ambulance
-                </span>
-              </div>
-            </div>
-
-            {/* 4. Optimal Route Polyline */}
-            <div className="flex items-center gap-2.5">
-              <div className="w-5 h-5 rounded-md bg-red-50 dark:bg-red-950/60 border border-red-200 dark:border-red-900 flex items-center justify-center text-[#D62828] dark:text-red-400 shrink-0">
-                <Navigation className="w-3 h-3 fill-current" />
-              </div>
-              <div>
-                <span className="font-bold text-slate-900 dark:text-slate-100 block text-[11px] leading-tight">
-                  Dispatched Corridor
-                </span>
-                <div className="flex items-center gap-1.5 mt-0.5">
-                  <span className="w-4 h-1 bg-[#D62828] rounded-full inline-block"></span>
-                  <span className="text-[10px] text-slate-500 dark:text-slate-400">
-                    A* Minimum travel-time path
-                  </span>
+                <div className="flex items-center gap-2.5">
+                  <div className="w-5 h-5 rounded-md bg-[#16A34A] border border-white flex items-center justify-center text-white shrink-0">
+                    <Hospital className="w-3 h-3" />
+                  </div>
+                  <span className="font-bold text-slate-900 dark:text-slate-100 text-[11px]">Receiving Hospital (3D)</span>
+                </div>
+                <div className="flex items-center gap-2.5">
+                  <div className="w-5 h-5 rounded-md bg-red-50 dark:bg-red-950/60 border border-red-200 dark:border-red-900 flex items-center justify-center text-[#D62828] shrink-0">
+                    <Navigation className="w-3 h-3 fill-current" />
+                  </div>
+                  <span className="font-bold text-slate-900 dark:text-slate-100 text-[11px]">Optimal Corridor</span>
+                </div>
+                <div className="flex items-center gap-2.5">
+                  <div className="w-5 h-5 rounded-md bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-600 shrink-0">
+                    <Flame className="w-3 h-3" />
+                  </div>
+                  <span className="font-bold text-slate-900 dark:text-slate-100 text-[11px]">Road Bottleneck</span>
                 </div>
               </div>
-            </div>
-
-            {/* 5. Incidents / Road Closures */}
-            <div className="flex items-center gap-2.5">
-              <div className="w-5 h-5 rounded-md bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-600 dark:text-amber-400 shrink-0">
-                <Flame className="w-3 h-3" />
-              </div>
-              <div>
-                <span className="font-bold text-slate-900 dark:text-slate-100 block text-[11px] leading-tight">
-                  Road Bottleneck / Crash
-                </span>
-                <span className="text-[10px] text-slate-500 dark:text-slate-400 leading-none">
-                  Click any road segment to inject delay
-                </span>
-              </div>
-            </div>
-
-            {/* 6. Road Graph Network */}
-            <div className="flex items-center gap-2.5">
-              <div className="w-5 h-5 rounded-md bg-blue-500/10 border border-blue-500/30 flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0">
-                <Network className="w-3 h-3" />
-              </div>
-              <div>
-                <span className="font-bold text-slate-900 dark:text-slate-100 block text-[11px] leading-tight">
-                  Graph Intersections & Edges
-                </span>
-                <span className="text-[10px] text-slate-500 dark:text-slate-400 leading-none">
-                  Click &ldquo;Graph Nodes&rdquo; button to toggle (Default: OFF)
-                </span>
-              </div>
-            </div>
+            )}
           </div>
-        )}
-      </div>
 
-      <MapHelpModal isOpen={helpModalOpen} onClose={() => setHelpModalOpen(false)} />
+          <MapHelpModal isOpen={helpModalOpen} onClose={() => setHelpModalOpen(false)} />
+        </>
+      )}
     </div>
   );
 }

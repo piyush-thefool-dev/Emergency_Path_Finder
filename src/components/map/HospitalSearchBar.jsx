@@ -53,6 +53,7 @@ export function HospitalSearchBar({
   onSelectHospital,
   ambulancePos = null,
   compact = false,
+  pill = false,
   embedded = false,
   autoFocus = false,
   className = '',
@@ -192,7 +193,7 @@ export function HospitalSearchBar({
     setQuery('');
   };
 
-  const totalHospitals = hospitals.length || enrichedHospitals.length || 280;
+  const totalHospitals = hospitals.length || enrichedHospitals.length || 360;
   const showList = embedded || isOpen;
   const hasAmbulancePos = ambulancePos?.lat != null && ambulancePos?.lon != null;
   const inputRightPadding = selectedHospitalId ? 'pr-44' : query ? 'pr-32' : 'pr-28';
@@ -225,8 +226,12 @@ export function HospitalSearchBar({
             setQuery(e.target.value);
             if (!isOpen) setIsOpen(true);
           }}
-          placeholder="Search all registered hospitals"
-          className={`w-full pl-10 ${inputRightPadding} py-2 sm:py-2.5 rounded-xl border text-xs sm:text-sm font-sans transition-all backdrop-blur-md shadow-xs bg-slate-50/90 dark:bg-slate-900/90 border-slate-200/90 dark:border-white/[0.08] text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-hidden focus:border-slate-400 dark:focus:border-slate-500 focus:ring-2 focus:ring-slate-400/20 dark:focus:ring-white/10`}
+          placeholder={pill ? `Search ${totalHospitals} hospitals, states, incidents…` : 'Search hospitals by name, city, or state'}
+          className={`w-full pl-10 ${inputRightPadding} ${
+            pill
+              ? 'py-2.5 rounded-full bg-white/95 dark:bg-slate-900/95 shadow-xl border-slate-200/90 dark:border-white/[0.12]'
+              : 'py-2 sm:py-2.5 rounded-xl bg-slate-50/90 dark:bg-slate-900/90 shadow-xs border-slate-200/90 dark:border-white/[0.08]'
+          } border text-xs sm:text-sm font-sans transition-all backdrop-blur-xl text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-hidden focus:border-slate-400 dark:focus:border-slate-500 focus:ring-2 focus:ring-slate-400/20 dark:focus:ring-white/10`}
         />
 
         <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1.5">

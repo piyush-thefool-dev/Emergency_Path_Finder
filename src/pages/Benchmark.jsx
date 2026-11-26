@@ -10,7 +10,7 @@ import { getDefaultGraph } from '../services/graphLoader.js';
 import { computeGraphWeights } from '../services/edgeWeights.js';
 import { dijkstra } from '../algorithms/dijkstra.js';
 import { astar } from '../algorithms/astar.js';
-import { SAMPLE_HOSPITALS } from '../data/sampleHospitals.js';
+import { SAMPLE_HOSPITALS } from '../data/delhiNcrHospitals.js';
 import BenchmarkChart from '../components/charts/BenchmarkChart.jsx';
 import CompareTable from '../components/panels/CompareTable.jsx';
 import { Play, CheckCircle2, AlertOctagon, HelpCircle, Cpu, Zap, Activity } from 'lucide-react';

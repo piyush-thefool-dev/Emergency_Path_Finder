@@ -8,14 +8,17 @@
  * Calibrated against OpenStreetMap and Google Maps ground truth.
  */
 
-export const PAN_INDIA_HOSPITALS = [
+import { PAN_INDIA_EXPANSION_HOSPITALS } from './panIndiaExpansion.js';
+import { resolveHospitalState } from '../utils/hospitalState.js';
+
+const CORE_PAN_INDIA_HOSPITALS = [
   {
     "id": "hosp_sharda",
     "name": "Sharda Super Speciality Hospital",
     "shortName": "Sharda Hospital (Greater Noida)",
     "nodeId": "n_kp3_north",
-    "lat": 28.4745,
-    "lon": 77.4827,
+    "lat": 28.474511,
+    "lon": 77.482683,
     "specialties": [
       "trauma_center",
       "cardiology",
@@ -47,8 +50,8 @@ export const PAN_INDIA_HOSPITALS = [
     "name": "Kailash Hospital & Neuro Institute",
     "shortName": "Kailash Hospital (Greater Noida)",
     "nodeId": "n_pari_east",
-    "lat": 28.4708,
-    "lon": 77.5054,
+    "lat": 28.470777,
+    "lon": 77.50535,
     "specialties": [
       "cardiology",
       "general_emergency",
@@ -80,8 +83,8 @@ export const PAN_INDIA_HOSPITALS = [
     "name": "Yatharth Super Speciality Hospital",
     "shortName": "Yatharth Hospital (Omega 1)",
     "nodeId": "n_alpha1_center",
-    "lat": 28.4516,
-    "lon": 77.51,
+    "lat": 28.451617,
+    "lon": 77.510014,
     "specialties": [
       "burn_unit",
       "trauma_center",
@@ -145,8 +148,8 @@ export const PAN_INDIA_HOSPITALS = [
     "name": "Government Institute of Medical Sciences (GIMS)",
     "shortName": "GIMS Hospital (Greater Noida)",
     "nodeId": "n_surajpur_south",
-    "lat": 28.4235,
-    "lon": 77.5305,
+    "lat": 28.433408,
+    "lon": 77.533344,
     "specialties": [
       "trauma_center",
       "burn_unit",
@@ -180,8 +183,8 @@ export const PAN_INDIA_HOSPITALS = [
     "name": "Bakson Multi-Speciality Hospital",
     "shortName": "Bakson Hospital (KP I)",
     "nodeId": "osm_kp3_south",
-    "lat": 28.4676,
-    "lon": 77.502,
+    "lat": 28.467621,
+    "lon": 77.502004,
     "specialties": [
       "general_emergency"
     ],
@@ -210,8 +213,8 @@ export const PAN_INDIA_HOSPITALS = [
     "name": "Navin Hospital & Critical Care",
     "shortName": "Navin Hospital (Alpha II)",
     "nodeId": "n_alpha2_navin",
-    "lat": 28.4775,
-    "lon": 77.5186,
+    "lat": 28.477538,
+    "lon": 77.518637,
     "specialties": [
       "cardiology",
       "general_emergency",
@@ -276,8 +279,8 @@ export const PAN_INDIA_HOSPITALS = [
     "name": "Prakash Hospital Greater Noida",
     "shortName": "Prakash Hospital (Kasna Rd)",
     "nodeId": "n_omega1_prakash",
-    "lat": 28.4559,
-    "lon": 77.5177,
+    "lat": 28.455895,
+    "lon": 77.51767,
     "specialties": [
       "general_emergency",
       "trauma_center"
@@ -340,8 +343,8 @@ export const PAN_INDIA_HOSPITALS = [
     "name": "Green City Hospital",
     "shortName": "Green City (Surajpur)",
     "nodeId": "n_surajpur_greencity",
-    "lat": 28.4837,
-    "lon": 77.527,
+    "lat": 28.483704,
+    "lon": 77.526978,
     "specialties": [
       "general_emergency",
       "trauma_center"
@@ -9454,6 +9457,11 @@ export const PAN_INDIA_HOSPITALS = [
     "nabhAccredited": true
   }
 ];
+
+export const PAN_INDIA_HOSPITALS = [
+  ...CORE_PAN_INDIA_HOSPITALS,
+  ...PAN_INDIA_EXPANSION_HOSPITALS,
+].map((hosp) => (hosp.state ? hosp : { ...hosp, state: resolveHospitalState(hosp) }));
 
 export const NATIONAL_EMERGENCY_NUMBERS = [
   {

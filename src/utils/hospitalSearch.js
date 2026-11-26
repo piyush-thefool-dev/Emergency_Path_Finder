@@ -150,7 +150,9 @@ export function getSearchRelevance(hosp, query) {
 
   const name = (hosp.name || '').toLowerCase();
   const shortName = (hosp.shortName || '').toLowerCase();
-  const addr = (hosp.address || '').toLowerCase();
+  const state = (hosp.state || '').toLowerCase();
+  const city = (hosp.city || '').toLowerCase();
+  const addr = [hosp.address, state, city].filter(Boolean).join(' ').toLowerCase();
   const specialties = Array.isArray(hosp.specialties) ? hosp.specialties.join(' ').toLowerCase() : '';
   const specialtyLabels = Array.isArray(hosp.specialtyLabels) ? hosp.specialtyLabels.join(' ').toLowerCase() : '';
 

@@ -15,7 +15,8 @@ import { dijkstra } from '../algorithms/dijkstra.js';
 import { astar } from '../algorithms/astar.js';
 import { extractPathDetails } from '../algorithms/pathUtils.js';
 import { isDataStale, getMinutesElapsed } from '../utils/time.js';
-import { findNearestNode } from '../utils/geo.js';
+import { findNearestNode, haversineDistance } from '../utils/geo.js';
+import { OSM_GREATER_NOIDA_POIS } from '../data/osmRegionalPois.js';
 
 /**
  * Calculates a seat/bed intake readiness factor and penalty (in seconds)
@@ -288,4 +289,145 @@ export function rankHospitalsForEmergency(
     filteredOutCount,
     unreachableCount,
   };
+}
+
+/**
+ * Transitions hospital selection + lock state across user and telemetry events.
+ * When locked, ambulance movement, category changes, and map recentering never
+ * revert the chosen hospital back to the closest automatic facility.
+ */
+export function resolveHospitalSelectionOnEvent(state = {}, event = {}) {
+  const {
+    selectedHospitalId = null,
+    isHospitalLocked = false,
+    activeHospitalId = null,
+  } = state;
+
+  switch (event.type) {
+    case 'SELECT_HOSPITAL': {
+      const nextId = event.hospitalId || null;
+      if (!nextId) {
+        return { selectedHospitalId: null, isHospitalLocked: false };
+      }
+      return { selectedHospitalId: nextId, isHospitalLocked };
+    }
+    case 'TOGGLE_LOCK': {
+      if (isHospitalLocked) {
+        return { selectedHospitalId: null, isHospitalLocked: false };
+      }
+      const targetId = selectedHospitalId || activeHospitalId || null;
+      return {
+        selectedHospitalId: targetId,
+        isHospitalLocked: Boolean(targetId),
+      };
+    }
+    case 'AMBULANCE_MOVED':
+    case 'CATEGORY_CHANGED':
+    case 'RECENTER': {
+      if (isHospitalLocked) {
+        return { selectedHospitalId, isHospitalLocked: true };
+      }
+      return { selectedHospitalId: null, isHospitalLocked: false };
+    }
+    default:
+      return { selectedHospitalId, isHospitalLocked };
+  }
+}
+
+/**
+ * Ensures a selected/locked destination outside the radius tier still renders on the map.
+ */
+export function ensureActiveHospitalInList(hospitals = [], activeHospital = null) {
+  const list = Array.isArray(hospitals) ? hospitals : [];
+  if (!activeHospital?.id) return list;
+  if (list.some((h) => h.id === activeHospital.id)) return list;
+  return [activeHospital, ...list];
+}
+
+/**
+ * Builds the complete map-marker list by starting from the active/ranked dispatch targets
+ * and overlaying local corridor hospitals plus supplemental OpenStreetMap hospital POIs
+ * strictly within the active search radius (`radiusKm`, matching the dashed blue circle)
+ * when `radiusKm > 0`. An explicitly active/locked target outside the ring is still kept.
+ */
+export function buildMapHospitalMarkers({
+  topHospitals = [],
+  availableHospitals = [],
+  activeHospital = null,
+  ambulancePos = null,
+  radiusKm = 10,
+} = {}) {
+  const hasBoundedRadius = Number.isFinite(radiusKm) && radiusKm > 0;
+  const maxLocalRadiusM = hasBoundedRadius ? radiusKm * 1000 : Infinity;
+
+  const isInsideRadius = (hosp) => {
+    if (!hasBoundedRadius || !ambulancePos) return true;
+    if (!Number.isFinite(ambulancePos.lat) || !Number.isFinite(ambulancePos.lon)) return true;
+    return haversineDistance(ambulancePos.lat, ambulancePos.lon, hosp.lat, hosp.lon) <= maxLocalRadiusM;
+  };
+
+  const result = ensureActiveHospitalInList([], activeHospital);
+  const seenIds = new Set(result.map((h) => h.id));
+
+  const isTooCloseToExisting = (candidate) =>
+    result.some(
+      (existing) =>
+        haversineDistance(existing.lat, existing.lon, candidate.lat, candidate.lon) < 60
+    );
+
+  const appendIfWithinRadius = (candidates, enforceDedupeDistance = true) => {
+    for (const hosp of candidates) {
+      if (!hosp?.id || seenIds.has(hosp.id)) continue;
+      if (!isInsideRadius(hosp)) continue;
+      if (enforceDedupeDistance && isTooCloseToExisting(hosp)) continue;
+      seenIds.add(hosp.id);
+      result.push(hosp);
+    }
+  };
+
+  appendIfWithinRadius(Array.isArray(topHospitals) ? topHospitals : [], false);
+
+  const baseCandidates = Array.isArray(availableHospitals)
+    ? ambulancePos
+      ? availableHospitals
+      : availableHospitals.slice(0, 12)
+    : [];
+
+  appendIfWithinRadius(baseCandidates, true);
+  appendIfWithinRadius(OSM_GREATER_NOIDA_POIS, true);
+  return result;
+}
+
+/**
+ * Decides whether a resolved route should divert the ambulance to another candidate
+ * hospital instead of forcing the blocked/heavily degraded corridor:
+ * - Never diverts when the dispatcher locked the current hospital.
+ * - Diverts immediately when all road detours failed (`status === 'blocked'`).
+ * - Diverts when multiple closures (`closedCount >= 2`) impose a major delay over baseline.
+ */
+export function shouldSwitchHospitalForRoute(telemetry, baseHospital, isHospitalLocked = false) {
+  if (!telemetry?.hospitalId || isHospitalLocked) return false;
+  if (telemetry.status === 'blocked') return true;
+  if ((telemetry.closedCount || 0) >= 2 && Number.isFinite(telemetry.durationSec)) {
+    const baseSec = baseHospital?.travelTimeSec || 0;
+    if (baseSec > 0 && telemetry.durationSec >= Math.max(baseSec * 1.65, baseSec + 180)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/**
+ * Excludes blocked candidate hospital IDs while always preserving at least one fallback entry.
+ */
+export function filterBlockedHospitals(rankedList = [], blockedIds = []) {
+  const list = Array.isArray(rankedList) ? rankedList : [];
+  if (list.length === 0 || !Array.isArray(blockedIds) || blockedIds.length === 0) return list;
+  const blocked = new Set(blockedIds);
+  const remaining = list.filter((h) => !blocked.has(h.id));
+  if (remaining.length > 0) return remaining;
+  // All candidates blocked: keep the last blocked candidate as final manual fallback
+  const lastBlockedId = blockedIds[blockedIds.length - 1];
+  const fallback = list.find((h) => h.id === lastBlockedId) || list[list.length - 1];
+  return fallback ? [fallback] : list;
 }

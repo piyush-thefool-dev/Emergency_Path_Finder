@@ -1,96 +1,81 @@
 /**
- * Hospital Markers for Leaflet Map.
- *
- * Implements custom Leaflet DivIcons and permanent highlighted callout badges:
- *   - Real Greater Noida healthcare facilities (Sharda, Kailash, Yatharth, Jaypee, GIMS)
- *   - Hospital markers show illustrative bed-estimate pills for prototype testing
- *   - Recommended Hospital is prominently distinguished in Emerald Green (#16A34A) with a gold "BEST" badge
- *   - Alternate hospitals are highlighted in Deep Navy (#1F3C6D) / Indigo
+ * 3D Architectural Hospital Landmark Markers for the 2D Leaflet Map (Uber / Rapido / Google Maps style).
+ *   - Recommended Hospital: 3D Helipad Tower (`/assets/hospital-3d.png`) on illuminated emerald pad + gold BEST crown + callout banner
+ *   - Contingency Hospitals: 3D Slate-Navy Medical Towers (`/assets/hospital-alt-3d.png`) on glowing navy base pads
  */
 
 import { useState } from 'react';
 import { Marker, Popup, Tooltip, useMap, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import { Phone, PhoneCall } from 'lucide-react';
+import { getMarkerScaleForZoom } from '../../utils/geo.js';
 
 export function HospitalMarkers({ hospitals = [], activeHospitalId, onSelectHospital }) {
-  // Cap markers to top 5 to keep the emergency corridor clean and readable
   const map = useMap();
   const [zoom, setZoom] = useState(() => map.getZoom());
   useMapEvents({ zoomend: () => setZoom(map.getZoom()) });
 
-  // Custom SVG DivIcon factory for hospitals
+  const scale = getMarkerScaleForZoom(zoom);
+  const showPermanentAltNames = zoom >= 13;
+  const showTargetBanner = zoom >= 10;
+
   const createHospitalIcon = (isTarget, displayName = '') => {
-    if (isTarget) {
-      // Recommended Hospital: Bright Emerald Pin with Gold "BEST" Banner and pulsing glow
-      return L.divIcon({
-        className: 'custom-hospital-pin',
-        html: `
-          <div title="${displayName}" style="width: 44px; height: 52px; display: flex; flex-direction: column; align-items: center; cursor: pointer; filter: drop-shadow(0 4px 10px rgba(22, 163, 74, 0.55));">
-            <svg width="44" height="50" viewBox="0 0 44 50" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <!-- Pin Outer Body -->
-              <path
-                d="M22 2C11.5 2 3 10.5 3 21C3 34 20.2 47.5 21.2 48.5C21.7 48.9 22.3 48.9 22.8 48.5C23.8 47.5 41 34 41 21C41 10.5 32.5 2 22 2Z"
-                fill="#16A34A"
-                stroke="#FFFFFF"
-                stroke-width="2.5"
-              />
+    const safeTitle = String(displayName).replace(/"/g, '&quot;');
+    const spec = isTarget
+      ? {
+          boxW: Math.max(22, Math.round(58 * scale)),
+          boxH: Math.max(24, Math.round(64 * scale)),
+          imgSize: Math.max(18, Math.round(50 * scale)),
+          padW: Math.max(18, Math.round(46 * scale)),
+          padH: Math.max(7, Math.round(15 * scale)),
+          marginBottom: 3,
+          imgSrc: '/assets/hospital-3d.png',
+          padBg: 'radial-gradient(circle, rgba(16,185,129,0.58) 0%, rgba(16,185,129,0.14) 68%, transparent 100%)',
+          padBorder: '1.5px solid rgba(52,211,153,0.85)',
+          imgShadow: 'drop-shadow(0 6px 8px rgba(0,0,0,0.5))',
+          showBest: zoom >= 13,
+        }
+      : {
+          boxW: Math.max(16, Math.round(42 * scale)),
+          boxH: Math.max(18, Math.round(46 * scale)),
+          imgSize: Math.max(14, Math.round(38 * scale)),
+          padW: Math.max(14, Math.round(34 * scale)),
+          padH: Math.max(5, Math.round(11 * scale)),
+          marginBottom: 2,
+          imgSrc: '/assets/hospital-alt-3d.png',
+          padBg: 'radial-gradient(circle, rgba(37,99,235,0.42) 0%, transparent 75%)',
+          padBorder: '1px solid rgba(96,165,250,0.65)',
+          imgShadow: 'drop-shadow(0 4px 6px rgba(0,0,0,0.45))',
+          showBest: false,
+        };
 
-              <!-- Top Golden BEST Banner -->
-              <rect x="13.5" y="4.5" width="17" height="5.5" rx="2.75" fill="#FEF08A" stroke="#FFFFFF" stroke-width="0.8"/>
-              <text x="22" y="9" font-family="Plus Jakarta Sans, sans-serif" font-size="4.2" font-weight="900" fill="#854D0E" text-anchor="middle">BEST</text>
+    // Anchor on the 3D building's isometric footprint base so the tower covers the exact OSM POI coordinate
+    const anchorY = Math.round(
+      spec.boxH - spec.marginBottom - Math.max(4, Math.round(spec.imgSize * 0.24))
+    );
+    const padBottom = Math.max(1, spec.boxH - anchorY - Math.round(spec.padH / 2));
 
-              <!-- Center White Disc -->
-              <circle cx="22" cy="23" r="11" fill="#FFFFFF"/>
-
-              <!-- Tactical Hospital Symbology Icon (Hospital Building with Cross) -->
-              <g transform="translate(14.5, 15.5) scale(0.625)" stroke="#16A34A" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" fill="none">
-                <path d="M12 7v4"/>
-                <path d="M14 21v-3a2 2 0 0 0-4 0v3"/>
-                <path d="M14 9h-4"/>
-                <path d="M18 11h2a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-9a2 2 0 0 1 2-2h2"/>
-                <path d="M18 21V5a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16"/>
-              </g>
-            </svg>
-          </div>
-        `,
-        iconSize: [44, 52],
-        iconAnchor: [22, 50], // Bottom needle points directly at the coordinates
-        popupAnchor: [0, -48],
-      });
-    }
-
-    // Alternative Hospital: High-contrast Navy/Blue Pin with Medical Cross
     return L.divIcon({
       className: 'custom-hospital-pin',
       html: `
-        <div title="${displayName}" style="width: 38px; height: 46px; display: flex; flex-direction: column; align-items: center; cursor: pointer; filter: drop-shadow(0 3px 8px rgba(31, 60, 109, 0.45));">
-          <svg width="38" height="44" viewBox="0 0 38 44" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <!-- Pin Outer Body -->
-            <path
-              d="M19 2C9.5 2 2 9.5 2 19C2 30 17.5 42 18.3 42.8C18.7 43.2 19.3 43.2 19.7 42.8C20.5 42 36 30 36 19C36 9.5 28.5 2 19 2Z"
-              fill="#1F3C6D"
-              stroke="#FFFFFF"
-              stroke-width="2.2"
-            />
-
-            <!-- Center White Disc -->
-            <circle cx="19" cy="19" r="9.5" fill="#FFFFFF"/>
-
-            <!-- Tactical Hospital Symbology Icon (Hospital Building with Cross) -->
-            <g transform="translate(12.8, 12.8) scale(0.52)" stroke="#1F3C6D" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" fill="none">
-              <path d="M12 7v4"/>
-              <path d="M14 21v-3a2 2 0 0 0-4 0v3"/>
-              <path d="M14 9h-4"/>
-              <path d="M18 11h2a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-9a2 2 0 0 1 2-2h2"/>
-              <path d="M18 21V5a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16"/>
-            </g>
-          </svg>
+        <div title="${safeTitle}" style="position:relative;width:${spec.boxW}px;height:${spec.boxH}px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;cursor:pointer;">
+          <div style="position:absolute;bottom:${padBottom}px;width:${spec.padW}px;height:${spec.padH}px;border-radius:9999px;background:${spec.padBg};border:${spec.padBorder};pointer-events:none;"></div>
+          ${
+            spec.showBest
+              ? `<div style="position:absolute;top:0;left:50%;transform:translateX(-50%);padding:1px 6px;border-radius:9999px;background:#FEF08A;color:#854D0E;border:1px solid #FFFFFF;font:900 8px/1.2 'Plus Jakarta Sans',sans-serif;box-shadow:0 2px 6px rgba(0,0,0,0.35);z-index:3;pointer-events:none;">BEST</div>`
+              : ''
+          }
+          <img
+            src="${spec.imgSrc}"
+            alt=""
+            draggable="false"
+            style="position:relative;z-index:2;width:${spec.imgSize}px;height:${spec.imgSize}px;object-fit:contain;margin-bottom:${spec.marginBottom}px;filter:${spec.imgShadow};pointer-events:none;"
+          />
         </div>
       `,
-      iconSize: [38, 46],
-      iconAnchor: [19, 44], // Bottom needle points directly at the coordinates
-      popupAnchor: [0, -42],
+      iconSize: [spec.boxW, spec.boxH],
+      iconAnchor: [Math.round(spec.boxW / 2), anchorY],
+      popupAnchor: [0, -Math.max(16, Math.round(anchorY * 0.9))],
     });
   };
 
@@ -128,26 +113,37 @@ export function HospitalMarkers({ hospitals = [], activeHospitalId, onSelectHosp
               },
             }}
           >
-            {/* On-map callout label: rendered ONLY for the active recommendation to eliminate label collisions */}
-            {isTarget && (
+            {isTarget ? (
               <Tooltip
-                permanent={true}
+                key={`tip-target-${showTargetBanner}`}
+                permanent={showTargetBanner}
                 direction="top"
-                offset={[0, -52]}
+                offset={[0, -Math.max(18, Math.round(44 * scale))]}
                 className="custom-hospital-label-recommended"
               >
-                <div className="flex items-center gap-1.5 text-2xs select-none">
+                <div className="flex items-center gap-1.5 text-2xs select-none whitespace-nowrap">
                   <span className="font-bold whitespace-nowrap">
                     ★ {displayName}
                   </span>
-                  <span className="text-3xs font-mono font-bold bg-white/20 px-1 rounded text-white">
+                  <span className="text-3xs font-mono font-bold bg-white/20 px-1 rounded text-white shrink-0">
                     RECOMMENDED
                   </span>
                 </div>
               </Tooltip>
+            ) : (
+              <Tooltip
+                key={`tip-alt-${showPermanentAltNames}`}
+                permanent={showPermanentAltNames}
+                direction="top"
+                offset={[0, -Math.max(14, Math.round(32 * scale))]}
+                className="custom-hospital-label"
+              >
+                <span className="font-semibold text-[10px] select-none whitespace-nowrap">
+                  {displayName}
+                </span>
+              </Tooltip>
             )}
 
-            {/* Click Popup with Clinical & Telemetry Details */}
             <Popup autoPan={true} autoPanPaddingTopLeft={[24, 150]} autoPanPaddingBottomRight={[24, 100]}>
               <div className="text-xs p-1 font-sans space-y-2 max-w-xs text-slate-900 dark:text-slate-100">
                 <div className="flex items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-800 pb-1.5">
@@ -162,7 +158,7 @@ export function HospitalMarkers({ hospitals = [], activeHospitalId, onSelectHosp
                   {isTarget ? (
                     <div className="flex items-center gap-1 shrink-0">
                       <span className="text-3xs px-2 py-0.5 rounded bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 font-bold border border-emerald-300 dark:border-emerald-800">
-                        ★ ACTIVE DESTINATION
+                        ★ ACTIVE
                       </span>
                       {activeHospitalId && (
                         <button
@@ -196,7 +192,6 @@ export function HospitalMarkers({ hospitals = [], activeHospitalId, onSelectHosp
                   )}
                 </div>
 
-                {/* Dual OSRM Telemetry Banner: Driving ETA (mins) & Road Distance (km) */}
                 {(durationMin != null || roadDistanceKm != null) && (
                   <div className="grid grid-cols-2 gap-1.5 bg-blue-50/70 dark:bg-blue-950/40 border border-blue-200/80 dark:border-blue-800/60 rounded-lg p-1.5 text-center">
                     <div>
@@ -214,7 +209,6 @@ export function HospitalMarkers({ hospitals = [], activeHospitalId, onSelectHosp
                   </div>
                 )}
 
-                {/* Clinical bed capacity readout */}
                 <div className="bg-slate-50 dark:bg-slate-900/80 border border-slate-200/80 dark:border-slate-800 rounded-lg p-2 space-y-1.5">
                   <div className="flex items-center justify-between">
                     <span className="font-bold text-3xs uppercase tracking-wide text-slate-700 dark:text-slate-300">Clinical Bed Capacity</span>
@@ -267,7 +261,6 @@ export function HospitalMarkers({ hospitals = [], activeHospitalId, onSelectHosp
                   </div>
                 </div>
 
-                {/* Call Desk Button for Seat/Bed Confirmation & Emergency Hotline */}
                 <div className="pt-1 space-y-1">
                   {hosp.phone && (
                     <a
@@ -289,15 +282,6 @@ export function HospitalMarkers({ hospitals = [], activeHospitalId, onSelectHosp
                     <Phone className="w-3 h-3 text-red-600 shrink-0" />
                     <span>24/7 Emergency Ambulance: 108 (Toll-Free)</span>
                   </a>
-                </div>
-
-                {/* Registry Status note */}
-                <div className="pt-1.5 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-3xs font-mono">
-                  <span className="inline-flex items-center gap-1 text-emerald-700 dark:text-emerald-400 font-semibold">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                    Verified Registry Telemetry
-                  </span>
-                  <span className="text-slate-600 dark:text-slate-400 font-mono">Delhi-NCR WIB Network</span>
                 </div>
               </div>
             </Popup>

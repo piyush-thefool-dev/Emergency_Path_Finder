@@ -5,7 +5,7 @@
 
 import { useState } from 'react';
 import { Bed } from 'lucide-react';
-import PageHeader from '../components/layout/PageHeader.jsx';
+import MobilePageHeader from '../components/layout/MobilePageHeader.jsx';
 import HospitalBedManagerModal from '../components/panels/HospitalBedManagerModal.jsx';
 import { useDispatch } from '../context/DispatchContext.jsx';
 
@@ -17,10 +17,11 @@ export function BedsPage() {
 
   return (
     <div className="h-full w-full flex-1 min-h-0 flex flex-col overflow-hidden bg-slate-50 dark:bg-slate-950">
-      <PageHeader
+      <MobilePageHeader
         icon={Bed}
         title="Bed Capacity Registry"
         subtitle={`${hospitalsToDisplay.length} Regional Facilities · Verified Clinical Telemetry`}
+        backTo="/"
       />
       <HospitalBedManagerModal
         key={version}

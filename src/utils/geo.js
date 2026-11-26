@@ -110,3 +110,28 @@ export function findNearestNode(lat, lon, nodes) {
 
   return bestNode;
 }
+
+/**
+ * Computes initial compass bearing (0..360 deg, 0 = North) from coordinate A to B.
+ */
+export function computeBearingDeg(lat1, lon1, lat2, lon2) {
+  if (lat1 == null || lon1 == null || lat2 == null || lon2 == null) return 0;
+  if (Math.abs(lat1 - lat2) < 1e-7 && Math.abs(lon1 - lon2) < 1e-7) return 0;
+  const toRad = Math.PI / 180;
+  const phi1 = lat1 * toRad;
+  const phi2 = lat2 * toRad;
+  const dLambda = (lon2 - lon1) * toRad;
+  const y = Math.sin(dLambda) * Math.cos(phi2);
+  const x = Math.cos(phi1) * Math.sin(phi2) - Math.sin(phi1) * Math.cos(phi2) * Math.cos(dLambda);
+  return ((Math.atan2(y, x) * 180) / Math.PI + 360) % 360;
+}
+
+/**
+ * Returns a bounded marker scale factor (0.28..1.0) so 3D vehicle and hospital icons
+ * shrink smoothly when zooming out instead of covering the page at regional/national zoom.
+ */
+export function getMarkerScaleForZoom(zoom = 14) {
+  const z = Number.isFinite(zoom) ? zoom : 14;
+  if (z >= 15) return 1;
+  return Math.max(0.28, Math.min(1, Math.pow(2, (z - 15) * 0.42)));
+}

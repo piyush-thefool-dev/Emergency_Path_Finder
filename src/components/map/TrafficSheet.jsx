@@ -6,7 +6,7 @@
 import { useMemo, useState } from 'react';
 import { X, MapPin, LocateFixed, Trash2, CheckCircle2, Siren, User, Flame } from 'lucide-react';
 import { TRAFFIC_LEVEL_LIST, REPORTERS } from '../../config/trafficLevels.js';
-import { buildIncidentList, edgeDisplayName, findNearestEdge, timeAgo } from '../../utils/incidents.js';
+import { buildIncidentList, edgeDisplayName, extractLocalStreetSegment, findNearestEdge, timeAgo } from '../../utils/incidents.js';
 
 export function TrafficSheet({
   open,
@@ -36,7 +36,15 @@ export function TrafficSheet({
       setNotice({ ok: false, text: 'No mapped road within 400 m of location. Select road directly on map.' });
       return;
     }
-    onAddIncident(hit.edge.id, levelId);
+    const a = nodes.find((n) => n.id === hit.edge.from);
+    const b = nodes.find((n) => n.id === hit.edge.to);
+    const pt = ambulancePos ? [ambulancePos.lat, ambulancePos.lon] : [hit.midpoint.lat, hit.midpoint.lon];
+    const clip = a && b ? extractLocalStreetSegment([[a.lat, a.lon], [b.lat, b.lon]], pt, 42) : null;
+    onAddIncident(hit.edge.id, levelId, {
+      point: clip?.point || pt,
+      roadName: edgeDisplayName(hit.edge),
+      streetSegment: clip?.streetSegment || (a && b ? [[a.lat, a.lon], [b.lat, b.lon]] : null),
+    });
     setNotice({ ok: true, text: `${selected.label} logged on ${edgeDisplayName(hit.edge)}.` });
   };
 

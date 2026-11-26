@@ -39,7 +39,7 @@ export function Architecture() {
       num: '05',
       title: 'Dispatch Presentation',
       icon: MapPin,
-      desc: 'Interactive CAD Leaflet display, corridor polylines, arrival countdowns, contingency alternates, and caution advisories.',
+      desc: 'Interactive 2D Leaflet map with 3D ambulance & hospital markers, corridor polylines, arrival countdowns, and caution advisories.',
       output: 'Dispatcher situational awareness & navigation',
     },
   ];
@@ -168,7 +168,7 @@ export function Architecture() {
             Pathfinding Engine & Tactical CAD Presentation
           </h4>
           <p className="text-[11px] text-slate-600 dark:text-slate-400 font-sans leading-relaxed">
-            The routing core executes Dijkstra and A* pathfinding using custom binary min-heaps. The presentation tier displays the Leaflet situational map with route polylines and live vehicle telemetry.
+            The routing core executes Dijkstra and A* pathfinding using custom binary min-heaps. The presentation tier displays the 2D Leaflet situational map with 3D ambulance & hospital diagrams, route polylines, and live telemetry.
           </p>
         </div>
       </div>

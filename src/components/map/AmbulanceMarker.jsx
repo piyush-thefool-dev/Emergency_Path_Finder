@@ -1,16 +1,12 @@
 /**
- * Draggable Ambulance Marker for Leaflet Map.
- *
- * Implements a custom Leaflet DivIcon featuring:
- *   - Distinctive Emergency Red (#D62828) Teardrop Map Pin
- *   - Emergency Vehicle Siren & Cross SVG icon
- *   - Animated radar beacon ripple at the anchor point
- *   - Smooth dragging and snapping to nearest valid graph node
+ * Uber / Rapido–style 3D Emergency Ambulance Marker on the 2D Leaflet Map.
+ * Scales smoothly with map zoom so zoomed-out views stay clean and uncluttered.
  */
 
-import { useMemo } from 'react';
-import { Marker, Popup } from 'react-leaflet';
+import { useMemo, useState } from 'react';
+import { Marker, Popup, useMap, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
+import { getMarkerScaleForZoom } from '../../utils/geo.js';
 
 export function AmbulanceMarker({
   position,
@@ -19,57 +15,56 @@ export function AmbulanceMarker({
   isMoving = false,
   isRealGps = false,
   speedKph = 0,
+  bearing = 0,
   canDragPin = false,
   onTogglePinLock,
 }) {
-  // Custom SVG DivIcon for Ambulance replacing default blue pin
+  const map = useMap();
+  const [zoom, setZoom] = useState(() => map.getZoom());
+  useMapEvents({ zoomend: () => setZoom(map.getZoom()) });
+
+  const angle = Number.isFinite(bearing) ? Math.round(bearing) : 0;
+  const scale = getMarkerScaleForZoom(zoom);
+  const showTag = zoom >= 13;
+
   const ambulanceIcon = useMemo(() => {
     const wrapperClass = canDragPin && !isMoving ? 'ambulance-pin-wrapper' : 'ambulance-pin-wrapper-locked';
+    const ringColor = isRealGps ? 'rgba(16,185,129,0.5)' : 'rgba(214,40,40,0.45)';
+    const coneColor = isRealGps ? 'rgba(16,185,129,0.4)' : 'rgba(56,189,248,0.45)';
+    const badgeBg = isRealGps ? '#059669' : '#D62828';
+
+    const box = Math.max(22, Math.round(58 * scale));
+    const imgSize = Math.max(16, Math.round(42 * scale));
+    const coneW = Math.max(12, Math.round(30 * scale));
+    const coneH = Math.max(10, Math.round(22 * scale));
+
     return L.divIcon({
       className: 'custom-ambulance-pin',
       html: `
-        <div class="${wrapperClass}" style="width: 44px; height: 54px;">
-          <!-- Animated radar ripple at needle anchor point -->
-          <div class="${isMoving ? 'ambulance-beacon-pulse-moving' : 'ambulance-beacon-pulse'}"></div>
-
-          <!-- Teardrop Pin SVG with Siren and Ambulance Vehicle -->
-          <svg width="44" height="52" viewBox="0 0 44 52" fill="none" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0 4px 8px rgba(0,0,0,0.45));">
-            <!-- Pin Outer Body -->
-            <path
-              d="M22 2C11.5 2 3 10.5 3 21C3 33.5 20.2 49 21.2 49.9C21.7 50.3 22.3 50.3 22.8 49.9C23.8 49 41 33.5 41 21C41 10.5 32.5 2 22 2Z"
-              fill="${isRealGps ? '#16A34A' : '#D62828'}"
-              stroke="#FFFFFF"
-              stroke-width="2.5"
+        <div class="${wrapperClass}" style="position:relative;width:${box}px;height:${box}px;display:flex;align-items:center;justify-content:center;">
+          <div style="position:absolute;inset:${Math.round(box * 0.12)}px;border-radius:9999px;background:radial-gradient(circle, ${ringColor} 0%, transparent 72%);pointer-events:none;"></div>
+          <div class="${isMoving ? 'ambulance-beacon-pulse-moving' : 'ambulance-beacon-pulse'}" style="bottom:${Math.round(box * 0.18)}px;width:${Math.round(box * 0.38)}px;height:${Math.round(box * 0.38)}px;"></div>
+          <div style="position:relative;width:${imgSize}px;height:${imgSize}px;display:flex;align-items:center;justify-content:center;transform:rotate(${angle}deg);transition:transform 0.3s ease-out;pointer-events:none;">
+            <div style="position:absolute;top:-${Math.round(coneH * 0.55)}px;left:50%;transform:translateX(-50%);width:${coneW}px;height:${coneH}px;background:linear-gradient(to top, ${coneColor}, transparent);clip-path:polygon(50% 0%, 100% 100%, 0% 100%);filter:blur(1px);"></div>
+            <img
+              src="/assets/ambulance-3d.png"
+              alt="3D Ambulance"
+              draggable="false"
+              style="width:${imgSize}px;height:${imgSize}px;object-fit:contain;filter:drop-shadow(0 4px 6px rgba(0,0,0,0.55));"
             />
-
-            <!-- Top Siren Light -->
-            <ellipse cx="22" cy="7.5" rx="3.5" ry="2" fill="#FBBF24" stroke="#FFFFFF" stroke-width="0.8"/>
-
-            <!-- White Circle Background for Vehicle Icon -->
-            <circle cx="22" cy="20" r="13" fill="#FFFFFF"/>
-
-            <!-- Inner Ambulance Vehicle Icon (Deep Navy on White) -->
-            <g transform="translate(13, 11)">
-              <!-- Ambulance Body Outline -->
-              <path d="M1 12V3C1 2.44772 1.44772 2 2 2H11C11.5523 2 12 2.44772 12 3V12" stroke="#1F3C6D" stroke-width="1.6" stroke-linecap="round"/>
-              <path d="M12 5H15.2C15.8 5 16.3 5.4 16.5 6L17.5 8.5C17.8 9.1 18 9.5 18 10.1V12H12" stroke="#1F3C6D" stroke-width="1.6" stroke-linecap="round"/>
-
-              <!-- Red Cross in Ambulance Window/Body -->
-              <path d="M5.5 6.5H8.5" stroke="#D62828" stroke-width="1.8" stroke-linecap="round"/>
-              <path d="M7 5V8" stroke="#D62828" stroke-width="1.8" stroke-linecap="round"/>
-
-              <!-- Wheels -->
-              <circle cx="4.5" cy="13" r="1.8" fill="#1F3C6D" stroke="#FFFFFF" stroke-width="0.8"/>
-              <circle cx="14.5" cy="13" r="1.8" fill="#1F3C6D" stroke="#FFFFFF" stroke-width="0.8"/>
-            </g>
-          </svg>
+          </div>
+          ${
+            showTag
+              ? `<span style="position:absolute;bottom:-1px;left:50%;transform:translateX(-50%);padding:1px 5px;border-radius:9999px;background:${badgeBg};color:#fff;font:800 8px/1.2 'JetBrains Mono',monospace;letter-spacing:0.04em;border:1px solid rgba(255,255,255,0.9);box-shadow:0 2px 5px rgba(0,0,0,0.4);white-space:nowrap;pointer-events:none;">AMB-01</span>`
+              : ''
+          }
         </div>
       `,
-      iconSize: [44, 54],
-      iconAnchor: [22, 52], // Bottom tip points directly at the coordinates
-      popupAnchor: [0, -50],
+      iconSize: [box, box],
+      iconAnchor: [Math.round(box / 2), Math.round(box / 2)],
+      popupAnchor: [0, -Math.round(box / 2)],
     });
-  }, [isMoving, isRealGps, canDragPin]);
+  }, [isMoving, isRealGps, canDragPin, angle, scale, showTag]);
 
   const eventHandlers = useMemo(
     () => ({
@@ -101,7 +96,7 @@ export function AmbulanceMarker({
                 className={`w-2 h-2 rounded-full inline-block ${
                   isRealGps ? 'bg-emerald-600 animate-pulse' : 'bg-[#D62828] animate-pulse'
                 }`}
-              ></span>
+              />
               <span>
                 {isRealGps ? 'Live Device GPS Active' : isMoving ? 'Vehicle Traversal Active' : 'Ambulance Position'}
               </span>
@@ -122,7 +117,7 @@ export function AmbulanceMarker({
               <strong>Nearest junction:</strong> {snappedNode?.name || 'On road network'}
             </p>
             <p className="text-slate-500 dark:text-slate-400 font-mono text-3xs">
-              Coordinates: {position.lat.toFixed(5)}°N, {position.lon.toFixed(5)}°E
+              Coordinates: {position.lat.toFixed(5)}°N, {position.lon.toFixed(5)}°E · {angle}°
             </p>
             {speedKph > 0 && (
               <p className="text-emerald-700 dark:text-emerald-400 font-mono text-3xs font-bold">
@@ -131,7 +126,6 @@ export function AmbulanceMarker({
             )}
           </div>
 
-          {/* Lock / Unlock Toggle Button in Popup */}
           {!isMoving && (
             <div className="pt-1 border-t border-slate-100 dark:border-slate-800">
               <button
@@ -143,7 +137,7 @@ export function AmbulanceMarker({
                     : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700'
                 }`}
               >
-                <span>{canDragPin ? '🔒 Fix Position (Lock)' : '🔓 Unlock to Drag Ambulance'}</span>
+                <span>{canDragPin ? 'Lock Position' : 'Unlock to Drag Ambulance'}</span>
               </button>
             </div>
           )}

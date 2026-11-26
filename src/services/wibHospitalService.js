@@ -27,6 +27,97 @@ export const DATA_GOV_IN_CONFIG = {
   licence: 'Government Open Data License - India (GODL)',
 };
 
+export const GEOAPIFY_PLACES_CONFIG = {
+  endpoint: 'https://api.geoapify.com/v2/places',
+  sourceName: 'Geoapify Places API v2',
+  sourceUrl: 'https://www.geoapify.com/places-api',
+};
+
+const DEFAULT_NCR_BBOX = { south: 28.36, west: 76.98, north: 28.72, east: 77.59 };
+
+/** Resolves optional Geoapify API key from env (Vite or Node). */
+export function getGeoapifyApiKey(overrideKey = '') {
+  return (
+    overrideKey ||
+    (typeof import.meta !== 'undefined' && (import.meta.env?.VITE_GEOAPIFY_API_KEY || import.meta.env?.GEOAPIFY_API_KEY)) ||
+    (typeof process !== 'undefined' && (process.env?.VITE_GEOAPIFY_API_KEY || process.env?.GEOAPIFY_API_KEY)) ||
+    ''
+  );
+}
+
+/** Builds a Geoapify Places v2 URL for hospitals inside a bounding box. */
+export function buildGeoapifyPlacesUrl(bbox = DEFAULT_NCR_BBOX, apiKey = '', limit = 100) {
+  const params = new URLSearchParams({
+    categories: 'healthcare.hospital',
+    filter: `rect:${bbox.west},${bbox.south},${bbox.east},${bbox.north}`,
+    limit: String(limit),
+    apiKey,
+  });
+  return `${GEOAPIFY_PLACES_CONFIG.endpoint}?${params.toString()}`;
+}
+
+/** Maps Geoapify GeoJSON FeatureCollection results into normalized hospital records. */
+export function mapGeoapifyFeaturesToHospitals(geojson) {
+  const features = Array.isArray(geojson?.features) ? geojson.features : [];
+  const now = new Date().toISOString();
+
+  return features
+    .map((feat, idx) => {
+      const props = feat?.properties || {};
+      const coords = feat?.geometry?.coordinates;
+      const lat = props.lat ?? (Array.isArray(coords) ? coords[1] : null);
+      const lon = props.lon ?? (Array.isArray(coords) ? coords[0] : null);
+      if (lat == null || lon == null || !props.name) return null;
+
+      const rawSpecs = Array.isArray(props.categories) ? props.categories : [];
+      const { specialties, specialtyLabels } = mapWibSpecialties(rawSpecs);
+      const id = props.place_id ? `geoapify_${props.place_id}` : `geoapify_hosp_${idx}`;
+      const rawPhone = props.contact?.phone || props.datasource?.raw?.phone || '+91 Emergency (108/112)';
+
+      return {
+        id,
+        name: props.name,
+        shortName: props.name,
+        lat,
+        lon,
+        address: props.formatted || props.address_line2 || props.city || 'Regional Corridor',
+        city: props.city || props.county || '',
+        phone: rawPhone,
+        hasEmergency: true,
+        specialties,
+        specialtyLabels,
+        bedAvailability: {
+          status: 'AVAILABLE',
+          totalCapacity: 150,
+          icuBedsFree: 4,
+          traumaBedsFree: 2,
+          emergencyWardFree: 12,
+          source: 'Geoapify Places API v2 (Estimated Baseline)',
+          lastUpdated: now,
+        },
+        source: 'Geoapify Places API v2',
+      };
+    })
+    .filter(Boolean);
+}
+
+/** Queries Geoapify Places v2 for healthcare.hospital POIs within bbox. */
+export async function fetchGeoapifyHospitals(bbox = DEFAULT_NCR_BBOX, apiKey = '', options = {}) {
+  const effectiveKey = getGeoapifyApiKey(apiKey);
+  if (isOffline() || !effectiveKey) return [];
+
+  try {
+    const url = buildGeoapifyPlacesUrl(bbox, effectiveKey, options.limit || 100);
+    const res = await fetch(url, { headers: { Accept: 'application/json' }, signal: options.signal });
+    if (!res.ok) return [];
+    const geojson = await res.json();
+    return mapGeoapifyFeaturesToHospitals(geojson);
+  } catch (err) {
+    markNetworkFailure(err);
+    return [];
+  }
+}
+
 /**
  * Maps WIB API medical specialty strings to emergency routing triage categories.
  *
@@ -169,16 +260,21 @@ export function processWibRecords(rawList = []) {
     if (!match) return { ...base };
 
     const totalBeds = match.beds || base.bedAvailability?.totalCapacity || 250;
-    const { specialties, specialtyLabels } = match.specialties
+    const isGenericGeoapify = match.source === 'Geoapify Places API v2';
+    const mappedMatch = !isGenericGeoapify && match.specialties
       ? mapWibSpecialties(match.specialties)
-      : { specialties: base.specialties, specialtyLabels: base.specialtyLabels };
+      : null;
+    const mergedSpecialties = mappedMatch
+      ? Array.from(new Set([...(base.specialties || []), ...mappedMatch.specialties]))
+      : base.specialties;
+    const specialtyLabels = mappedMatch?.specialtyLabels || base.specialtyLabels;
 
     return {
       ...base,
       institutionType: match.type || base.institutionType || 'Multi-Speciality Hospital',
       rating: match.rating || base.rating || 4.4,
       nabhAccredited: Boolean(match.nabh ?? base.nabhAccredited ?? true),
-      specialties,
+      specialties: mergedSpecialties,
       specialtyLabels,
       phone: match.phone || base.phone,
       address: match.address || base.address,
@@ -199,7 +295,7 @@ export function processWibRecords(rawList = []) {
  *
  * @returns {Promise<{ hospitals: Array<Object>, isLive: boolean, totalFetched: number, source: string }>}
  */
-export async function fetchWibHospitals() {
+export async function fetchWibHospitals(options = {}) {
   if (isOffline()) {
     return {
       hospitals: processWibRecords([]),
@@ -237,9 +333,19 @@ export async function fetchWibHospitals() {
       source: WIB_API_CONFIG.sourceName,
     };
   } catch (err) {
-    markNetworkFailure(err);
     if (!isOffline()) {
-      console.warn('WIB API live fetch failed, using bundled regional reference data:', err.message);
+      console.warn('WIB API live fetch failed, attempting Geoapify Places / bundled reference data:', err.message);
+      const geoHospitals = await fetchGeoapifyHospitals(DEFAULT_NCR_BBOX, options?.geoapifyApiKey, options);
+      if (geoHospitals.length > 0) {
+        const mappedGeo = processWibRecords(geoHospitals);
+        return {
+          hospitals: mappedGeo,
+          isLive: true,
+          totalFetched: geoHospitals.length,
+          source: GEOAPIFY_PLACES_CONFIG.sourceName,
+        };
+      }
+      markNetworkFailure(err);
     }
     const mapped = processWibRecords([]);
 
@@ -253,14 +359,16 @@ export async function fetchWibHospitals() {
 }
 
 /**
- * Live Overpass Hospital & Trauma Intake Query.
+ * Live Overpass Hospital & Trauma Intake Query with Geoapify Places API fallback.
  * Queries OpenStreetMap Overpass API for active hospitals, emergency wards,
- * and trauma centers inside the Delhi-NCR study bounding box.
+ * and trauma centers inside the Delhi-NCR study bounding box; falls back to
+ * Geoapify Places API v2 (`healthcare.hospital`) when Overpass mirrors fail.
  *
  * @param {{ south: number, west: number, north: number, east: number }} [bbox]
+ * @param {{ geoapifyApiKey?: string, limit?: number, signal?: AbortSignal }} [options]
  * @returns {Promise<Array<Object>>}
  */
-export async function fetchOverpassHospitals(bbox = { south: 28.36, west: 76.98, north: 28.72, east: 77.59 }) {
+export async function fetchOverpassHospitals(bbox = DEFAULT_NCR_BBOX, options = {}) {
   if (isOffline()) return [];
   const query = `[out:json][timeout:25];(node["amenity"="hospital"](${bbox.south},${bbox.west},${bbox.north},${bbox.east});way["amenity"="hospital"](${bbox.south},${bbox.west},${bbox.north},${bbox.east});relation["amenity"="hospital"](${bbox.south},${bbox.west},${bbox.north},${bbox.east}););out center tags qt;`;
   const mirrors = [
@@ -270,6 +378,7 @@ export async function fetchOverpassHospitals(bbox = { south: 28.36, west: 76.98,
     'https://overpass-api.de/api/interpreter',
   ];
 
+  let lastErr = null;
   for (const mirror of mirrors) {
     if (isOffline()) break;
     try {
@@ -277,10 +386,11 @@ export async function fetchOverpassHospitals(bbox = { south: 28.36, west: 76.98,
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: `data=${encodeURIComponent(query)}`,
+        signal: options.signal,
       });
       if (!res.ok) continue;
       const data = await res.json();
-      if (!data?.elements) continue;
+      if (!data?.elements || data.elements.length === 0) continue;
 
       return data.elements
         .map((elem) => {
@@ -314,10 +424,15 @@ export async function fetchOverpassHospitals(bbox = { south: 28.36, west: 76.98,
         })
         .filter(Boolean);
     } catch (err) {
-      markNetworkFailure(err);
-      // try next mirror
+      lastErr = err;
+      // try next mirror or Geoapify fallback before marking global offline
     }
   }
+
+  const geoFallback = await fetchGeoapifyHospitals(bbox, options.geoapifyApiKey, options);
+  if (geoFallback.length > 0) return geoFallback;
+
+  if (lastErr) markNetworkFailure(lastErr);
   return [];
 }
 

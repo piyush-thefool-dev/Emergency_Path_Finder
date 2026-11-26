@@ -12,7 +12,7 @@
 import { haversineDistance } from '../utils/geo.js';
 import { OSRM_BASES } from './roadSnapService.js';
 import { isOffline, markNetworkFailure } from '../utils/network.js';
-import { WEATHER_FACTORS } from '../data/congestionFactors.js';
+import { WEATHER_FACTORS, TIME_OF_DAY_FACTORS } from '../data/congestionFactors.js';
 
 export const AUTO_RADIUS_TIERS = [5, 10, 20];
 export const DEFAULT_RADIUS_KM = 5;
@@ -189,6 +189,11 @@ export async function computeOsrmTableMetrics(userPos, candidateHospitals = [], 
 
   const { signal, timeoutMs = 4000 } = options;
 
+  // Cap OSRM single-table query size to avoid public OSRM URL length limits when "All (280)" is active
+  if (candidateHospitals.length > 60) {
+    return computeLocalGeometricFallback(userPos, candidateHospitals);
+  }
+
   // Format OSRM coordinates string: {userLon},{userLat};{hosp1Lon},{hosp1Lat}...
   const coordsList = [
     `${userPos.lon.toFixed(6)},${userPos.lat.toFixed(6)}`,
@@ -279,14 +284,20 @@ export async function filterAndRankHospitalsByOsrmEta(userPos, hospitals = [], o
     fallbackRadiusKm = FALLBACK_RADIUS_KM,
     minThreshold = MIN_HOSPITALS_THRESHOLD,
     roadDistanceCutoffKm,
-    cap = TOP_HOSPITALS_CAP,
+    cap = null,
+    requiredSpecialty = null,
     signal,
   } = options;
+
+  // Enforce emergency specialty constraint before radius & OSRM ranking
+  const specialtyFilteredHospitals = requiredSpecialty
+    ? (hospitals || []).filter((h) => Array.isArray(h.specialties) && h.specialties.includes(requiredSpecialty))
+    : hospitals;
 
   // Stage 1: Haversine distance filtering with automatic tier cascading (5 -> 10 -> 20 km)
   const filterOpts = radiusKm != null ? radiusKm : { tiers: AUTO_RADIUS_TIERS, minThreshold };
   const { candidates, isFallback, effectiveRadiusKm, selectedRadiusKm } =
-    filterHospitalsByRadius(userPos, hospitals, filterOpts, fallbackRadiusKm, minThreshold);
+    filterHospitalsByRadius(userPos, specialtyFilteredHospitals, filterOpts, fallbackRadiusKm, minThreshold);
 
   if (candidates.length === 0) {
     return {
@@ -302,16 +313,20 @@ export async function filterAndRankHospitalsByOsrmEta(userPos, hospitals = [], o
   // Stage 2: Project-OSRM routing calculation
   let evaluated = await computeOsrmTableMetrics(userPos, candidates, { signal });
 
-  // Calibrate evaluated driving durations with atmospheric weather speed multiplier
+  // Calibrate evaluated driving durations with atmospheric weather and time-of-day congestion multipliers
   const weatherMult =
     options.weatherMultiplier ??
     (options.weather && WEATHER_FACTORS[options.weather]?.speedMultiplier ? WEATHER_FACTORS[options.weather].speedMultiplier : 1.0);
+  const timeMult =
+    options.timeOfDayMultiplier ??
+    (options.timeOfDay && TIME_OF_DAY_FACTORS[options.timeOfDay]?.speedMultiplier ? TIME_OF_DAY_FACTORS[options.timeOfDay].speedMultiplier : 1.0);
+  const combinedSpeedMult = Math.max(0.2, weatherMult * timeMult);
 
-  if (weatherMult < 1.0) {
+  if (combinedSpeedMult < 1.0) {
     evaluated = evaluated.map((h) => {
       const baseSec = h.durationSec ?? h.travelTimeSec;
       if (baseSec == null) return h;
-      const adjustedSec = Math.round(baseSec / weatherMult);
+      const adjustedSec = Math.round(baseSec / combinedSpeedMult);
       const adjustedMin = Number((adjustedSec / 60).toFixed(1));
       return {
         ...h,
@@ -320,28 +335,21 @@ export async function filterAndRankHospitalsByOsrmEta(userPos, hospitals = [], o
         travelTimeSec: adjustedSec,
         travelTimeMin: adjustedMin,
         weatherMultiplier: weatherMult,
+        timeOfDayMultiplier: timeMult,
         isWeatherCalibrated: true,
+        isScenarioCalibrated: true,
       };
     });
   }
 
-  // Determine road distance cutoff dynamically based on the active corridor:
-  // 5 km corridor: allow up to 8 km road
-  // 10 km corridor: allow up to 14 km road
-  // 20 km corridor: allow up to 26 km road
+  // Determine road distance cutoff dynamically so curved expressway approaches inside the circle aren't dropped
   let maxRoadKm;
   if (effectiveRadiusKm === 0 || radiusKm === 0) {
     maxRoadKm = Infinity;
   } else if (roadDistanceCutoffKm != null) {
     maxRoadKm = roadDistanceCutoffKm;
-  } else if (effectiveRadiusKm >= 100) {
-    maxRoadKm = effectiveRadiusKm * 1.5;
-  } else if (effectiveRadiusKm >= 20) {
-    maxRoadKm = 26;
-  } else if (effectiveRadiusKm >= 10) {
-    maxRoadKm = 14;
   } else {
-    maxRoadKm = 8;
+    maxRoadKm = Math.max(12, Math.round(effectiveRadiusKm * 2));
   }
 
   // Discard candidates whose actual road distance exceeds maxRoadKm

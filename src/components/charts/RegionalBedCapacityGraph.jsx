@@ -4,13 +4,15 @@
  */
 
 import { useState, useMemo } from 'react';
-import { Bed, ShieldCheck, Activity, BarChart2, CheckCircle2 } from 'lucide-react';
+import { Bed, CheckCircle2 } from 'lucide-react';
 import { PAN_INDIA_HOSPITALS } from '../../data/panIndiaHospitals.js';
+import { getHospitalMacroZone, groupHospitalsByState } from '../../utils/hospitalState.js';
 
 export function RegionalBedCapacityGraph({ hospitals = PAN_INDIA_HOSPITALS, className = '' }) {
   const [activeZone, setActiveZone] = useState('ALL');
+  const [breakdownMode, setBreakdownMode] = useState('ZONES'); // 'ZONES' | 'STATES'
 
-  // Compute aggregated capacity metrics by geographic zone
+  // Compute aggregated capacity metrics by canonical geographic macro-zone
   const regionalMetrics = useMemo(() => {
     const zones = {
       NORTH: { name: 'North India', count: 0, icuFree: 0, traumaFree: 0, wardFree: 0, totalCapacity: 0 },
@@ -22,23 +24,8 @@ export function RegionalBedCapacityGraph({ hospitals = PAN_INDIA_HOSPITALS, clas
     };
 
     hospitals.forEach((h) => {
-      const addr = (h.address || '').toLowerCase();
-      const name = (h.name || '').toLowerCase();
-      let zone = 'NORTH'; // default fallback for NCR
-
-      if (addr.includes('maharashtra') || addr.includes('mumbai') || addr.includes('pune') || addr.includes('nagpur') || addr.includes('gujarat') || addr.includes('ahmedabad') || addr.includes('surat') || addr.includes('goa')) {
-        zone = 'WEST';
-      } else if (addr.includes('karnataka') || addr.includes('bengaluru') || addr.includes('tamil nadu') || addr.includes('chennai') || addr.includes('telangana') || addr.includes('hyderabad') || addr.includes('andhra') || addr.includes('kerala') || addr.includes('kochi') || addr.includes('puducherry')) {
-        zone = 'SOUTH';
-      } else if (addr.includes('west bengal') || addr.includes('kolkata') || addr.includes('bihar') || addr.includes('patna') || addr.includes('jharkhand') || addr.includes('ranchi') || addr.includes('odisha') || addr.includes('bhubaneswar')) {
-        zone = 'EAST';
-      } else if (addr.includes('madhya pradesh') || addr.includes('bhopal') || addr.includes('indore') || addr.includes('chhattisgarh') || addr.includes('raipur')) {
-        zone = 'CENTRAL';
-      } else if (addr.includes('assam') || addr.includes('guwahati') || addr.includes('meghalaya') || addr.includes('shillong') || addr.includes('tripura') || addr.includes('manipur')) {
-        zone = 'NORTHEAST';
-      }
-
-      const z = zones[zone];
+      const zone = getHospitalMacroZone(h);
+      const z = zones[zone] || zones.NORTH;
       z.count += 1;
       z.icuFree += h.bedAvailability?.icuBedsFree || 0;
       z.traumaFree += h.bedAvailability?.traumaBedsFree || 0;
@@ -48,6 +35,8 @@ export function RegionalBedCapacityGraph({ hospitals = PAN_INDIA_HOSPITALS, clas
 
     return zones;
   }, [hospitals]);
+
+  const stateMetrics = useMemo(() => groupHospitalsByState(hospitals), [hospitals]);
 
   const maxZoneIcu = Math.max(...Object.values(regionalMetrics).map((z) => z.icuFree), 1);
 
@@ -61,7 +50,7 @@ export function RegionalBedCapacityGraph({ hospitals = PAN_INDIA_HOSPITALS, clas
           </div>
           <div>
             <h4 className="text-xs font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider">
-              Pan-India Regional Clinical Intake Matrix ({hospitals.length} Hospitals)
+              Pan-India Clinical Intake Matrix ({hospitals.length} Hospitals · {stateMetrics.length} States/UTs)
             </h4>
             <p className="text-[11px] text-slate-500 dark:text-slate-400 font-sans">
               ICU beds, trauma resuscitation bays, and emergency ward telemetry
@@ -69,69 +58,112 @@ export function RegionalBedCapacityGraph({ hospitals = PAN_INDIA_HOSPITALS, clas
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2.5">
+          <div className="inline-flex rounded-lg p-0.5 bg-slate-100 dark:bg-slate-950/80 border border-slate-200/80 dark:border-white/[0.08]">
+            {[
+              { id: 'ZONES', label: '6 Zones' },
+              { id: 'STATES', label: `State-Wise (${stateMetrics.length})` },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setBreakdownMode(tab.id)}
+                className={`px-2.5 py-1 rounded-md text-[11px] font-bold cursor-pointer transition-colors ${
+                  breakdownMode === tab.id
+                    ? 'bg-blue-600 text-white shadow-xs'
+                    : 'text-slate-600 dark:text-slate-300'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
           <span className="flex items-center gap-1.5 text-2xs text-emerald-600 dark:text-emerald-400 font-bold">
             <span className="w-2 h-2 rounded-xs bg-emerald-500"></span>
-            Free ICU
+            ICU
           </span>
           <span className="flex items-center gap-1.5 text-2xs text-amber-600 dark:text-amber-400 font-bold">
             <span className="w-2 h-2 rounded-xs bg-amber-500"></span>
-            Trauma Bays
+            Trauma
           </span>
           <span className="flex items-center gap-1.5 text-2xs text-blue-600 dark:text-blue-400 font-bold">
             <span className="w-2 h-2 rounded-xs bg-blue-500"></span>
-            Ward Free
+            Ward
           </span>
         </div>
       </div>
 
-      {/* Regional Zone Bars */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-        {Object.entries(regionalMetrics).map(([key, zone]) => {
-          const isSelected = activeZone === key || activeZone === 'ALL';
-          const icuPercent = Math.round((zone.icuFree / maxZoneIcu) * 100);
+      {/* Regional Zone Bars vs State-Wise Grid */}
+      {breakdownMode === 'ZONES' ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+          {Object.entries(regionalMetrics).map(([key, zone]) => {
+            const isSelected = activeZone === key || activeZone === 'ALL';
+            const icuPercent = Math.round((zone.icuFree / maxZoneIcu) * 100);
 
-          return (
-            <div
-              key={key}
-              onClick={() => setActiveZone((prev) => (prev === key ? 'ALL' : key))}
-              className={`p-2.5 rounded-xl border transition-all cursor-pointer ${isSelected
-                  ? 'bg-slate-50/80 dark:bg-slate-950/60 border-slate-200/90 dark:border-white/[0.08]'
-                  : 'bg-transparent border-transparent opacity-50'
-                }`}
-            >
-              <div className="flex items-center justify-between text-xs mb-1.5">
-                <span className="font-bold text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
-                  <span>{zone.name}</span>
-                  <span className="text-[10px] font-normal text-slate-400">({zone.count} apex centers)</span>
-                </span>
-                <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 tabular-nums">
-                  {zone.icuFree} ICU · {zone.traumaFree} Trauma · {zone.wardFree} Ward
-                </span>
+            return (
+              <div
+                key={key}
+                onClick={() => setActiveZone((prev) => (prev === key ? 'ALL' : key))}
+                className={`p-2.5 rounded-xl border transition-all cursor-pointer ${isSelected
+                    ? 'bg-slate-50/80 dark:bg-slate-950/60 border-slate-200/90 dark:border-white/[0.08]'
+                    : 'bg-transparent border-transparent opacity-50'
+                  }`}
+              >
+                <div className="flex items-center justify-between text-xs mb-1.5">
+                  <span className="font-bold text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
+                    <span>{zone.name}</span>
+                    <span className="text-[10px] font-normal text-slate-400">({zone.count} apex centers)</span>
+                  </span>
+                  <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 tabular-nums">
+                    {zone.icuFree} ICU · {zone.traumaFree} Trauma · {zone.wardFree} Ward
+                  </span>
+                </div>
+
+                {/* Stacked Progress Bars */}
+                <div className="w-full bg-slate-100 dark:bg-slate-800 h-2.5 rounded-full overflow-hidden flex gap-0.5">
+                  <div
+                    className="bg-emerald-500 h-full rounded-l-full transition-all duration-300"
+                    style={{ width: `${Math.max(4, icuPercent * 0.45)}%` }}
+                    title={`${zone.icuFree} ICU Beds Free`}
+                  ></div>
+                  <div
+                    className="bg-amber-500 h-full transition-all duration-300"
+                    style={{ width: `${Math.max(3, icuPercent * 0.25)}%` }}
+                    title={`${zone.traumaFree} Trauma Bays Free`}
+                  ></div>
+                  <div
+                    className="bg-blue-500 h-full rounded-r-full transition-all duration-300"
+                    style={{ width: `${Math.max(5, icuPercent * 0.30)}%` }}
+                    title={`${zone.wardFree} Emergency Ward Beds Free`}
+                  ></div>
+                </div>
               </div>
-
-              {/* Stacked Progress Bars */}
-              <div className="w-full bg-slate-100 dark:bg-slate-800 h-2.5 rounded-full overflow-hidden flex gap-0.5">
-                <div
-                  className="bg-emerald-500 h-full rounded-l-full transition-all duration-300"
-                  style={{ width: `${Math.max(4, icuPercent * 0.45)}%` }}
-                  title={`${zone.icuFree} ICU Beds Free`}
-                ></div>
-                <div
-                  className="bg-amber-500 h-full transition-all duration-300"
-                  style={{ width: `${Math.max(3, icuPercent * 0.25)}%` }}
-                  title={`${zone.traumaFree} Trauma Bays Free`}
-                ></div>
-                <div
-                  className="bg-blue-500 h-full rounded-r-full transition-all duration-300"
-                  style={{ width: `${Math.max(5, icuPercent * 0.30)}%` }}
-                  title={`${zone.wardFree} Emergency Ward Beds Free`}
-                ></div>
+            );
+          })}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 max-h-96 overflow-y-auto pr-1">
+          {stateMetrics.map((st) => (
+            <div
+              key={st.state}
+              className="p-2.5 rounded-xl bg-slate-50/80 dark:bg-slate-950/60 border border-slate-200/80 dark:border-white/[0.06] flex items-center justify-between gap-2 text-xs"
+            >
+              <div className="min-w-0">
+                <div className="font-bold text-slate-900 dark:text-slate-100 truncate">
+                  {st.state}
+                </div>
+                <div className="text-[10px] text-slate-500 dark:text-slate-400">
+                  {st.totalCount} {st.totalCount === 1 ? 'Hospital' : 'Hospitals'} · {st.type}
+                </div>
+              </div>
+              <div className="text-right text-[11px] font-bold text-emerald-600 dark:text-emerald-400 tabular-nums shrink-0">
+                {st.icuFreeTotal} ICU · {st.traumaFreeTotal} Tr
               </div>
             </div>
-          );
-        })}
-      </div>
+          ))}
+        </div>
+      )}
 
       {/* Footer Summary Strip */}
       <div className="pt-2 border-t border-slate-100 dark:border-white/[0.06] flex flex-wrap items-center justify-between gap-2 text-2xs text-slate-500 dark:text-slate-400">

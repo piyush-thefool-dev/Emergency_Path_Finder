@@ -18,6 +18,7 @@ import { fetchLiveWeather } from '../services/weatherService.js';
 import { getStoredTrafficConfig, saveStoredTrafficConfig, TRAFFIC_PROVIDERS } from '../services/trafficService.js';
 import { downloadOverpassGrid } from '../services/overpassService.js';
 import { resolveLevel, REPORTERS } from '../config/trafficLevels.js';
+import { findPairedEdgeIds } from '../utils/incidents.js';
 import { isOffline, subscribeNetworkStatus } from '../utils/network.js';
 
 export function useGraph() {
@@ -135,26 +136,48 @@ export function useGraph() {
   const addIncident = useCallback(
     (edgeId, type = 'closure', meta = {}) => {
       const level = resolveLevel(type);
+      const linkedEdgeIds =
+        Array.isArray(meta.linkedEdgeIds) && meta.linkedEdgeIds.length > 0
+          ? meta.linkedEdgeIds
+          : findPairedEdgeIds(edgeId, baseGraph.edges);
+
       setIncidents((prev) => {
         const next = new Map(prev);
-        next.set(edgeId, {
+        // Replace any existing report along the same paired undirected street edge so count stays 1
+        let targetKey = edgeId;
+        for (const [k, existing] of next.entries()) {
+          if (k === edgeId || (Array.isArray(existing?.linkedEdgeIds) && existing.linkedEdgeIds.includes(edgeId))) {
+            targetKey = k;
+            break;
+          }
+        }
+        next.set(targetKey, {
           kind: level.id,
           closed: level.closed,
           slowdownFactor: level.closed ? 1 : level.factor,
           label: level.label,
           reportedBy: meta.reportedBy || reporter,
           timestamp: new Date().toISOString(),
+          point: meta.point || null,
+          streetSegment: meta.streetSegment || null,
+          roadName: meta.roadName || null,
+          linkedEdgeIds,
         });
         return next;
       });
     },
-    [reporter]
+    [reporter, baseGraph.edges]
   );
 
   const removeIncident = useCallback((edgeId) => {
     setIncidents((prev) => {
       const next = new Map(prev);
       next.delete(edgeId);
+      for (const [k, existing] of next.entries()) {
+        if (Array.isArray(existing?.linkedEdgeIds) && existing.linkedEdgeIds.includes(edgeId)) {
+          next.delete(k);
+        }
+      }
       return next;
     });
   }, []);

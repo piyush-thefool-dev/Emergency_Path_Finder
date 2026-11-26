@@ -12,7 +12,7 @@
 
 import { OVERPASS_MIRRORS } from './overpassService.js';
 import { OSRM_BASES } from './roadSnapService.js';
-import { WIB_API_CONFIG } from './wibHospitalService.js';
+import { WIB_API_CONFIG, getGeoapifyApiKey, buildGeoapifyPlacesUrl } from './wibHospitalService.js';
 import { isOffline, markNetworkFailure } from '../utils/network.js';
 
 export const SLOW_MS = 3000;
@@ -133,7 +133,7 @@ async function checkWeather() {
 
 async function checkWib(ctx = {}) {
   if (isOffline()) {
-    return { state: 'ok', detail: 'Bundled Pan-India 280-Hospital Registry (Active)' };
+    return { state: 'ok', detail: 'Bundled Pan-India 360-Hospital Registry (Active)' };
   }
   const dataGovKey =
     ctx?.dataGovKey ||
@@ -160,6 +160,18 @@ async function checkWib(ctx = {}) {
     if (res.ok) sources.push(hostOf(WIB_API_CONFIG.endpoint));
   } catch {
     // quiet fallback
+  }
+
+  const geoKey = getGeoapifyApiKey(ctx?.geoapifyKey);
+  if (geoKey) {
+    try {
+      const res = await ping(
+        buildGeoapifyPlacesUrl({ south: LAT - 0.03, west: LON - 0.03, north: LAT + 0.03, east: LON + 0.03 }, geoKey, 1)
+      );
+      if (res.ok) sources.push('api.geoapify.com (Places v2)');
+    } catch {
+      // quiet fallback
+    }
   }
 
   sources.push('Overpass amenity=hospital');
@@ -204,8 +216,8 @@ export const API_CHECKS = [
   {
     id: 'tiles',
     name: 'Map tiles',
-    provider: 'OpenStreetMap (ODbL 1.0)',
-    purpose: 'Renders the live street map with tactical dark radar styling (100% free, zero watermarks).',
+    provider: 'OpenStreetMap + Esri (ODbL 1.0)',
+    purpose: 'Renders the 2D street map (Night/Day) and Satellite imagery with 3D ambulance & hospital markers.',
     ifDown: 'The map background will be blank.',
     run: checkTiles,
   },
@@ -236,8 +248,8 @@ export const API_CHECKS = [
   {
     id: 'wib',
     name: 'Hospital directory',
-    provider: 'data.gov.in + Overpass + WIB',
-    purpose: 'Queries official Indian health registry, OSM emergency ward tags, and intake capacity.',
+    provider: 'data.gov.in + Geoapify Places + Overpass + WIB',
+    purpose: 'Queries official Indian health registry, Geoapify Places healthcare.hospital POIs, OSM emergency tags, and intake capacity.',
     ifDown: 'Bundled 19-apex hospital reference data is used.',
     run: checkWib,
   },

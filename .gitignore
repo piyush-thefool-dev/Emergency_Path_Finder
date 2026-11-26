@@ -23,8 +23,7 @@ Thumbs.db
 
 # Screenshots & Local Scratch Files
 screenshots/*
-!screenshots/preview-desktop.png
-!screenshots/preview-samsung-mobile.png
+!screenshots/*.png
 scratch/
 scripts/
 *capture*.mjs

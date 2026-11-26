@@ -15,7 +15,7 @@ const getOfflineResults = () => ({
   osrm: { state: 'down', detail: 'Offline (In-memory graph routing active)', latencyMs: null, checkedAt: Date.now() },
   weather: { state: 'down', detail: 'Offline (Manual / model weather active)', latencyMs: null, checkedAt: Date.now() },
   overpass: { state: 'ok', detail: 'Bundled Pan-India & Delhi-NCR High-Fidelity Graph (Active)', latencyMs: null, checkedAt: Date.now() },
-  wib: { state: 'ok', detail: 'Bundled Pan-India 280-Hospital Registry (Active)', latencyMs: null, checkedAt: Date.now() },
+  wib: { state: 'ok', detail: 'Bundled Pan-India 360-Hospital Registry (Active)', latencyMs: null, checkedAt: Date.now() },
   tomtom: { state: 'off', detail: 'Offline (Diurnal & incident model active)', latencyMs: null, checkedAt: Date.now() },
   gps: { state: 'ok', detail: 'Device GPS / Local Navigation Active', latencyMs: null, checkedAt: Date.now() },
 });

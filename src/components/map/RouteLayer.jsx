@@ -1,22 +1,35 @@
 /**
- * Route and Road Network Layer for Leaflet Map.
- *
- * Renders:
- *   - Base road network geometry
- *   - The optimal ambulance route polyline
- *   - Real-time incident blockages (red dashed overlay)
- *   - Intersection junction dots
+ * 2D Route and Road Network Layer for Leaflet Map.
+ * Uses the shared `useRouteCorridor` hook and renders active route polylines,
+ * incident overlays/badges, click-to-report traffic popup, and optional graph nodes.
  */
 
-import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
+import { Fragment, useEffect, useState } from 'react';
 import L from 'leaflet';
-import { Polyline, CircleMarker, Tooltip, Marker, Popup } from 'react-leaflet';
-import { fetchRoadRoute } from '../../services/roadSnapService.js';
-import { isOffline } from '../../utils/network.js';
+import { Polyline, CircleMarker, Tooltip, Marker, Popup, useMapEvents } from 'react-leaflet';
+import { useRouteCorridor } from '../../hooks/useRouteCorridor.js';
 import { TRAFFIC_LEVEL_LIST, levelOfIncident } from '../../config/trafficLevels.js';
-import { edgeDisplayName, timeAgo } from '../../utils/incidents.js';
+import {
+  edgeDisplayName,
+  extractLocalStreetSegment,
+  findNearestEdge,
+  resolveIncidentForEdge,
+  timeAgo,
+} from '../../utils/incidents.js';
 
-/** Round badge shown in the middle of every reported road segment. */
+function RoadMapClickListener({ enabled, edges, nodes, onHit }) {
+  useMapEvents({
+    click(e) {
+      if (!enabled || !e?.latlng) return;
+      const hit = findNearestEdge(edges, nodes, { lat: e.latlng.lat, lon: e.latlng.lng }, 600);
+      if (hit) {
+        onHit(hit.edge, e.latlng);
+      }
+    },
+  });
+  return null;
+}
+
 function badgeIcon(level) {
   return L.divIcon({
     className: 'traffic-badge-wrap',
@@ -34,150 +47,90 @@ export function RouteLayer({
   onSelectEdge,
   onAddIncident,
   onRemoveIncident,
-  routeStart = null, // live ambulance position {lat, lon}
-  routeEnd = null, // active hospital {lat, lon}
+  routeStart = null,
+  routeEnd = null,
   onRoadResolved = null,
+  onDisplayCoordsChange = null,
   showAllNodes = false,
   showGraphEdges = false,
+  canDragPin = false,
+  roadReportMode = false,
 }) {
-  const nodeMap = new Map(nodes.map((n) => [n.id, n]));
+  const {
+    nodeMap,
+    networkSegments,
+    activeRouteCoords,
+    incidentOverlays,
+    roadRoute,
+    displayCoords,
+    isBlocked,
+  } = useRouteCorridor({
+    nodes,
+    edges,
+    activePathNodeIds,
+    incidents,
+    routeStart,
+    routeEnd,
+    onRoadResolved,
+  });
 
-  // Road the user tapped: { edgeId, latlng } -> shows the report popup.
+  useEffect(() => {
+    onDisplayCoordsChange?.(displayCoords);
+  }, [displayCoords, onDisplayCoordsChange]);
+
   const [picker, setPicker] = useState(null);
   const canReport = typeof onAddIncident === 'function';
 
-  const handleRoadClick = (edge, latlng) => {
-    if (canReport) setPicker({ edgeId: edge.id, latlng: [latlng.lat, latlng.lng] });
-    else if (onSelectEdge) onSelectEdge(edge.id);
+  const openReportPicker = (edge, latlng, event) => {
+    if (event?.originalEvent) {
+      L.DomEvent.stopPropagation(event.originalEvent);
+    }
+    if (!canReport) {
+      if (onSelectEdge && edge) onSelectEdge(edge.id);
+      return;
+    }
+    const clickPt = { lat: latlng.lat, lon: latlng.lng ?? latlng.lon };
+    const fromNode = edge ? nodeMap.get(edge.from) : null;
+    const toNode = edge ? nodeMap.get(edge.to) : null;
+    const edgePositions = fromNode && toNode ? [[fromNode.lat, fromNode.lon], [toNode.lat, toNode.lon]] : [];
+
+    const pavedClip =
+      roadRoute?.coords?.length > 1
+        ? extractLocalStreetSegment(roadRoute.coords, clickPt, 42)
+        : null;
+    const usePavedClip = Boolean(pavedClip && pavedClip.distanceM <= 90);
+    const local = usePavedClip
+      ? pavedClip
+      : (edgePositions.length >= 2 ? extractLocalStreetSegment(edgePositions, clickPt, 42) : null);
+
+    setPicker({
+      edgeId: edge.id,
+      latlng: local?.point || [clickPt.lat, clickPt.lon],
+      streetSegment: local?.streetSegment || (edgePositions.length >= 2 ? edgePositions : null),
+      roadName: edgeDisplayName(edge),
+    });
   };
 
-  // Build coordinate lines for all edges
-  const networkSegments = edges.map((edge) => {
-    const fromNode = nodeMap.get(edge.from);
-    const toNode = nodeMap.get(edge.to);
-    if (!fromNode || !toNode) return null;
-
-    const incident = incidents.get(edge.id);
-    const isClosed = Boolean(edge.closed || incident?.closed);
-    const hasSlowdown = Boolean(incident?.slowdownFactor > 1);
-
-    return {
-      edge,
-      positions: [
-        [fromNode.lat, fromNode.lon],
-        [toNode.lat, toNode.lon],
-      ],
-      isClosed,
-      hasSlowdown,
-    };
-  }).filter(Boolean);
-
-  // Build polyline coordinates for the active route
-  const activeRouteCoords = [];
-  if (Array.isArray(activePathNodeIds) && activePathNodeIds.length > 1) {
-    for (const nodeId of activePathNodeIds) {
-      const node = nodeMap.get(nodeId);
-      if (node && typeof node.lat === 'number' && typeof node.lon === 'number') {
-        activeRouteCoords.push([node.lat, node.lon]);
-      }
+  const handleRouteCorridorClick = (e) => {
+    if (!canReport || !e?.latlng) return;
+    if (e?.originalEvent) {
+      L.DomEvent.stopPropagation(e.originalEvent);
     }
-  }
-
-  // Incident geometry (closures to avoid, congestion to penalise) for the road router.
-  const { closedSegs, slowSegs, incidentKey } = useMemo(() => {
-    const closed = [];
-    const slow = [];
-    for (const { edge, positions, isClosed, hasSlowdown } of networkSegments) {
-      if (isClosed) closed.push(positions);
-      else if (hasSlowdown) slow.push({ segment: positions, factor: incidents.get(edge.id)?.slowdownFactor || 4 });
+    const hit = findNearestEdge(edges, nodes, { lat: e.latlng.lat, lon: e.latlng.lng }, 1500);
+    if (hit) {
+      openReportPicker(hit.edge, e.latlng, e);
     }
-    return { closedSegs: closed, slowSegs: slow, incidentKey: JSON.stringify([closed, slow]) };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [edges, nodes, incidents]);
-
-  // Start = the ambulance's live position (not its snapped graph node); end = the hospital.
-  // Quantised to ~11 m so GPS jitter does not trigger a request for every tiny movement.
-  const q = (v) => Math.round(v * 1e4) / 1e4;
-  const startPt = routeStart?.lat != null ? [q(routeStart.lat), q(routeStart.lon)] : activeRouteCoords[0] || null;
-  const endPt = routeEnd?.lat != null ? [routeEnd.lat, routeEnd.lon] : activeRouteCoords[activeRouteCoords.length - 1] || null;
-
-  // Active route exists as long as startPt and endPt (or at least 2 path points) are defined
-  const hasRoute = Boolean(startPt && endPt);
-  const routeKey = hasRoute ? JSON.stringify([startPt, endPt, incidentKey]) : '';
-
-  // Last good road route is kept while a new one loads, so the line never flickers while moving.
-  const [roadRoute, setRoadRoute] = useState(null); // { coords, status, distanceM, durationSec } | null
-
-  // High-fidelity fallback coordinates connecting ambulance to destination
-  const fallbackCoords = useMemo(() => {
-    if (activeRouteCoords.length > 1) {
-      const pts = [...activeRouteCoords];
-      if (startPt && (Math.abs(pts[0][0] - startPt[0]) > 0.0001 || Math.abs(pts[0][1] - startPt[1]) > 0.0001)) {
-        pts.unshift(startPt);
-      }
-      if (endPt && (Math.abs(pts[pts.length - 1][0] - endPt[0]) > 0.0001 || Math.abs(pts[pts.length - 1][1] - endPt[1]) > 0.0001)) {
-        pts.push(endPt);
-      }
-      return pts;
-    }
-    if (startPt && endPt) {
-      return [startPt, endPt];
-    }
-    return [];
-  }, [activeRouteCoords, startPt, endPt]);
-
-  // Use OSRM road-following geometry when resolved, falling back seamlessly to graph road coordinates
-  const displayCoords = (roadRoute?.coords && roadRoute.coords.length > 1) ? roadRoute.coords : fallbackCoords;
-
-  // Throttled (not debounced): while the ambulance is moving the route is refreshed at most
-  // every ~1.5 s using the latest position, instead of waiting for movement to stop.
-  const latest = useRef(null);
-  const timer = useRef(null);
-  const controller = useRef(null);
-  const lastFired = useRef(0);
-  latest.current = { start: startPt, end: endPt, closed: closedSegs, slow: slowSegs };
-
-  useEffect(() => {
-    if (!routeKey || timer.current || isOffline()) return;
-    const wait = Math.max(300, 1500 - (Date.now() - lastFired.current));
-    timer.current = setTimeout(() => {
-      timer.current = null;
-      lastFired.current = Date.now();
-      controller.current?.abort();
-      controller.current = new AbortController();
-      fetchRoadRoute(latest.current, controller.current.signal)
-        .then((res) => {
-          setRoadRoute(res);
-          if (typeof onRoadResolved === 'function') {
-            onRoadResolved(res ? { ...res, hospitalId: routeEnd?.id } : null);
-          }
-        })
-        .catch((err) => {
-          if (err?.name !== 'AbortError') {
-            setRoadRoute(null);
-            if (typeof onRoadResolved === 'function') {
-              onRoadResolved(null);
-            }
-          }
-        });
-    }, wait);
-  }, [routeKey, onRoadResolved]);
-
-  useEffect(
-    () => () => {
-      clearTimeout(timer.current);
-      timer.current = null;
-      controller.current?.abort();
-    },
-    []
-  );
-
-  const routeCoords = roadRoute?.coords || null;
-  const isBlocked = roadRoute?.status === 'blocked';
+  };
 
   return (
     <>
-      {/* 0. Complete Road Network Topological Graph Edges (when toggled ON) */}
+      <RoadMapClickListener
+        enabled={canReport && (roadReportMode || !canDragPin)}
+        edges={edges}
+        nodes={nodes}
+        onHit={(edge, latlng) => openReportPicker(edge, latlng)}
+      />
+
       {showGraphEdges &&
         networkSegments.map(({ edge, positions, isClosed }) => {
           const isPathEdge =
@@ -205,36 +158,29 @@ export function RouteLayer({
           );
         })}
 
-      {/* 1. Reported roads: thick coloured line with a white outline so they stand out */}
-      {networkSegments.map(({ edge, positions }) => {
-        const level = levelOfIncident(incidents.get(edge.id)) || (edge.closed ? TRAFFIC_LEVEL_LIST[3] : null);
-        if (!level) return null;
-        return (
-          <Fragment key={`inc-${edge.id}`}>
-            <Polyline
-              positions={positions}
-              interactive={false}
-              pathOptions={{ color: '#FFFFFF', weight: 11, opacity: 0.9, lineCap: 'round' }}
-            />
-            <Polyline
-              positions={positions}
-              interactive={false}
-              pathOptions={{
-                color: level.color,
-                weight: 7,
-                opacity: 0.95,
-                lineCap: 'round',
-                dashArray: level.closed ? '4, 10' : null,
-              }}
-            />
-          </Fragment>
-        );
-      })}
+      {incidentOverlays.map((item) => (
+        <Fragment key={`inc-${item.edgeId}`}>
+          <Polyline
+            positions={item.positions}
+            interactive={false}
+            pathOptions={{ color: '#FFFFFF', weight: 11, opacity: 0.9, lineCap: 'round' }}
+          />
+          <Polyline
+            positions={item.positions}
+            interactive={false}
+            pathOptions={{
+              color: item.level.color,
+              weight: 7,
+              opacity: 0.95,
+              lineCap: 'round',
+              dashArray: item.level.closed ? '4, 10' : null,
+            }}
+          />
+        </Fragment>
+      ))}
 
-      {/* 2. Primary Optimal Route Polyline (road-following & incident-aware; strictly following paved road geometry) */}
       {displayCoords.length > 1 && (
         <>
-          {/* Contrast shadow casing for razor-sharp visibility on both light and dark tiles */}
           <Polyline
             positions={displayCoords}
             pathOptions={{
@@ -246,7 +192,6 @@ export function RouteLayer({
             }}
             interactive={false}
           />
-          {/* Crisp white outer border outline */}
           <Polyline
             positions={displayCoords}
             pathOptions={{
@@ -258,7 +203,6 @@ export function RouteLayer({
             }}
             interactive={false}
           />
-          {/* High-visibility Emergency Red (#D62828) or Amber (#F59E0B) core line */}
           <Polyline
             positions={displayCoords}
             pathOptions={{
@@ -271,78 +215,100 @@ export function RouteLayer({
             }}
             interactive={false}
           >
-            {isBlocked && (
+            {!picker && isBlocked && (
               <Tooltip sticky>No road route avoiding the closure was found - verify manually.</Tooltip>
             )}
           </Polyline>
+          {canReport && (
+            <Polyline
+              positions={displayCoords}
+              pathOptions={{ color: '#D62828', weight: 22, opacity: 0, lineCap: 'round' }}
+              eventHandlers={{ click: handleRouteCorridorClick }}
+            >
+              {!picker && <Tooltip sticky>Click road corridor to set congestion or closure</Tooltip>}
+            </Polyline>
+          )}
         </>
       )}
 
-      {/* 1c. Wide invisible lines: easy to tap with a finger. Hover shows the road details. */}
       {networkSegments.map(({ edge, positions, isClosed, hasSlowdown }) => (
         <Polyline
           key={`hit-${edge.id}`}
           positions={positions}
-          pathOptions={{ color: '#000000', weight: 22, opacity: 0, lineCap: 'round' }}
-          eventHandlers={{ click: (e) => handleRoadClick(edge, e.latlng) }}
+          pathOptions={{ color: '#000000', weight: 24, opacity: 0, lineCap: 'round' }}
+          eventHandlers={{ click: (e) => openReportPicker(edge, e.latlng, e) }}
         >
-          <Tooltip sticky>
-            <div className="text-3xs font-sans">
-              <span className="font-bold block">{edgeDisplayName(edge)}</span>
-              <span className="block text-slate-500">
-                {edge.roadType} · {edge.lengthM}m · {edge.speedLimitKph} km/h
-                {edge.isNarrow ? ' · Narrow' : ''}
-                {edge.hasSignal ? ' · Signal' : ''}
-                {edge.hasSpeedBreaker ? ' · Speed Breaker' : ''}
-              </span>
-              {isClosed && <span className="text-red-600 font-bold block">CLOSED</span>}
-              {hasSlowdown && !isClosed && (
-                <span className="text-amber-600 font-bold block">
-                  {levelOfIncident(incidents.get(edge.id))?.label || 'Congested'}
+          {!picker && (
+            <Tooltip sticky>
+              <div className="text-3xs font-sans">
+                <span className="font-bold block">{edgeDisplayName(edge)}</span>
+                <span className="block text-slate-500">
+                  {edge.roadType} · {edge.lengthM}m · {edge.speedLimitKph} km/h
+                  {edge.isNarrow ? ' · Narrow' : ''}
+                  {edge.hasSignal ? ' · Signal' : ''}
+                  {edge.hasSpeedBreaker ? ' · Speed Breaker' : ''}
                 </span>
-              )}
-              {canReport && <span className="block text-slate-400">Tap to report</span>}
-            </div>
-          </Tooltip>
+                {isClosed && <span className="text-red-600 font-bold block">CLOSED</span>}
+                {hasSlowdown && !isClosed && (
+                  <span className="text-amber-600 font-bold block">
+                    {levelOfIncident(resolveIncidentForEdge(edge.id, incidents))?.label || 'Congested'}
+                  </span>
+                )}
+                {canReport && <span className="block text-slate-400">Tap to report</span>}
+              </div>
+            </Tooltip>
+          )}
         </Polyline>
       ))}
 
-      {/* 1d. Badges so a reported road is spotted even when zoomed out */}
-      {networkSegments.map(({ edge, positions }) => {
-        const level = levelOfIncident(incidents.get(edge.id));
-        if (!level) return null;
-        const mid = [(positions[0][0] + positions[1][0]) / 2, (positions[0][1] + positions[1][1]) / 2];
+      {incidentOverlays.map((item) => {
+        if (item.staticClosed || !item.badgePoint) return null;
         return (
           <Marker
-            key={`badge-${edge.id}`}
-            position={mid}
-            icon={badgeIcon(level)}
+            key={`badge-${item.edgeId}`}
+            position={item.badgePoint}
+            icon={badgeIcon(item.level)}
             zIndexOffset={800}
-            eventHandlers={{ click: () => canReport && setPicker({ edgeId: edge.id, latlng: mid }) }}
+            eventHandlers={{
+              click: () =>
+                canReport &&
+                setPicker({
+                  edgeId: item.edgeId,
+                  latlng: item.badgePoint,
+                  streetSegment: item.positions,
+                  roadName: item.name,
+                }),
+            }}
           />
         );
       })}
 
-      {/* Report popup */}
       {picker && canReport && (() => {
         const edge = edges.find((e) => e.id === picker.edgeId);
-        const info = incidents.get(picker.edgeId);
+        const info = resolveIncidentForEdge(picker.edgeId, incidents);
         const current = levelOfIncident(info);
         if (!edge) return null;
         return (
           <Popup
             position={picker.latlng}
             closeButton
+            autoPan={true}
+            autoPanPaddingTopLeft={[20, 190]}
+            autoPanPaddingBottomRight={[20, 120]}
+            maxWidth={260}
             eventHandlers={{ remove: () => setPicker(null) }}
           >
-            <div className="font-sans w-[210px]">
-              <span className="block text-xs font-extrabold text-slate-900 leading-tight">{edgeDisplayName(edge)}</span>
+            <div className="font-sans w-[235px] text-slate-900 dark:text-slate-100">
+              <span className="block text-xs font-extrabold text-slate-900 dark:text-slate-100 leading-tight">{picker.roadName || edgeDisplayName(edge)}</span>
+              <span className="block text-[10px] font-mono text-slate-500 dark:text-slate-400 mt-0.5">
+                {String(edge.roadType || 'road').replace(/_/g, ' ')} · {edge.lengthM}m · {edge.speedLimitKph} km/h
+              </span>
               {current ? (
-                <span className="block text-3xs mt-0.5" style={{ color: current.color }}>
+                <span className="block text-3xs mt-1 font-semibold" style={{ color: current.color }}>
                   <strong>{current.label}</strong> · {info.reportedBy} · {timeAgo(info.timestamp)}
                 </span>
               ) : (
-                <span className="block text-3xs text-slate-500 mt-0.5">What is happening on this road?</span>
+                <span className="block text-3xs text-slate-500 dark:text-slate-400 mt-1">Select road congestion or closure:</span>
               )}
               <div className="grid grid-cols-2 gap-1.5 mt-2">
                 {TRAFFIC_LEVEL_LIST.map((lvl) => (
@@ -351,13 +317,23 @@ export function RouteLayer({
                     type="button"
                     title={lvl.hint}
                     onClick={() => {
-                      onAddIncident(edge.id, lvl.id);
+                      onAddIncident(edge.id, lvl.id, {
+                        point: picker.latlng,
+                        streetSegment: picker.streetSegment,
+                        roadName: picker.roadName || edgeDisplayName(edge),
+                      });
                       setPicker(null);
                     }}
-                    className="min-h-[40px] rounded-lg text-white text-3xs font-bold leading-tight px-1 cursor-pointer active:scale-95"
-                    style={{ backgroundColor: lvl.color, outline: current?.id === lvl.id ? '3px solid #0f172a' : 'none' }}
+                    className="min-h-[42px] rounded-lg text-white text-3xs font-bold leading-tight px-1.5 py-1 cursor-pointer active:scale-95 transition-transform flex flex-col items-center justify-center"
+                    style={{
+                      backgroundColor: lvl.color,
+                      outline: current?.id === lvl.id ? '2px solid #FFFFFF' : 'none',
+                    }}
                   >
-                    {lvl.label}
+                    <span>{lvl.label}</span>
+                    <span className="text-[9px] font-normal opacity-90">
+                      {lvl.closed ? 'Detour route' : `${lvl.factor}x slower`}
+                    </span>
                   </button>
                 ))}
               </div>
@@ -368,9 +344,9 @@ export function RouteLayer({
                     onRemoveIncident(edge.id);
                     setPicker(null);
                   }}
-                  className="w-full mt-1.5 min-h-[36px] rounded-lg border border-slate-300 text-3xs font-bold text-slate-700 cursor-pointer"
+                  className="w-full mt-1.5 min-h-[34px] rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-3xs font-bold text-slate-700 dark:text-slate-200 cursor-pointer transition-colors"
                 >
-                  Road is clear now
+                  Normal flow · Clear report
                 </button>
               )}
             </div>
@@ -378,34 +354,33 @@ export function RouteLayer({
         );
       })()}
 
-      {/* 3. Graph Intersections & Junction Nodes (Strictly rendered ONLY when Nodes toggle is ON) */}
       {showAllNodes &&
         nodes.map((node) => {
           const isRouteNode = activePathNodeIds.includes(node.id);
           const isSnappedOrigin = activePathNodeIds.length > 0 && activePathNodeIds[0] === node.id;
-          let color = '#3B82F6'; // Default Cobalt Blue
+          let color = '#3B82F6';
           let radius = 4;
 
           if (isSnappedOrigin) {
-            color = '#10B981'; // Emerald Snapped Origin Junction
+            color = '#10B981';
             radius = 7;
           } else if (isRouteNode) {
-            color = '#D62828'; // Active route: Crimson
+            color = '#D62828';
             radius = 6;
           } else if (node.type === 'expressway' || node.type === 'expressway_ramp' || node.type === 'highway') {
-            color = '#F59E0B'; // Amber Expressway
+            color = '#F59E0B';
             radius = 5;
           } else if (node.type === 'rotary') {
-            color = '#8B5CF6'; // Purple Roundabout / Rotary
+            color = '#8B5CF6';
             radius = 5.5;
           } else if (node.type === 'healthcare_hub' || node.type === 'hospital') {
-            color = '#10B981'; // Emerald Healthcare Hub
+            color = '#10B981';
             radius = 5;
           } else if (node.type === 'commercial' || node.type === 'commercial_hub') {
-            color = '#EC4899'; // Rose Pink Commercial Hub
+            color = '#EC4899';
             radius = 4.5;
           } else if (node.type === 'arterial' || node.type === 'primary' || node.type === 'primary_intersection') {
-            color = '#06B6D4'; // Cyan Primary Arterial
+            color = '#06B6D4';
             radius = 4.5;
           }
 
@@ -430,11 +405,11 @@ export function RouteLayer({
                   </span>
                   {isSnappedOrigin ? (
                     <span className="inline-block mt-1 px-1.5 py-0.5 rounded bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 font-bold text-[9px] border border-emerald-300 dark:border-emerald-800">
-                      📍 NEAREST SNAPPED INTERSECTION (GPS ENTRY)
+                      NEAREST SNAPPED INTERSECTION
                     </span>
                   ) : isRouteNode && (
                     <span className="inline-block mt-1 px-1.5 py-0.5 rounded bg-red-100 dark:bg-red-950/80 text-red-700 dark:text-red-300 font-bold text-[9px] border border-red-300 dark:border-red-800">
-                      ★ ACTIVE DISPATCH CORRIDOR
+                      ACTIVE DISPATCH CORRIDOR
                     </span>
                   )}
                 </div>

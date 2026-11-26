@@ -22,6 +22,8 @@ import {
   Sparkles,
   Search,
   X,
+  Lock,
+  Unlock,
 } from 'lucide-react';
 import Badge from '../ui/Badge.jsx';
 import HospitalSearchBar from '../map/HospitalSearchBar.jsx';
@@ -37,6 +39,8 @@ export function ResultCard({
   searchHospitals = [],
   selectedHospitalId,
   onSelectHospital,
+  isHospitalLocked = false,
+  onToggleHospitalLock,
   sourceNode,
   algorithm,
   isFigure2Mode,
@@ -119,16 +123,40 @@ export function ResultCard({
             </span>
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-2">
-                <Badge variant={hospital.isManualOverride ? 'warning' : 'destructive'}>
-                  {hospital.isManualOverride ? 'Manual Destination Override' : 'Optimal Receiving Hospital'}
+                <Badge variant={isHospitalLocked ? 'warning' : hospital.isManualOverride ? 'warning' : 'destructive'}>
+                  {isHospitalLocked
+                    ? 'Locked Hospital Choice'
+                    : hospital.isManualOverride
+                    ? 'Manual Destination Override'
+                    : 'Closest Optimal (Default)'}
                 </Badge>
-                {selectedHospitalId && onSelectHospital && (
+                {onToggleHospitalLock && (
+                  <button
+                    type="button"
+                    onClick={onToggleHospitalLock}
+                    aria-pressed={isHospitalLocked}
+                    title={
+                      isHospitalLocked
+                        ? 'Hospital choice is locked. Click to unlock and revert to closest default.'
+                        : 'Lock this hospital so moving the ambulance or changing triage keeps your choice.'
+                    }
+                    className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-[10px] font-mono font-bold border transition-all cursor-pointer ${
+                      isHospitalLocked
+                        ? 'bg-amber-500/20 text-amber-800 dark:text-amber-300 border-amber-500/40 ring-1 ring-amber-500/60 hover:bg-amber-500/30'
+                        : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border-slate-300 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700'
+                    }`}
+                  >
+                    {isHospitalLocked ? <Lock className="w-3 h-3" /> : <Unlock className="w-3 h-3" />}
+                    <span>{isHospitalLocked ? 'Locked (Click for Closest)' : 'Lock Choice'}</span>
+                  </button>
+                )}
+                {selectedHospitalId && !isHospitalLocked && onSelectHospital && (
                   <button
                     type="button"
                     onClick={() => onSelectHospital(null)}
                     className="text-[10px] font-mono text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white underline cursor-pointer"
                   >
-                    ↺ Reset to Best Match
+                    ↺ Use Closest Default
                   </button>
                 )}
                 {hospital.nabhAccredited && (
@@ -293,7 +321,7 @@ export function ResultCard({
       </div>
 
       {/* Alternate Contingency Facilities */}
-      {alternateHospitals.length > 0 && (
+      {(alternateHospitals.length > 0 || searchablePool.length > 0) && (
         <div className="border-t border-slate-100 dark:border-white/[0.06] pt-3.5">
           <div className="flex items-center justify-between gap-2 mb-2.5">
             <div className="flex items-center gap-2 min-w-0">

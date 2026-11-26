@@ -236,9 +236,9 @@ export const GRAPH_MODES_CATALOG = [
   {
     id: 'real_osm',
     name: 'Pan-India National Highway & Metropolitan Grid',
-    description: 'Complete nationwide 371-node topology connecting all 280 apex healthcare facilities.',
-    nodeCount: 371,
-    edgeCount: 902,
+    description: 'Complete nationwide 379-node topology connecting all 360 apex healthcare facilities across 36 States & UTs.',
+    nodeCount: 379,
+    edgeCount: 918,
     badge: 'ALL INDIA',
   },
   {

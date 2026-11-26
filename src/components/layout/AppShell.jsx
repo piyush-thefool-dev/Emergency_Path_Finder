@@ -4,8 +4,6 @@
  *   ┌──────────────────────┐
  *   │  Map (always mounted)│  ← pages slide over it, so the map and the
  *   │  + page overlay      │    live navigation telemetry keep running
- *   ├──────────────────────┤
- *   │  bottom tab bar      │
  *   └──────────────────────┘
  *
  * Used below 1024px wide (phones, tablets). PCs get DesktopShell instead.
@@ -14,12 +12,11 @@
 import { useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import MapScreen from '../map/MapScreen.jsx';
-import BottomNav from './BottomNav.jsx';
 import AppRoutes from '../../routes/AppRoutes.jsx';
 
 export function AppShell() {
   const { pathname } = useLocation();
-  const isMap = pathname === '/';
+  const isMap = pathname === '/' || pathname === '/map';
   const scrollRef = useRef(null);
 
   // Lock document scrolling while mobile shell is active
@@ -46,15 +43,13 @@ export function AppShell() {
               className={`page-enter absolute inset-0 z-[900] bg-slate-100/95 dark:bg-[#090D16]/95 backdrop-blur-xs flex flex-col ${
                 pathname === '/beds'
                   ? 'overflow-hidden pb-0'
-                  : 'overflow-y-auto overscroll-contain pb-24 sm:pb-28'
+                  : 'overflow-y-auto overscroll-contain pb-6'
               }`}
             >
               <AppRoutes />
             </div>
           )}
         </div>
-
-        <BottomNav />
       </div>
     </div>
   );

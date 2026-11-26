@@ -7,7 +7,7 @@ import { useMemo, useState } from 'react';
 import { motion } from 'motion/react';
 import { Flame, X, RefreshCw, LocateFixed, CheckCircle2, ShieldAlert } from 'lucide-react';
 import { TRAFFIC_LEVEL_LIST, REPORTERS } from '../../config/trafficLevels.js';
-import { buildIncidentList, edgeDisplayName, findNearestEdge, timeAgo } from '../../utils/incidents.js';
+import { buildIncidentList, edgeDisplayName, extractLocalStreetSegment, findNearestEdge, timeAgo } from '../../utils/incidents.js';
 import Badge from '../ui/Badge.jsx';
 
 export function IncidentTool({
@@ -44,7 +44,15 @@ export function IncidentTool({
       setNotice('No mapped road within 400 m of the ambulance pin.');
       return;
     }
-    onAddIncident(hit.edge.id, levelId);
+    const a = nodes.find((n) => n.id === hit.edge.from);
+    const b = nodes.find((n) => n.id === hit.edge.to);
+    const pt = ambulancePos ? [ambulancePos.lat, ambulancePos.lon] : [hit.midpoint.lat, hit.midpoint.lon];
+    const clip = a && b ? extractLocalStreetSegment([[a.lat, a.lon], [b.lat, b.lon]], pt, 42) : null;
+    onAddIncident(hit.edge.id, levelId, {
+      point: clip?.point || pt,
+      roadName: edgeDisplayName(hit.edge),
+      streetSegment: clip?.streetSegment || (a && b ? [[a.lat, a.lon], [b.lat, b.lon]] : null),
+    });
     setNotice(`${level.label} reported on ${edgeDisplayName(hit.edge)}.`);
   };
 

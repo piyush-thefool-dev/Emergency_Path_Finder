@@ -19,6 +19,7 @@
 import { DELAYS_AND_PENALTIES } from '../config/constants.js';
 import { kphToMps } from '../utils/geo.js';
 import { predictSegmentSpeed } from './speedModel.js';
+import { resolveIncidentForEdge } from '../utils/incidents.js';
 
 /**
  * Calculates the travel time (in seconds) and suitability metadata for a single road edge.
@@ -50,8 +51,8 @@ export function calculateEdgeWeight(edge, options = {}) {
 
   const reviewReasons = [];
 
-  // Check hard road closure or incident closure
-  const incident = incidents ? incidents.get(edge.id) : null;
+  // Check hard road closure or incident closure (matching either direct edge ID or paired bidirectional edge)
+  const incident = resolveIncidentForEdge(edge.id, incidents);
   const isClosed = Boolean(edge.closed || incident?.closed);
 
   if (isClosed) {
@@ -159,7 +160,7 @@ export function computeGraphWeights(graph, options = {}) {
   // If graph specifies fixed manual weights (e.g. Figure 2 in minutes), preserve them
   if (graph.isSchematic) {
     const weightedEdges = graph.edges.map((edge) => {
-      const incident = options.incidents ? options.incidents.get(edge.id) : null;
+      const incident = resolveIncidentForEdge(edge.id, options.incidents);
       const isClosed = Boolean(edge.closed || incident?.closed);
       let weight = edge.weightMinutes;
       if (incident?.slowdownFactor) {

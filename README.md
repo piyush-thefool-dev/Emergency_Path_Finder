@@ -11,15 +11,20 @@ An intelligent, real-time emergency dispatch and navigation decision-support eng
 
 ---
 
-### System Interface Previews
+### System Interface Previews (4K HiDPI Dark Mode)
 
 <p align="center">
-  <img src="screenshots/preview-desktop.png" width="68%" alt="PC Desktop Dispatch Console (1440x900)" />
-  <img src="screenshots/preview-samsung-mobile.png" width="28%" alt="Samsung Galaxy Mobile CAD (412x915)" />
+  <img src="screenshots/preview-desktop.png" width="68%" alt="PC Desktop Dispatch Console Dark Mode (4320x2700 HiDPI)" />
+  <img src="screenshots/preview-samsung-mobile.png" width="28%" alt="Samsung Galaxy Mobile CAD Dark Mode (1236x2745 HiDPI)" />
 </p>
 
 <p align="center">
-  <em>Left: Tactical Computer-Aided Dispatch (CAD) Desktop Console (1440 × 900) &nbsp;|&nbsp; Right: Mobile First-Responder CAD View (412 × 915)</em>
+  <em>Left: Tactical Computer-Aided Dispatch (CAD) Desktop Console (4320 × 2700 @ 3x HiDPI) &nbsp;|&nbsp; Right: Mobile First-Responder CAD View (1236 × 2745 @ 3x HiDPI)</em>
+</p>
+
+<p align="center">
+  <img src="screenshots/preview-desktop-hospitals.png" width="49%" alt="State-Wise 360-Hospital Directory Dark Mode (4320x2700)" />
+  <img src="screenshots/preview-desktop-analytics.png" width="49%" alt="Pan-India Clinical Intake Matrix 36 States/UTs Dark Mode (4320x2700)" />
 </p>
 
 ---
@@ -37,12 +42,16 @@ An intelligent, real-time emergency dispatch and navigation decision-support eng
 
 | Layer | Component | Technologies | Implementation Details |
 | :--- | :--- | :--- | :--- |
-| **CAD Dispatch UI** | Tactical Web Console | React 19, Tailwind CSS 4, Motion, Lucide Icons | Responsive incident command console, 8pt spatial grid, tactical dark cockpit and light themes, mobile responder bottom sheet. |
-| **Spatial GIS Engine** | Interactive Cartography | Leaflet 1.9, React-Leaflet, CartoDB Positron / OSM | Dynamic polyline routing, OSRM centerline snapping, ambulance tracking markers, live incident blockades. |
+| **CAD Dispatch UI** | Dark Dispatch Console (**PATHFINDER**) | React 19, Tailwind CSS 4, Motion, Lucide Icons | Permanent dark enterprise console (`#0B1220` / `#101B2D` / `#111C2F`), collapsible desktop sidebar, sticky global search bar, mobile bottom navigation & expandable inspector sheet. |
+| **Spatial GIS Engine** | Interactive Cartography | Leaflet 1.9, React-Leaflet, Dark-Filtered OSM Tiles | Dynamic polyline routing, OSRM/Valhalla/ORS centerline snapping, active ambulance & staging markers, emergency incident pins, live road blockades. |
 | **Routing Core** | Graph Algorithms | Pure Standalone JavaScript / ES6+ (Zero External Graph Libs) | Hand-crafted Binary Min-Heap Priority Queue ($\mathcal{O}(\log \|V\|)$), Dijkstra baseline solver, $A^*$ search with admissible Haversine heuristic. |
 | **Traffic Physics** | Dynamic Weighting | Multi-Criteria Edge Cost Engine | Real-time edge traversal cost $t(e) = \frac{L(e)}{v(e)}$, Open-Meteo road friction scaling, diurnal time-of-day multipliers, signal delay pre-emption. |
-| **Facility Match** | Hospital Ranking | Multi-Criteria Ranking Matrix | Fused road ETA + department specialty matching + live ICU/oxygen bed readiness score ($\mathcal{S}_{\text{hospital}}$). |
-| **Data Ingestion** | OpenStreetMap Loader | Overpass API, OSMnx Schema, WIB India API | Regional 182-node / 494-edge Greater Noida road graph, 19 apex emergency trauma centers, pluggable JSON schema loader. |
+| **Facility Match** | Hospital Ranking | Multi-Criteria Ranking Matrix | Two-stage distance cascade + road ETA + department specialty matching + local/reference ICU/trauma bed readiness score ($\mathcal{S}_{\text{hospital}}$). |
+| **Data Ingestion** | OpenStreetMap Loader | Overpass API, OSMnx Schema, WIB India API | **379-node / 918-edge** Pan-India & Delhi-NCR road graph, **360** registered emergency facilities across **36 States & UTs**, pluggable JSON schema loader. |
+
+---
+
+> Looking for a plain-English walkthrough comparing the **earlier prototype** and the **PATHFINDER redesign** for presentations or demos? See [docs/PROJECT_GUIDE.md](docs/PROJECT_GUIDE.md).
 
 ---
 
@@ -50,70 +59,48 @@ An intelligent, real-time emergency dispatch and navigation decision-support eng
 
 ```
 Emergency_Path_Finder/
-├── screenshots/                    # System interface previews
-│   ├── preview-desktop.png         # PC Desktop Dispatch Console (1440x900)
-│   └── preview-samsung-mobile.png  # Samsung Galaxy Mobile CAD View (412x915)
-├── src/                            # React 19 + TypeScript + Tailwind Application Source
-│   ├── algorithms/                 # Graph search algorithms & data structures
+├── docs/
+│   └── PROJECT_GUIDE.md            # Complete walkthrough & old-vs-new comparison guide
+├── src/                            # React 19 + JSX + Tailwind Application Source
+│   ├── algorithms/                 # Pure graph search algorithms & data structures
 │   │   ├── astar.js                # A* Heuristic Search engine
 │   │   ├── dijkstra.js             # Dijkstra Shortest Path baseline solver
 │   │   ├── heuristics.js           # Admissible Haversine travel-time heuristic
 │   │   ├── minHeap.js              # Binary Min-Heap Priority Queue (O(log |V|))
 │   │   └── pathUtils.js            # Adjacency list builder & predecessor path reconstruction
-│   ├── components/                 # Reusable UI component modules
-│   │   ├── charts/                 # Algorithmic benchmark visualization
-│   │   ├── layout/                 # CAD Header, Bottom Navigation, Footer, AppShell
-│   │   ├── map/                    # MapView, RouteLayer, HospitalMarkers, Incidents, Live GPS
-│   │   ├── panels/                 # ControlPanel, ResultCard, CompareTable, StatusIndicators
-│   │   └── ui/                     # Accessible cards, badges, buttons, modal dialogs
-│   ├── config/                     # System constants & emergency severity profiles
-│   ├── context/                    # React Context providers (Theme, Telemetry, Calibration)
-│   ├── data/                       # Spatial road networks & medical facility registries
-│   │   ├── delhiNcrHospitals.js    # 19 apex emergency trauma centers with active hotlines
-│   │   ├── delhiNcrRoadGraph.js    # 182-node, 494-edge verified regional arterial network
-│   │   ├── demoGraphFigure2.js     # Standard 6-node benchmark graph (Report Figure 2)
-│   │   ├── sampleHospitals.js      # Regional Greater Noida emergency facilities
-│   │   └── syntheticCityGraph.js   # 46-node urban arterial grid for stress testing
-│   ├── hooks/                      # Custom hooks (useGraph, useRouting, useWindowSize)
-│   ├── pages/                      # Page routing views
-│   │   ├── Architecture.jsx        # 5-Stage operational pipeline & architectural design
-│   │   ├── BedsPage.jsx            # Real-time ICU & emergency bed intake management
-│   │   ├── Benchmark.jsx           # Dijkstra vs A* empirical performance audit
-│   │   ├── ControlsPage.jsx        # Dispatch simulation parameters & incident injection
-│   │   ├── Dashboard.jsx           # Tactical CAD Dispatch Command Console
-│   │   ├── Evaluation.jsx          # ML speed prediction models & evaluation metrics
-│   │   ├── GraphExplorer.jsx       # Mathematical graph model & topology inspector
-│   │   ├── HospitalsPage.jsx       # Apex trauma directory & emergency contact sheet
-│   │   └── MorePage.jsx            # System operations menu & theme switcher
-│   ├── routes/                     # React Router 7 route definitions
-│   │   └── AppRoutes.jsx           # App navigation & persistent map view shell
-│   ├── services/                   # Business logic, physical modeling & telemetry
-│   │   ├── apiHealth.js            # Live telemetry ping & latency monitor
-│   │   ├── benchmark.js            # Automated comparative performance evaluator
-│   │   ├── edgeWeights.js          # Dynamic cost calculation & road penalty physics
-│   │   ├── graphLoader.js          # Pluggable graph schema validator & loader
-│   │   ├── hospitalRanking.js      # Multi-criteria facility optimization matrix
-│   │   ├── overpassService.js      # Dynamic OpenStreetMap bounding box extract
-│   │   ├── roadSnapService.js      # OSRM road centerline geometry snapping
-│   │   ├── speedModel.js           # Road speed prediction lookup matrix
-│   │   ├── trafficService.js       # Live TomTom flow & diurnal traffic multiplier
-│   │   ├── weatherService.js       # Live Open-Meteo telemetry & road friction scaling
-│   │   └── wibHospitalService.js   # WIB India open healthcare directory client
-│   ├── styles/                     # Tailwind CSS and Leaflet overrides
-│   │   └── global.css              # Tactical CAD styling & responsive adjustments
-│   ├── tests/                      # Automated unit & invariant test suites
-│   │   ├── algorithms.test.js      # Dijkstra vs A* agreement & directed graph invariants
-│   │   ├── minHeap.test.js         # MinHeap priority order & decreaseKey verification
-│   │   └── speedAndWeights.test.js # Physical speed conversions & delay penalties
-│   ├── utils/                      # Geographic math, validation & time helpers
-│   ├── App.jsx                     # Root application container & providers
+│   ├── components/
+│   │   ├── charts/                 # BenchmarkChart, NetworkTopologyGraph, RegionalBedCapacityGraph
+│   │   ├── common/                 # StatusBadge, PageHeader, EmptyState
+│   │   ├── layout/                 # AppLayout, Sidebar, TopBar (desktop + mobile bottom nav)
+│   │   ├── map/                    # CommandMap, RouteLayer, HospitalMarkers, AmbulanceMarker, HospitalSearchBar, IncidentTool
+│   │   ├── panels/                 # CompareTable, HospitalBedManagerModal
+│   │   └── ui/                     # Badge, ErrorBoundary, HoverTips, ProfessionalLogos
+│   ├── config/                     # System constants, emergency categories, traffic levels
+│   ├── context/                    # ThemeContext (Dark), DispatchContext, BedManagerContext, CalibrationContext
+│   ├── data/                       # 379-node / 918-edge Pan-India+NCR graph & 360-hospital registries (36 States & UTs)
+│   ├── hooks/                      # useGraph, useRouting, useLiveLocation, useIsDesktop
+│   ├── pages/                      # 8 main routes + GraphExplorer & Architecture tabs
+│   │   ├── Dashboard.jsx           # `/` — Emergency Operations Overview
+│   │   ├── LiveMap.jsx             # `/map` — Full-bleed tactical map & inspector drawer/sheet
+│   │   ├── Incidents.jsx           # `/incidents` — Dispatch queue & road blockage tool
+│   │   ├── AmbulanceFleet.jsx      # `/fleet` — Unit telemetry, GPS toggle & incident assignment
+│   │   ├── Hospitals.jsx           # `/hospitals` — State-wise 360-hospital directory (all 36 States & UTs)
+│   │   ├── RouteOptimization.jsx   # `/routing` — Multi-criteria route workbench & OSRM/TomTom probes
+│   │   ├── Analytics.jsx           # `/analytics` — Dijkstra vs A* audit & regional capacity charts
+│   │   ├── Settings.jsx            # `/settings` — API health, TomTom config, GraphExplorer & Architecture
+│   │   ├── GraphExplorer.jsx       # Embedded formula workbench & graph edge inspector
+│   │   └── Architecture.jsx        # Embedded 5-stage pipeline & ODbL governance reference
+│   ├── services/                   # edgeWeights, roadSnapService, trafficService, weatherService, hospitalRanking, benchmark
+│   ├── styles/                     # Tailwind CSS v4 dark theme tokens & Leaflet styling
+│   ├── tests/                      # 63 unit tests across 10 test files (12 suites)
+│   ├── utils/                      # Geographic math, multi-token hospital search, offline guard, validators
+│   ├── App.jsx                     # Root provider tree
 │   └── main.jsx                    # Application entry point
-├── public/                         # Static assets & icons
-├── .env.example                    # Environment variable template
+├── .env.example                    # Optional API key environment variable template
 ├── package.json                    # Project dependencies & npm scripts
-├── tsconfig.json                   # TypeScript configuration
+├── tsconfig.json                   # TypeScript checker config (JS checkJs / JSX)
 ├── vite.config.ts                  # Vite bundler configuration
-└── README.md                       # Comprehensive project documentation
+└── README.md                       # Technical project overview
 ```
 
 ---
@@ -293,7 +280,7 @@ npm install
 
 ### 3. Run Test Suites
 ```bash
-# Execute Node unit & invariant test suite (All 19 tests pass)
+# Execute Node unit & invariant test suite (47/47 tests across 10 suites pass)
 npm test
 
 # TypeScript type check (Zero errors)
@@ -311,15 +298,14 @@ npm run dev
 ```
 Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-- **`/`**: Tactical CAD Command Console (Interactive Leaflet map, ambulance tracking, green corridor toggle, route polylines).
-- **`/hospitals`**: Apex Emergency Hospital Directory (19 trauma centers, verified casualty hotlines, capacity badges).
-- **`/beds`**: Real-Time Bed & ICU Intake Editor (live interactive triage editor, ventilator allocation, instant route recalculation).
-- **`/controls`**: Dispatch Simulation Controls (weather friction presets, diurnal traffic sliders, road incident injection).
-- **`/benchmark`**: Empirical Algorithmic Performance Audit (Dijkstra vs $A^*$ comparison with interactive charts & pair selector).
-- **`/evaluation`**: Model Evaluation Framework (Speed prediction ML models: Linear Regression, Random Forest, XGBoost).
-- **`/graph-explorer`**: Mathematical Graph Model Explorer (182-node, 494-edge inspection, formulas, adjacency lists).
-- **`/architecture`**: 5-Stage Operational Pipeline & Architectural Design (Data ingestion, preprocessing, routing, CAD UI).
-- **`/more`**: Operations menu, research documentation links, and Dark/Light cockpit theme toggle.
+- **`/`**: **Emergency Operations Overview** (4 KPI metrics, live tactical map, active route summary, incident queue, `AMB-01` quick GPS, nearest hospitals).
+- **`/map`**: **Live Map** (full-bleed interactive map with desktop collapsible inspector drawer and mobile expandable bottom sheet).
+- **`/incidents`**: **Emergency Incidents** (dispatch queue filter/sort, unit assignment, status workflow, and road blockage injection).
+- **`/fleet`**: **Ambulance Fleet** (`AMB-01` live origin/GPS telemetry alongside staging fleet units and incident assignment).
+- **`/hospitals`**: **Hospitals Directory** (multi-token search across 280 facilities, specialty & radius filters, hotlines, and bed capacity editor).
+- **`/routing`**: **Smart Route Optimization** (CAD corridor vs live OSRM/Valhalla road geometry vs Dijkstra/A\* baseline, alternates, weather, signal priority).
+- **`/analytics`**: **Analytics & Reports** (empirical Dijkstra vs A\* pruning audit, regional bed capacity breakdown, calibrated speed regression MAE benchmarks).
+- **`/settings`**: **Settings & Graph Governance** (active road graph switcher, embedded Graph Formula Explorer & System Architecture).
 
 ---
 

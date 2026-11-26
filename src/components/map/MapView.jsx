@@ -1,20 +1,16 @@
 /**
- * Full-screen Leaflet map layer.
- *
- * This component renders ONLY the map and its layers (roads, route, hospitals,
- * ambulance). All floating UI (destination banner, speed circle, buttons) lives
- * in MapScreen so the map can fill the whole page like a navigation app.
- *
- * OpenStreetMap (ODbL) attribution is kept visible bottom-right.
+ * Full-screen 2D Leaflet Map View with Uber/Rapido-style 3D Ambulance & 3D Hospital markers.
+ * All floating UI lives in MapScreen so the 2D map stays crisp and full-bleed.
  */
 
-import { useEffect, useMemo, useRef } from 'react';
-import { MapContainer, TileLayer, Circle, useMap, useMapEvents } from 'react-leaflet';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { MapContainer, Circle, useMap, useMapEvents } from 'react-leaflet';
 import AmbulanceMarker from './AmbulanceMarker.jsx';
 import HospitalMarkers from './HospitalMarkers.jsx';
 import RouteLayer from './RouteLayer.jsx';
+import { MapTileLayers, MapZoomDock } from './MapLayersControl.jsx';
+import { computeBearingDeg } from '../../utils/geo.js';
 
-// Responsive camera framing padding avoiding coordinate clipping on narrow mobile viewports
 function getResponsiveFitPadding() {
   if (typeof window === 'undefined') {
     return { topLeft: [40, 24], bottomRight: [40, 24] };
@@ -25,12 +21,6 @@ function getResponsiveFitPadding() {
     : { topLeft: [45, 60], bottomRight: [45, 60] };
 }
 
-/**
- * Keeps the camera sensible:
- *  - fits ambulance + destination when the destination changes
- *  - re-fits when `recenterKey` is bumped (locate button)
- *  - follows the vehicle while it is moving
- */
 function CameraController({ ambulancePos, destination, recenterKey, followVehicle, focusPoint }) {
   const map = useMap();
   const lastDestRef = useRef(null);
@@ -43,7 +33,6 @@ function CameraController({ ambulancePos, destination, recenterKey, followVehicl
   const ambLat = ambulancePos?.lat;
   const ambLon = ambulancePos?.lon;
 
-  // Fit to ambulance + destination on first load, destination change, or recenter.
   useEffect(() => {
     if (ambLat == null || ambLon == null) return;
     const destChanged = lastDestRef.current !== destId;
@@ -74,7 +63,6 @@ function CameraController({ ambulancePos, destination, recenterKey, followVehicl
     }
   }, [map, ambLat, ambLon, destId, destLat, destLon, recenterKey]);
 
-  // Jump to a point (used when a congestion report is tapped in the list).
   const lastFocusRef = useRef(null);
   useEffect(() => {
     if (!focusPoint || lastFocusRef.current === focusPoint.key) return;
@@ -82,7 +70,6 @@ function CameraController({ ambulancePos, destination, recenterKey, followVehicl
     map.flyTo([focusPoint.lat, focusPoint.lon], 17, { duration: 0.6 });
   }, [map, focusPoint]);
 
-  // Follow the vehicle while it is driving.
   useEffect(() => {
     if (followVehicle && ambLat != null && ambLon != null) {
       map.panTo([ambLat, ambLon], { animate: true, duration: 0.4 });
@@ -92,7 +79,6 @@ function CameraController({ ambulancePos, destination, recenterKey, followVehicl
   return null;
 }
 
-/** Re-measures the map when its container changes size (tab switches, rotation). */
 function SizeWatcher() {
   const map = useMap();
   useEffect(() => {
@@ -104,7 +90,6 @@ function SizeWatcher() {
   return null;
 }
 
-/** Relocates the ambulance pin when user clicks anywhere on the Greater Noida map. */
 function MapClickHandler({ onAmbulanceMove, canDragPin, isMoving }) {
   useMapEvents({
     click(e) {
@@ -137,15 +122,21 @@ export function MapView({
   isRealGps = false,
   gpsAccuracy = null,
   gpsSpeedKph = 0,
+  gpsHeading = null,
   followVehicle = true,
   canDragPin = false,
   onTogglePinLock,
   recenterKey = 0,
   onRoadResolved = null,
   showGraphNetwork = false,
+  mapStyle = 'auto',
+  onLocate = null,
+  zoomExtraContent = null,
+  zoomBottomClass = 'bottom-[5.25rem]',
   effectiveRadiusKm = 10,
   isRadiusFallback = false,
 }) {
+  const [routeCoords, setRouteCoords] = useState([]);
   const defaultCenter = useMemo(
     () => (isFigure2Mode ? [28.475, 77.51] : [28.4625, 77.493]),
     [isFigure2Mode]
@@ -156,102 +147,116 @@ export function MapView({
     [activeHospitalProp, hospitals, activeHospitalId]
   );
 
+  const vehicleBearing = useMemo(() => {
+    if (gpsHeading != null && Number.isFinite(gpsHeading) && isMoving) return gpsHeading;
+    if (routeCoords.length >= 2) {
+      const look = routeCoords[Math.min(3, routeCoords.length - 1)];
+      return computeBearingDeg(routeCoords[0][0], routeCoords[0][1], look[0], look[1]);
+    }
+    if (ambulancePos && activeHospital) {
+      return computeBearingDeg(ambulancePos.lat, ambulancePos.lon, activeHospital.lat, activeHospital.lon);
+    }
+    return 0;
+  }, [gpsHeading, isMoving, routeCoords, ambulancePos, activeHospital]);
+
   return (
-    <MapContainer
-      center={defaultCenter}
-      zoom={14}
-      zoomControl={false}
-      scrollWheelZoom={true}
-      className="epf-map absolute inset-0 w-full h-full"
-    >
-      {/* OpenStreetMap TileLayer with compulsory ODbL attribution */}
-      <TileLayer
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        maxZoom={19}
-      />
+    <div className={`absolute inset-0 w-full h-full map-${mapStyle}`}>
+      <MapContainer
+        center={defaultCenter}
+        zoom={14}
+        zoomControl={false}
+        scrollWheelZoom={true}
+        className="epf-map w-full h-full"
+      >
+        <MapTileLayers mapStyle={mapStyle} />
 
-      <SizeWatcher />
-      <MapClickHandler
-        onAmbulanceMove={onAmbulanceMove}
-        canDragPin={canDragPin}
-        isMoving={isMoving}
-      />
-      <CameraController
-        ambulancePos={ambulancePos}
-        destination={activeHospital}
-        recenterKey={recenterKey}
-        followVehicle={followVehicle && isMoving && !focusPoint}
-        focusPoint={focusPoint}
-      />
-
-      {/* Road Network & Route Lines */}
-      <RouteLayer
-        nodes={nodes}
-        edges={edges}
-        activePathNodeIds={activePathNodeIds}
-        incidents={incidents}
-        onSelectEdge={onSelectEdge}
-        onAddIncident={onAddIncident}
-        onRemoveIncident={onRemoveIncident}
-        routeStart={ambulancePos}
-        routeEnd={activeHospital}
-        onRoadResolved={onRoadResolved}
-        showAllNodes={showGraphNetwork}
-        showGraphEdges={showGraphNetwork}
-      />
-
-      {/* Hospital Destination Pins (Capped to top 5) */}
-      <HospitalMarkers
-        hospitals={hospitals}
-        activeHospitalId={activeHospitalId}
-        onSelectHospital={onSelectHospital}
-      />
-
-      {/* Dynamic Search Radius Corridor (5km, 10km, 25km, 100km - hidden when All/0) */}
-      {ambulancePos && effectiveRadiusKm > 0 && (
-        <Circle
-          center={[ambulancePos.lat, ambulancePos.lon]}
-          radius={effectiveRadiusKm * 1000}
-          pathOptions={{
-            color: isRadiusFallback ? '#F59E0B' : '#0284C7',
-            fillColor: isRadiusFallback ? '#FBBF24' : '#38BDF8',
-            fillOpacity: 0.06,
-            weight: 1.5,
-            dashArray: '6, 6',
-          }}
+        <MapZoomDock
+          onLocate={onLocate}
+          bottomClass={zoomBottomClass}
+          rightClass="right-3"
+          extraTopContent={zoomExtraContent}
         />
-      )}
 
-      {/* GPS Accuracy Radius Bubble */}
-      {ambulancePos && gpsAccuracy && gpsAccuracy > 0 && (
-        <Circle
-          center={[ambulancePos.lat, ambulancePos.lon]}
-          radius={gpsAccuracy}
-          pathOptions={{
-            color: isRealGps ? '#10B981' : '#3B82F6',
-            fillColor: isRealGps ? '#34D399' : '#60A5FA',
-            fillOpacity: 0.15,
-            weight: 1.5,
-            dashArray: '4, 4',
-          }}
-        />
-      )}
-
-      {/* Draggable & Live-Moving Ambulance Pin */}
-      {ambulancePos && (
-        <AmbulanceMarker
-          position={ambulancePos}
-          onDragEnd={onAmbulanceMove}
-          snappedNode={snappedSourceNode}
-          isMoving={isMoving}
-          isRealGps={isRealGps}
-          speedKph={gpsSpeedKph}
+        <SizeWatcher />
+        <MapClickHandler
+          onAmbulanceMove={onAmbulanceMove}
           canDragPin={canDragPin}
-          onTogglePinLock={onTogglePinLock}
+          isMoving={isMoving}
         />
-      )}
-    </MapContainer>
+        <CameraController
+          ambulancePos={ambulancePos}
+          destination={activeHospital}
+          recenterKey={recenterKey}
+          followVehicle={followVehicle && isMoving && !focusPoint}
+          focusPoint={focusPoint}
+        />
+
+        <RouteLayer
+          nodes={nodes}
+          edges={edges}
+          activePathNodeIds={activePathNodeIds}
+          incidents={incidents}
+          onSelectEdge={onSelectEdge}
+          onAddIncident={onAddIncident}
+          onRemoveIncident={onRemoveIncident}
+          routeStart={ambulancePos}
+          routeEnd={activeHospital}
+          onRoadResolved={onRoadResolved}
+          onDisplayCoordsChange={setRouteCoords}
+          showAllNodes={showGraphNetwork}
+          showGraphEdges={showGraphNetwork}
+          canDragPin={canDragPin}
+        />
+
+        <HospitalMarkers
+          hospitals={hospitals}
+          activeHospitalId={activeHospitalId}
+          onSelectHospital={onSelectHospital}
+        />
+
+        {ambulancePos && effectiveRadiusKm > 0 && (
+          <Circle
+            center={[ambulancePos.lat, ambulancePos.lon]}
+            radius={effectiveRadiusKm * 1000}
+            pathOptions={{
+              color: isRadiusFallback ? '#F59E0B' : '#0284C7',
+              fillColor: isRadiusFallback ? '#FBBF24' : '#38BDF8',
+              fillOpacity: 0.06,
+              weight: 1.5,
+              dashArray: '6, 6',
+            }}
+          />
+        )}
+
+        {ambulancePos && gpsAccuracy && gpsAccuracy > 0 && (
+          <Circle
+            center={[ambulancePos.lat, ambulancePos.lon]}
+            radius={gpsAccuracy}
+            pathOptions={{
+              color: isRealGps ? '#10B981' : '#3B82F6',
+              fillColor: isRealGps ? '#34D399' : '#60A5FA',
+              fillOpacity: 0.15,
+              weight: 1.5,
+              dashArray: '4, 4',
+            }}
+          />
+        )}
+
+        {ambulancePos && (
+          <AmbulanceMarker
+            position={ambulancePos}
+            onDragEnd={onAmbulanceMove}
+            snappedNode={snappedSourceNode}
+            isMoving={isMoving}
+            isRealGps={isRealGps}
+            speedKph={gpsSpeedKph}
+            bearing={vehicleBearing}
+            canDragPin={canDragPin}
+            onTogglePinLock={onTogglePinLock}
+          />
+        )}
+      </MapContainer>
+    </div>
   );
 }
 

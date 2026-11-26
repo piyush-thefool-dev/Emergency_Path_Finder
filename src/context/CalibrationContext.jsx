@@ -12,7 +12,7 @@ import { createContext, useContext, useState, useMemo, useCallback } from 'react
 import { getDefaultGraph } from '../services/graphLoader.js';
 import { computeGraphWeights } from '../services/edgeWeights.js';
 import { runAlgorithmBenchmark } from '../services/benchmark.js';
-import { SAMPLE_HOSPITALS } from '../data/sampleHospitals.js';
+import { SAMPLE_HOSPITALS } from '../data/delhiNcrHospitals.js';
 
 const CalibrationContext = createContext(null);
 

@@ -28,7 +28,7 @@ export function MapHelpModal({ isOpen, onClose }) {
                 CAD Map Operations Guide
               </h3>
               <p className="text-[11px] text-slate-400 font-mono">
-                Interactive Graph & Dynamic Dispatch Architecture
+                2D Interactive Map with 3D Vehicle &amp; Hospital Landmarks
               </p>
             </div>
           </div>
@@ -99,7 +99,7 @@ export function MapHelpModal({ isOpen, onClose }) {
                 4. Manual Dispatch Pin Repositioning
               </span>
               <p className="text-[11px] text-slate-600 dark:text-slate-300 font-sans leading-relaxed">
-                Toggle <strong>Lock Pin</strong> in the telemetry header to drag the ambulance origin marker to any intersection across Greater Noida.
+                Unlock <strong>Pin</strong> on the map dock to drag or tap anywhere on the street grid to relocate the 3D ambulance unit.
               </p>
             </div>
           </div>

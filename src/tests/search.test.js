@@ -71,17 +71,14 @@ test('Smart Multi-Token Hospital Search Verification', async (t) => {
     assert.ok(!reachable.some((h) => (h.address || '').toLowerCase().includes('kolkata')), 'Kolkata hospitals (>1300 km) must be excluded from 100 km search');
   });
 
-  await t.test('All registered hospitals (280) are available and searchable in registry', () => {
-    assert.equal(PAN_INDIA_HOSPITALS.length, 280, 'Must have exactly 280 registered hospitals in registry');
+  await t.test('All registered hospitals (360) are available and searchable by city and state', () => {
+    assert.equal(PAN_INDIA_HOSPITALS.length, 360, 'Must have exactly 360 registered hospitals in registry');
     
     // Check key regional hospitals across India exist in address/name and can be matched
-    const cities = ['Delhi', 'Noida', 'Mumbai', 'Bengaluru', 'Kolkata', 'Chennai', 'Hyderabad'];
-    for (const city of cities) {
-      const match = PAN_INDIA_HOSPITALS.filter(
-        (h) => (h.address || '').toLowerCase().includes(city.toLowerCase()) ||
-               (h.name || '').toLowerCase().includes(city.toLowerCase())
-      );
-      assert.ok(match.length > 0, `Registry must include hospitals for ${city}`);
+    const citiesAndStates = ['Delhi', 'Noida', 'Mumbai', 'Bengaluru', 'Kolkata', 'Chennai', 'Hyderabad', 'Sikkim', 'Ladakh', 'Nagaland'];
+    for (const term of citiesAndStates) {
+      const match = PAN_INDIA_HOSPITALS.filter((h) => getSearchRelevance(h, term) > 0);
+      assert.ok(match.length > 0, `Registry must include searchable hospitals for ${term}`);
     }
   });
 });
