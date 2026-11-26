@@ -6,14 +6,29 @@
 import React from 'react';
 
 /**
- * Official Pathfinder 3D Navigation & Medical Cross Brand Emblem.
+ * Official Emergency Path Finder Brand Emblem & Banner.
  */
-export function CadBrandLogo({ className = 'w-7 h-7', alt = 'Pathfinder 3D Dispatch Emblem', ...props }) {
+export function CadBrandLogo({ className = 'w-7 h-7', alt = 'Emergency Path Finder Logo', ...props }) {
   return (
     <img
       src="/assets/pathfinder-logo.png"
       alt={alt}
-      className={`${className} rounded-xl object-cover shadow-md select-none`}
+      className={`${className} rounded-xl object-contain shadow-md select-none shrink-0`}
+      draggable={false}
+      {...props}
+    />
+  );
+}
+
+/**
+ * Full-Lockup Emergency Path Finder Banner Logo with Wordmark.
+ */
+export function CadBrandBanner({ className = 'h-20 w-auto', alt = 'Emergency Path Finder Banner Logo', ...props }) {
+  return (
+    <img
+      src="/assets/pathfinder-logo-banner.png"
+      alt={alt}
+      className={`${className} rounded-xl object-contain shadow-md select-none`}
       draggable={false}
       {...props}
     />

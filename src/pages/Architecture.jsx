@@ -4,6 +4,7 @@
  */
 
 import { GitCommit, ArrowRight, Database, Cpu, Navigation, MapPin, ShieldCheck, Layers } from 'lucide-react';
+import { CadBrandLogo } from '../components/ui/ProfessionalLogos.jsx';
 
 export function Architecture() {
   const pipelineStages = [
@@ -47,14 +48,17 @@ export function Architecture() {
   return (
     <div className="page-shell space-y-4 font-mono">
       {/* Header */}
-      <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200/90 dark:border-slate-800/80 p-4 sm:p-5 shadow-xs transition-colors">
-        <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider flex items-center gap-2">
-          <Cpu className="w-4 h-4 text-[#D62828]" />
-          System Architecture & Pipeline Specification
-        </h2>
-        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-3xl">
-          Structured as a decoupled, multi-tiered pipeline separating raw spatial data from velocity modeling, search algorithms, and presentation dispatch.
-        </p>
+      <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200/90 dark:border-slate-800/80 p-4 sm:p-5 shadow-xs transition-colors flex items-center gap-3.5">
+        <CadBrandLogo className="w-11 h-11 border border-white/10" />
+        <div className="min-w-0">
+          <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider flex items-center gap-2">
+            <Cpu className="w-4 h-4 text-[#D62828] shrink-0" />
+            <span>System Architecture &amp; Pipeline Specification</span>
+          </h2>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-3xl">
+            Structured as a decoupled, multi-tiered pipeline separating raw spatial data from velocity modeling, search algorithms, and presentation dispatch.
+          </p>
+        </div>
       </div>
 
       {/* 5-Stage Operational Pipeline */}

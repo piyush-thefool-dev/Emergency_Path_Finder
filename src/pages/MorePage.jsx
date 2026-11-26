@@ -19,6 +19,7 @@ import {
   Settings,
 } from 'lucide-react';
 import MobilePageHeader from '../components/layout/MobilePageHeader.jsx';
+import { CadBrandLogo } from '../components/ui/ProfessionalLogos.jsx';
 import { useDispatch } from '../context/DispatchContext.jsx';
 
 const OPERATIONS_LINKS = [
@@ -111,9 +112,10 @@ export function MorePage() {
         </div>
 
         {/* Advisory Attribution */}
-        <div className="p-4 rounded-2xl bg-slate-100/60 dark:bg-slate-900/60 backdrop-blur-md border border-slate-200/80 dark:border-white/[0.06] text-[11px] text-slate-500 leading-relaxed font-sans">
+        <div className="p-4 rounded-2xl bg-slate-100/60 dark:bg-slate-900/60 backdrop-blur-md border border-slate-200/80 dark:border-white/[0.06] text-[11px] text-slate-500 leading-relaxed font-sans flex items-center gap-3">
+          <CadBrandLogo className="w-10 h-10 border border-white/10" />
           <p>
-            Tactical Emergency Path Finder · Computer-Aided Dispatch (CAD) System · Pan-India & Delhi-NCR Road Grid. Map data © OpenStreetMap contributors under Open Database Licence (ODbL).
+            Emergency Path Finder · Tactical Computer-Aided Dispatch (CAD) System · Pan-India &amp; Delhi-NCR Road Grid. Map data © OpenStreetMap contributors under Open Database Licence (ODbL).
           </p>
         </div>
       </div>

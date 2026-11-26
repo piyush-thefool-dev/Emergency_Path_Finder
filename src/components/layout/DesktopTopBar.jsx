@@ -5,7 +5,7 @@
  */
 
 import { useState, useMemo, useRef, useEffect } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   Search,
   Bell,
@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { useDispatch } from '../../context/DispatchContext.jsx';
 import { useBedManager } from '../../context/BedManagerContext.jsx';
+import { CadBrandLogo } from '../ui/ProfessionalLogos.jsx';
 import { getSearchRelevance } from '../../utils/hospitalSearch.js';
 import { isOffline, subscribeNetworkStatus } from '../../utils/network.js';
 
@@ -98,8 +99,25 @@ export function DesktopTopBar({ onQuickReportEmergency }) {
 
   return (
     <header className="sticky top-0 z-30 h-14 bg-white/80 dark:bg-slate-950/80 backdrop-blur-2xl border-b border-slate-200/80 dark:border-white/[0.08] px-6 flex items-center justify-between gap-4 shrink-0 transition-colors">
-      {/* Global Multi-Entity Search */}
-      <div ref={searchRef} className="relative flex-1 max-w-xl">
+      {/* Left Brand Mark + Global Multi-Entity Search */}
+      <div className="flex items-center gap-3.5 flex-1 min-w-0">
+        <Link
+          to="/"
+          className="hidden lg:inline-flex items-center gap-2 shrink-0 no-underline group"
+          title="Emergency Path Finder — Live Map"
+        >
+          <CadBrandLogo className="w-8 h-8 border border-white/10 group-hover:scale-105 transition-transform" />
+          <div className="leading-none">
+            <span className="block text-xs font-extrabold tracking-wide text-slate-900 dark:text-slate-100">
+              EMERGENCY
+            </span>
+            <span className="block text-[9px] font-mono font-bold tracking-widest text-[#D62828] dark:text-red-400 mt-0.5">
+              PATH FINDER
+            </span>
+          </div>
+        </Link>
+
+        <div ref={searchRef} className="relative flex-1 max-w-xl">
         <Search className="w-4 h-4 text-slate-400 dark:text-slate-500 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
         <input
           type="text"
@@ -212,6 +230,7 @@ export function DesktopTopBar({ onQuickReportEmergency }) {
             )}
           </div>
         )}
+        </div>
       </div>
 
       {/* Right Status & Quick Actions */}

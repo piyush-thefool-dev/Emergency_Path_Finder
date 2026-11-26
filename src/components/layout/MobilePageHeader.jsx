@@ -2,9 +2,10 @@
  * Sticky Mobile & Sub-Page Navigation Header with optional Back button and icon badge.
  */
 
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { ArrowLeft } from 'lucide-react';
+import { CadBrandLogo } from '../ui/ProfessionalLogos.jsx';
 
 export function MobilePageHeader({ title, subtitle, icon: Icon, backTo, right }) {
   const navigate = useNavigate();
@@ -37,7 +38,17 @@ export function MobilePageHeader({ title, subtitle, icon: Icon, backTo, right })
             </p>
           )}
         </div>
-        {right}
+        <div className="flex items-center gap-2 shrink-0">
+          {right}
+          <Link
+            to="/"
+            aria-label="Emergency Path Finder Home"
+            title="Emergency Path Finder"
+            className="lg:hidden inline-flex shrink-0"
+          >
+            <CadBrandLogo className="w-8 h-8 border border-white/10" />
+          </Link>
+        </div>
       </div>
     </header>
   );

@@ -43,6 +43,7 @@ import {
 } from 'lucide-react';
 import MapView from './MapView.jsx';
 import MapLegend from './MapLegend.jsx';
+import { CadBrandLogo } from '../ui/ProfessionalLogos.jsx';
 import MapHelpModal from './MapHelpModal.jsx';
 import TrafficSheet from './TrafficSheet.jsx';
 import HospitalSearchBar from './HospitalSearchBar.jsx';
@@ -271,6 +272,8 @@ export function MapScreen() {
                   </span>
                 )}
               </button>
+
+              <CadBrandLogo className="w-7 h-7 rounded-lg border border-white/10" />
 
               <button
                 type="button"
@@ -779,14 +782,12 @@ export function MapScreen() {
           >
             <div className="px-4 py-3.5 border-b border-slate-200/80 dark:border-white/[0.08] flex items-center justify-between">
               <div className="flex items-center gap-2.5">
-                <img
-                  src="/assets/pathfinder-logo.png"
-                  alt="Pathfinder Logo"
-                  className="w-9 h-9 rounded-xl object-cover shadow-md border border-white/10 shrink-0"
-                />
+                <CadBrandLogo className="w-9 h-9 border border-white/10" />
                 <div>
-                  <span className="block text-sm font-bold tracking-tight leading-none">PATHFINDER</span>
-                  <span className="block text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Dispatch Control</span>
+                  <span className="block text-xs font-extrabold tracking-wide leading-none">EMERGENCY</span>
+                  <span className="block text-[10px] font-mono font-bold tracking-widest text-[#D62828] dark:text-red-400 mt-0.5">
+                    PATH FINDER
+                  </span>
                 </div>
               </div>
               <button
