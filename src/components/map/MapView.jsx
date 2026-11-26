@@ -10,6 +10,7 @@ import HospitalMarkers from './HospitalMarkers.jsx';
 import RouteLayer from './RouteLayer.jsx';
 import { MapTileLayers, MapZoomDock } from './MapLayersControl.jsx';
 import { computeBearingDeg } from '../../utils/geo.js';
+import { DEFAULT_AMBULANCE_ORIGIN } from '../../config/constants.js';
 
 function getResponsiveFitPadding() {
   if (typeof window === 'undefined') {
@@ -138,7 +139,7 @@ export function MapView({
 }) {
   const [routeCoords, setRouteCoords] = useState([]);
   const defaultCenter = useMemo(
-    () => (isFigure2Mode ? [28.475, 77.51] : [28.4625, 77.493]),
+    () => (isFigure2Mode ? [28.475, 77.51] : [DEFAULT_AMBULANCE_ORIGIN.lat, DEFAULT_AMBULANCE_ORIGIN.lon]),
     [isFigure2Mode]
   );
 

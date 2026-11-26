@@ -8,6 +8,8 @@ import assert from 'node:assert';
 import { PAN_INDIA_HOSPITALS } from '../data/panIndiaHospitals.js';
 import { INDIAN_STATES_AND_UTS, groupHospitalsByState } from '../utils/hospitalState.js';
 import { getRealGreaterNoidaOsmGraph } from '../data/delhiNcrRoadGraph.js';
+import { DEFAULT_AMBULANCE_ORIGIN } from '../config/constants.js';
+import { findNearestNode } from '../utils/geo.js';
 import { dijkstra } from '../algorithms/dijkstra.js';
 import { astar } from '../algorithms/astar.js';
 import { computeGraphWeights } from '../services/edgeWeights.js';
@@ -26,6 +28,28 @@ describe('Pan-India Healthcare Registry & Road Graph Invariants', () => {
       INDIAN_STATES_AND_UTS.length,
       'Must cover all 28 States and 8 Union Territories (36 jurisdictions)'
     );
+  });
+
+  it('snaps the default Stanza Living Athens House ambulance origin to osm_kp3_stanza_athens and routes cleanly', () => {
+    const snapped = findNearestNode(
+      DEFAULT_AMBULANCE_ORIGIN.lat,
+      DEFAULT_AMBULANCE_ORIGIN.lon,
+      fullGraph.nodes
+    );
+    assert.ok(snapped, 'Snapped origin node must exist');
+    assert.strictEqual(snapped.id, DEFAULT_AMBULANCE_ORIGIN.nodeId);
+
+    const weightedGraph = computeGraphWeights(fullGraph, {
+      timeOfDay: 'morning_peak',
+      weather: 'clear',
+      signalPriorityEnabled: true,
+      incidents: new Map(),
+    });
+    const dRes = dijkstra(weightedGraph, snapped.id, 'n_kp3_north');
+    const aRes = astar(weightedGraph, snapped.id, 'n_kp3_north');
+    assert.strictEqual(dRes.success, true);
+    assert.strictEqual(aRes.success, true);
+    assert.ok(Math.abs(dRes.totalCost - aRes.totalCost) < 0.01);
   });
 
   it('every hospital maps to an existing node in the road graph with valid GPS coordinates', () => {

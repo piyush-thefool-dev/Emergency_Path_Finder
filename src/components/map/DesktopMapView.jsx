@@ -11,6 +11,7 @@ import MapHelpModal from './MapHelpModal.jsx';
 import HospitalSearchBar from './HospitalSearchBar.jsx';
 import { MapTileLayers, MapZoomDock } from './MapLayersControl.jsx';
 import { computeBearingDeg } from '../../utils/geo.js';
+import { DEFAULT_AMBULANCE_ORIGIN } from '../../config/constants.js';
 import {
   Ambulance,
   Hospital,
@@ -169,7 +170,7 @@ export function MapView({
     if (ambulancePos?.lat && ambulancePos?.lon) {
       return [ambulancePos.lat, ambulancePos.lon];
     }
-    return isFigure2Mode ? [28.475, 77.51] : [28.482, 77.51];
+    return isFigure2Mode ? [28.475, 77.51] : [DEFAULT_AMBULANCE_ORIGIN.lat, DEFAULT_AMBULANCE_ORIGIN.lon];
   }, [ambulancePos, isFigure2Mode]);
   const defaultZoom = isFigure2Mode ? 14 : 13;
   const bounds = useMemo(() => {

@@ -5,7 +5,7 @@
 
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Hospital, MapPin, PhoneCall } from 'lucide-react';
+import { Hospital, MapPin, PhoneCall, Search, X } from 'lucide-react';
 import MobilePageHeader from '../components/layout/MobilePageHeader.jsx';
 import DisclaimerBanner from '../components/layout/DisclaimerBanner.jsx';
 import ResultCard from '../components/panels/ResultCard.jsx';
@@ -13,6 +13,7 @@ import { useDispatch } from '../context/DispatchContext.jsx';
 import { useBedManager } from '../context/BedManagerContext.jsx';
 import { EMERGENCY_CATEGORIES } from '../config/emergencyCategories.js';
 import { groupHospitalsByState } from '../utils/hospitalState.js';
+import { getSearchRelevance } from '../utils/hospitalSearch.js';
 
 export function HospitalsPage() {
   const navigate = useNavigate();
@@ -39,9 +40,20 @@ export function HospitalsPage() {
     [availableHospitals]
   );
   const [selectedState, setSelectedState] = useState('Uttar Pradesh');
+  const [stateQuery, setStateQuery] = useState('');
 
   const activeGroup =
     stateGroups.find((g) => g.state === selectedState) || stateGroups[0] || null;
+
+  const filteredStateHospitals = useMemo(() => {
+    if (!activeGroup) return [];
+    if (!stateQuery.trim()) return activeGroup.hospitals;
+    return activeGroup.hospitals
+      .map((h) => ({ h, score: getSearchRelevance(h, stateQuery) }))
+      .filter((item) => item.score > 0)
+      .sort((a, b) => b.score - a.score)
+      .map((item) => item.h);
+  }, [activeGroup, stateQuery]);
 
   const category = EMERGENCY_CATEGORIES[emergencyCategory];
 
@@ -89,21 +101,59 @@ export function HospitalsPage() {
               </span>
             </div>
 
-            <select
-              aria-label="Select Indian State or Union Territory"
-              value={activeGroup.state}
-              onChange={(e) => setSelectedState(e.target.value)}
-              className="w-full h-9 px-3 rounded-xl text-xs font-semibold bg-slate-50/90 dark:bg-slate-950/60 border border-slate-200/90 dark:border-white/[0.08] text-slate-900 dark:text-slate-100 focus:border-[#D62828] focus:outline-hidden"
-            >
-              {stateGroups.map((grp) => (
-                <option key={grp.state} value={grp.state}>
-                  {grp.state} ({grp.totalCount} hospitals · {grp.icuFreeTotal} ICU)
-                </option>
-              ))}
-            </select>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <select
+                aria-label="Select Indian State or Union Territory"
+                value={activeGroup.state}
+                onChange={(e) => {
+                  setSelectedState(e.target.value);
+                  setStateQuery('');
+                }}
+                className="w-full h-9 px-3 rounded-xl text-xs font-semibold bg-slate-50/90 dark:bg-slate-950/60 border border-slate-200/90 dark:border-white/[0.08] text-slate-900 dark:text-slate-100 focus:border-[#D62828] focus:outline-hidden"
+              >
+                {stateGroups.map((grp) => (
+                  <option key={grp.state} value={grp.state}>
+                    {grp.state} ({grp.totalCount} hospitals · {grp.icuFreeTotal} ICU)
+                  </option>
+                ))}
+              </select>
+
+              <div className="relative">
+                <Search className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <input
+                  type="text"
+                  value={stateQuery}
+                  onChange={(e) => setStateQuery(e.target.value)}
+                  placeholder={`Search in ${activeGroup.state}…`}
+                  aria-label={`Search hospitals in ${activeGroup.state}`}
+                  className="w-full h-9 pl-8 pr-7 rounded-xl text-xs bg-slate-50/90 dark:bg-slate-950/60 border border-slate-200/90 dark:border-white/[0.08] text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:bg-white dark:focus:bg-slate-900 focus:border-[#D62828] focus:outline-hidden"
+                />
+                {stateQuery && (
+                  <button
+                    type="button"
+                    onClick={() => setStateQuery('')}
+                    aria-label={`Clear ${activeGroup.state} search`}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 cursor-pointer"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+            </div>
 
             <div className="space-y-2 max-h-96 overflow-y-auto pr-0.5">
-              {activeGroup.hospitals.map((hosp) => (
+              {filteredStateHospitals.length === 0 ? (
+                <div className="p-3 rounded-xl bg-slate-50/80 dark:bg-slate-950/60 border border-slate-200/80 dark:border-white/[0.06] text-xs text-slate-500 dark:text-slate-400 flex items-center justify-between gap-2">
+                  <span>No hospitals in {activeGroup.state} match &ldquo;{stateQuery}&rdquo;.</span>
+                  <button
+                    type="button"
+                    onClick={() => setStateQuery('')}
+                    className="px-2 py-1 rounded-lg bg-[#D62828] text-white font-semibold cursor-pointer shrink-0"
+                  >
+                    Clear
+                  </button>
+                </div>
+              ) : filteredStateHospitals.map((hosp) => (
                 <div
                   key={hosp.id}
                   className="p-2.5 rounded-xl bg-slate-50/80 dark:bg-slate-950/60 border border-slate-200/80 dark:border-white/[0.06] flex items-center justify-between gap-2.5"

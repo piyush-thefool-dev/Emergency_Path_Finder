@@ -10,6 +10,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { haversineDistance } from '../utils/geo.js';
 import { matchGpsCoordinates } from '../services/roadSnapService.js';
+import { DEFAULT_AMBULANCE_ORIGIN } from '../config/constants.js';
 
 /**
  * 2D Kalman Filter for GPS Coordinate Smoothing & Multipath Drift Rejection.
@@ -53,7 +54,7 @@ export function useLiveLocation({
   onLocationUpdate,
   activeRouteNodeIds = [],
   graphNodes = [],
-  initialPos = { lat: 28.4625, lon: 77.4930 },
+  initialPos = { lat: DEFAULT_AMBULANCE_ORIGIN.lat, lon: DEFAULT_AMBULANCE_ORIGIN.lon },
 }) {
   const [isGpsActive, setIsGpsActive] = useState(false);
   const [followVehicle, setFollowVehicle] = useState(true);

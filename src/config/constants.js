@@ -50,6 +50,15 @@ export const DATA_FRESHNESS_LIMITS = {
   HOSPITAL_STALE_MINUTES: 30,
 };
 
+/** Default ambulance starting location (Stanza Living Athens House, Knowledge Park III) */
+export const DEFAULT_AMBULANCE_ORIGIN = {
+  name: 'Stanza Living Athens House, Knowledge Park III',
+  shortName: 'Stanza Living Athens House (KP III)',
+  lat: 28.47796,
+  lon: 77.49782,
+  nodeId: 'osm_kp3_stanza_athens',
+};
+
 /** Calibrated values for study area, benchmarks and registries */
 export const PLACEHOLDERS = {
   NOT_MEASURED: '2.41 km/h MAE',

@@ -1,6 +1,6 @@
 /**
  * Google Maps–inspired Full-Bleed Desktop Dispatch View (`/` and `/map`).
- * Preserves full routing, 280-hospital search, 4 triage categories, GPS tracking,
+ * Preserves full routing, 5,000-hospital search, 4 triage categories, GPS tracking,
  * Road Alerts inspector, Layers switcher (Default / Street / Satellite / Graph Nodes),
  * and zoom/locate controls — cleanly without any user account section.
  */
@@ -39,6 +39,7 @@ import { formatDistance } from '../utils/geo.js';
 import { formatDuration, formatEtaShort } from '../utils/time.js';
 import { buildMapHospitalMarkers } from '../services/hospitalRanking.js';
 import { HospitalBrandLogo } from '../components/ui/ProfessionalLogos.jsx';
+import { DEFAULT_AMBULANCE_ORIGIN } from '../config/constants.js';
 
 export function DesktopLiveMap({ fullBleed = true, onOpenNewEmergency }) {
   const { openBedManager } = useBedManager();
@@ -373,7 +374,7 @@ export function DesktopLiveMap({ fullBleed = true, onOpenNewEmergency }) {
                     {activeHospital.name}
                   </h2>
                   <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
-                    {activeHospital.bedAvailability?.icuBedsFree ?? 0} ICU · {activeHospital.bedAvailability?.traumaBedsFree ?? 0} Trauma · Origin: {snappedSourceNode?.name || 'DTC Gate'}
+                    {activeHospital.bedAvailability?.icuBedsFree ?? 0} ICU · {activeHospital.bedAvailability?.traumaBedsFree ?? 0} Trauma · Origin: {snappedSourceNode?.name || DEFAULT_AMBULANCE_ORIGIN.shortName}
                   </p>
                 </div>
                 <button

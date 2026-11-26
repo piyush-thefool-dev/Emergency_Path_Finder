@@ -27,6 +27,7 @@ import { findNearestNode, haversineDistance } from '../utils/geo.js';
 import { isOffline, subscribeNetworkStatus } from '../utils/network.js';
 import { WEATHER_FACTORS, TIME_OF_DAY_FACTORS } from '../data/congestionFactors.js';
 import { EMERGENCY_CATEGORIES } from '../config/emergencyCategories.js';
+import { DEFAULT_AMBULANCE_ORIGIN } from '../config/constants.js';
 
 export function useRouting(weightedGraph, isFigure2Mode, options = {}) {
   const {
@@ -37,10 +38,10 @@ export function useRouting(weightedGraph, isFigure2Mode, options = {}) {
     incidents = null,
   } = options;
 
-  // Coordinates of ambulance. Default: near DTC gate in Greater Noida
+  // Coordinates of ambulance. Default: Stanza Living Athens House, Knowledge Park III
   const [ambulancePos, setAmbulancePos] = useState({
-    lat: 28.4625,
-    lon: 77.4930,
+    lat: DEFAULT_AMBULANCE_ORIGIN.lat,
+    lon: DEFAULT_AMBULANCE_ORIGIN.lon,
   });
 
   const [emergencyCategory, setEmergencyCategoryState] = useState('TRAUMA');

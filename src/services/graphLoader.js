@@ -236,9 +236,9 @@ export const GRAPH_MODES_CATALOG = [
   {
     id: 'real_osm',
     name: 'Pan-India National Highway & Metropolitan Grid',
-    description: 'Complete nationwide 593-node / 1,346-edge topology connecting all 5,000 verified healthcare facilities across 36 States & UTs.',
-    nodeCount: 593,
-    edgeCount: 1346,
+    description: 'Complete nationwide 594-node / 1,352-edge topology connecting all 5,000 verified healthcare facilities across 36 States & UTs.',
+    nodeCount: 594,
+    edgeCount: 1352,
     badge: 'ALL INDIA',
   },
   {
@@ -261,8 +261,8 @@ export const GRAPH_MODES_CATALOG = [
     id: 'delhi_ncr',
     name: 'Delhi-NCR Metropolitan Urban Grid',
     description: 'High-density urban street topology with grade separators, flyovers, and local expressways.',
-    nodeCount: 104,
-    edgeCount: 258,
+    nodeCount: 105,
+    edgeCount: 264,
     badge: 'NCR METRO',
   },
   {

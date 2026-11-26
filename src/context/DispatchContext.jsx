@@ -11,6 +11,7 @@ import { useLiveLocation } from '../hooks/useLiveLocation.js';
 import { useApiHealth } from '../hooks/useApiHealth.js';
 import { useTheme } from './ThemeContext.jsx';
 import { shouldSwitchHospitalForRoute } from '../services/hospitalRanking.js';
+import { DEFAULT_AMBULANCE_ORIGIN } from '../config/constants.js';
 
 const DispatchContext = createContext(null);
 const INCIDENTS_STORAGE_KEY = 'epf_dispatch_incidents_v1';
@@ -178,7 +179,7 @@ export function DispatchProvider({ children }) {
       id: 'act-init-1',
       time: new Date().toISOString(),
       title: 'Dispatch console initialized',
-      detail: 'Loaded 5,000 Pan-India hospitals across all 36 States & UTs and 593-node OSM directed graph.',
+      detail: 'Loaded 5,000 Pan-India hospitals across all 36 States & UTs and 594-node OSM directed graph.',
       tone: 'primary',
     },
   ]);
@@ -317,7 +318,7 @@ export function DispatchProvider({ children }) {
       registration: 'UP-16-AG-1081',
       unitType: 'ALS Primary Tactical Unit',
       status: primaryStatus,
-      locationName: routing.snappedSourceNode?.name || 'Active Dispatch Origin',
+      locationName: routing.snappedSourceNode?.name || DEFAULT_AMBULANCE_ORIGIN.shortName,
       lat: ambulancePos.lat,
       lon: ambulancePos.lon,
       assignedIncidentId: assignedInc?.id || null,

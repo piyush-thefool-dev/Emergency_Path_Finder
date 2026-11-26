@@ -19,6 +19,7 @@ import {
 import Badge from '../ui/Badge.jsx';
 import Button from '../ui/Button.jsx';
 import { formatDistance } from '../../utils/geo.js';
+import { DEFAULT_AMBULANCE_ORIGIN } from '../../config/constants.js';
 
 export function LiveLocationTracker({
   isGpsActive,
@@ -152,7 +153,9 @@ export function LiveLocationTracker({
             className="font-bold text-slate-900 dark:text-slate-100 text-xs block truncate"
             title={`${currentPos?.lat}, ${currentPos?.lon}`}
           >
-            {currentPos?.lat ? `${currentPos.lat.toFixed(5)}°N, ${currentPos.lon.toFixed(5)}°E` : '28.46250°N, 77.50500°E'}
+            {currentPos?.lat
+              ? `${currentPos.lat.toFixed(5)}°N, ${currentPos.lon.toFixed(5)}°E`
+              : `${DEFAULT_AMBULANCE_ORIGIN.lat.toFixed(5)}°N, ${DEFAULT_AMBULANCE_ORIGIN.lon.toFixed(5)}°E`}
           </span>
         </div>
 
