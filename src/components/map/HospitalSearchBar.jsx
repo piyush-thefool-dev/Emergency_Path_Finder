@@ -193,7 +193,7 @@ export function HospitalSearchBar({
     setQuery('');
   };
 
-  const totalHospitals = hospitals.length || enrichedHospitals.length || 360;
+  const totalHospitals = hospitals.length || enrichedHospitals.length || 5000;
   const showList = embedded || isOpen;
   const hasAmbulancePos = ambulancePos?.lat != null && ambulancePos?.lon != null;
   const inputRightPadding = selectedHospitalId ? 'pr-44' : query ? 'pr-32' : 'pr-28';
@@ -369,7 +369,8 @@ export function HospitalSearchBar({
                 )}
               </div>
             ) : (
-              filteredHospitals.map((hosp) => {
+              <>
+              {filteredHospitals.slice(0, 60).map((hosp) => {
                 const isSelected = hosp.id === selectedHospitalId;
                 const isCadBest = activeHospital && hosp.id === activeHospital.id && !selectedHospitalId;
                 const beds = hosp.bedAvailability || {};
@@ -510,7 +511,13 @@ export function HospitalSearchBar({
                     </div>
                   </div>
                 );
-              })
+              })}
+              {filteredHospitals.length > 60 && (
+                <div className="p-2.5 text-center text-[11px] font-sans text-slate-500 dark:text-slate-400">
+                  Showing top 60 nearest of {filteredHospitals.length} matching hospitals — type a name, city, or state to narrow down.
+                </div>
+              )}
+              </>
             )}
           </div>
         </div>

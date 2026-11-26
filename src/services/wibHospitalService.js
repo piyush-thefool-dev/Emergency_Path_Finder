@@ -10,7 +10,7 @@
  * across the Greater Noida / Delhi-NCR operational corridor.
  */
 
-import { SAMPLE_HOSPITALS } from '../data/delhiNcrHospitals.js';
+import { PAN_INDIA_HOSPITALS } from '../data/panIndiaHospitals.js';
 import { isOffline, markNetworkFailure } from '../utils/network.js';
 
 export const WIB_API_CONFIG = {
@@ -244,7 +244,7 @@ export function processWibRecords(rawList = []) {
   const list = Array.isArray(rawList) ? rawList : [];
   const now = new Date().toISOString();
 
-  return SAMPLE_HOSPITALS.map((base) => {
+  return PAN_INDIA_HOSPITALS.map((base) => {
     const baseName = base.name.toLowerCase();
     const baseShort = base.shortName.toLowerCase();
     const match = list.find((h) => {
@@ -300,7 +300,7 @@ export async function fetchWibHospitals(options = {}) {
     return {
       hospitals: processWibRecords([]),
       isLive: false,
-      totalFetched: SAMPLE_HOSPITALS.length,
+      totalFetched: PAN_INDIA_HOSPITALS.length,
       source: `${WIB_API_CONFIG.sourceName} (Offline Reference Mode)`,
     };
   }
@@ -352,7 +352,7 @@ export async function fetchWibHospitals(options = {}) {
     return {
       hospitals: mapped,
       isLive: false,
-      totalFetched: SAMPLE_HOSPITALS.length,
+      totalFetched: PAN_INDIA_HOSPITALS.length,
       source: `${WIB_API_CONFIG.sourceName} (bundled reference data)`,
     };
   }

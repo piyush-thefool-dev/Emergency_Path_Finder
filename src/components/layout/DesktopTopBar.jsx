@@ -109,7 +109,7 @@ export function DesktopTopBar({ onQuickReportEmergency }) {
             setQuery(e.target.value);
             setSearchFocused(true);
           }}
-          placeholder={`Search incidents, fleet units, or ${routing.availableHospitals?.length || 360} hospitals…`}
+          placeholder={`Search incidents, fleet units, or ${routing.availableHospitals?.length || 5000} hospitals…`}
           aria-label="Global dispatch search"
           className="w-full h-9 pl-9 pr-8 text-sm bg-slate-100/80 dark:bg-slate-900/80 border border-slate-200/90 dark:border-white/[0.08] rounded-xl text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:bg-white dark:focus:bg-slate-900 focus:border-[#D62828] focus:outline-hidden transition-colors"
         />

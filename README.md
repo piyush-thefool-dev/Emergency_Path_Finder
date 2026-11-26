@@ -47,11 +47,7 @@ An intelligent, real-time emergency dispatch and navigation decision-support eng
 | **Routing Core** | Graph Algorithms | Pure Standalone JavaScript / ES6+ (Zero External Graph Libs) | Hand-crafted Binary Min-Heap Priority Queue ($\mathcal{O}(\log \|V\|)$), Dijkstra baseline solver, $A^*$ search with admissible Haversine heuristic. |
 | **Traffic Physics** | Dynamic Weighting | Multi-Criteria Edge Cost Engine | Real-time edge traversal cost $t(e) = \frac{L(e)}{v(e)}$, Open-Meteo road friction scaling, diurnal time-of-day multipliers, signal delay pre-emption. |
 | **Facility Match** | Hospital Ranking | Multi-Criteria Ranking Matrix | Two-stage distance cascade + road ETA + department specialty matching + local/reference ICU/trauma bed readiness score ($\mathcal{S}_{\text{hospital}}$). |
-| **Data Ingestion** | OpenStreetMap Loader | Overpass API, OSMnx Schema, WIB India API | **379-node / 918-edge** Pan-India & Delhi-NCR road graph, **360** registered emergency facilities across **36 States & UTs**, pluggable JSON schema loader. |
-
----
-
-> Looking for a plain-English walkthrough comparing the **earlier prototype** and the **PATHFINDER redesign** for presentations or demos? See [docs/PROJECT_GUIDE.md](docs/PROJECT_GUIDE.md).
+| **Data Ingestion** | OpenStreetMap Loader | Overpass API, OSMnx Schema, WIB India API | **593-node / 1,346-edge** Pan-India & Delhi-NCR road graph, **5,000** verified emergency facilities across **36 States & UTs**, pluggable JSON schema loader. |
 
 ---
 
@@ -59,8 +55,8 @@ An intelligent, real-time emergency dispatch and navigation decision-support eng
 
 ```
 Emergency_Path_Finder/
-├── docs/
-│   └── PROJECT_GUIDE.md            # Complete walkthrough & old-vs-new comparison guide
+├── public/assets/                  # High-resolution 3D PNG landmarks (ambulance, hospitals, emblem)
+├── screenshots/                    # 4K HiDPI dark-mode preview screenshots
 ├── src/                            # React 19 + JSX + Tailwind Application Source
 │   ├── algorithms/                 # Pure graph search algorithms & data structures
 │   │   ├── astar.js                # A* Heuristic Search engine
@@ -71,29 +67,29 @@ Emergency_Path_Finder/
 │   ├── components/
 │   │   ├── charts/                 # BenchmarkChart, NetworkTopologyGraph, RegionalBedCapacityGraph
 │   │   ├── common/                 # StatusBadge, PageHeader, EmptyState
-│   │   ├── layout/                 # AppLayout, Sidebar, TopBar (desktop + mobile bottom nav)
-│   │   ├── map/                    # CommandMap, RouteLayer, HospitalMarkers, AmbulanceMarker, HospitalSearchBar, IncidentTool
-│   │   ├── panels/                 # CompareTable, HospitalBedManagerModal
-│   │   └── ui/                     # Badge, ErrorBoundary, HoverTips, ProfessionalLogos
+│   │   ├── layout/                 # AppShell, DesktopShell, DesktopSidebar, DesktopTopBar, MobilePageHeader
+│   │   ├── map/                    # DesktopMapView, MapView, MapLayersControl, RouteLayer, HospitalMarkers, AmbulanceMarker, HospitalSearchBar, IncidentTool
+│   │   ├── panels/                 # ResultCard, CompareTable, ControlPanel, ApiStatusPanel, HospitalBedManagerModal
+│   │   └── ui/                     # Badge, Button, ErrorBoundary, HoverTips, ProfessionalLogos, Switch
 │   ├── config/                     # System constants, emergency categories, traffic levels
-│   ├── context/                    # ThemeContext (Dark), DispatchContext, BedManagerContext, CalibrationContext
-│   ├── data/                       # 379-node / 918-edge Pan-India+NCR graph & 360-hospital registries (36 States & UTs)
-│   ├── hooks/                      # useGraph, useRouting, useLiveLocation, useIsDesktop
-│   ├── pages/                      # 8 main routes + GraphExplorer & Architecture tabs
-│   │   ├── Dashboard.jsx           # `/` — Emergency Operations Overview
-│   │   ├── LiveMap.jsx             # `/map` — Full-bleed tactical map & inspector drawer/sheet
+│   ├── context/                    # ThemeContext (Dark/Light), DispatchContext, BedManagerContext, CalibrationContext
+│   ├── data/                       # 593-node / 1,346-edge Pan-India+NCR graph & 5,000-hospital registries (36 States & UTs)
+│   ├── hooks/                      # useGraph, useRouting, useRouteCorridor, useLiveLocation, useApiHealth, useIsDesktop
+│   ├── pages/                      # Core views & workbench pages
+│   │   ├── DesktopLiveMap.jsx      # `/` & `/map` — Full-bleed desktop 2D map with 3D ambulance/hospital markers
 │   │   ├── Incidents.jsx           # `/incidents` — Dispatch queue & road blockage tool
 │   │   ├── AmbulanceFleet.jsx      # `/fleet` — Unit telemetry, GPS toggle & incident assignment
-│   │   ├── Hospitals.jsx           # `/hospitals` — State-wise 360-hospital directory (all 36 States & UTs)
+│   │   ├── Hospitals.jsx           # `/hospitals` — State-wise 5,000-hospital directory (all 36 States & UTs)
+│   │   ├── HospitalsPage.jsx       # Mobile hospitals & state-wise selector view
 │   │   ├── RouteOptimization.jsx   # `/routing` — Multi-criteria route workbench & OSRM/TomTom probes
-│   │   ├── Analytics.jsx           # `/analytics` — Dijkstra vs A* audit & regional capacity charts
+│   │   ├── Analytics.jsx           # `/analytics` — Dijkstra vs A* audit & state-wise capacity matrix
 │   │   ├── Settings.jsx            # `/settings` — API health, TomTom config, GraphExplorer & Architecture
 │   │   ├── GraphExplorer.jsx       # Embedded formula workbench & graph edge inspector
 │   │   └── Architecture.jsx        # Embedded 5-stage pipeline & ODbL governance reference
 │   ├── services/                   # edgeWeights, roadSnapService, trafficService, weatherService, hospitalRanking, benchmark
 │   ├── styles/                     # Tailwind CSS v4 dark theme tokens & Leaflet styling
 │   ├── tests/                      # 63 unit tests across 10 test files (12 suites)
-│   ├── utils/                      # Geographic math, multi-token hospital search, offline guard, validators
+│   ├── utils/                      # Geographic math, state normalization, multi-token hospital search, offline guard, validators
 │   ├── App.jsx                     # Root provider tree
 │   └── main.jsx                    # Application entry point
 ├── .env.example                    # Optional API key environment variable template
@@ -181,10 +177,10 @@ To maintain zero downtime in life-critical dispatch environments, every telemetr
 
 | # | Telemetry Domain | Primary Live Provider | Auth Required | Offline Backup & Resilience Mechanism |
 |---|---|---|---|---|
-| **1** | **Road Geometry** | **Valhalla / ORS / Project-OSRM** | None (Public) / Optional Key | Valhalla ambulance costing (`ignore_oneways: true`, `use_highways: 1.0`) &rarr; German OSM Mirror &rarr; Bundled Delhi-NCR Graph (182 nodes, 494 edges). |
+| **1** | **Road Geometry** | **Valhalla / ORS / Project-OSRM** | None (Public) / Optional Key | Valhalla ambulance costing (`ignore_oneways: true`, `use_highways: 1.0`) &rarr; German OSM Mirror &rarr; Bundled Pan-India + NCR Graph (593 nodes, 1,346 edges). |
 | **2** | **Map Tiles** | **OpenStreetMap Tiles (ODbL 1.0) + Tactical Night Filter** | None (Free / Open) | 100% free with zero watermarks (avoids CARTO's mandatory key watermarks), styled with tactical dark radar contrast. |
 | **3** | **Weather & Friction** | **Open-Meteo API (WMO + Visibility)** | None (Free / Open) | Direct mapping of WMO codes & visibility (< 350m: `0.60x`, fog: `0.75x`, rain: `0.82x`, squalls: `0.50x`). Fallback: deterministic matrix in `weatherService.js`. |
-| **4** | **Hospital Capacity** | **Overpass `amenity=hospital` + data.gov.in + WIB** | None (Public) | Overpass emergency tags (`emergency=yes`, `beds`, `phone`) + National Health Registry. Fallback: 19 Apex Delhi-NCR Registry + `localStorage` bed editor. |
+| **4** | **Hospital Capacity** | **Overpass `amenity=hospital` + data.gov.in + WIB** | None (Public) | Overpass emergency tags (`emergency=yes`, `beds`, `phone`) + National Health Registry. Fallback: 5,000-Hospital Registry across all 36 States & UTs + `localStorage` bed editor. |
 | **5** | **Traffic Congestion** | **TomTom Traffic Flow API (No Card Required)** | Optional (`.env`) | Real-time probe speeds across Delhi-NCR with 2,500 free calls/day (~75k/month) and zero credit card requirement. Fallback: Diurnal model + manual blockades. |
 | **6** | **Street Vectors** | **Overpass API (Strict Vehicle Filter)** | None (Public) | Strict vehicular regex filter (`motorway`, `trunk`, `primary`, `secondary`, `tertiary`) excluding footways (>60% smaller payloads). Fallback: Geofabrik extracts. |
 | **7** | **GPS Positioning** | **W3C Geolocation + 2D Kalman Filter & OSRM Match** | Browser Prompt | 2D Kalman filter eliminates 5–15 m multipath drift; snapped to road centerline with OSRM `/match`. Fallback: Greater Noida arterial center (Lat: `28.4744`, Lon: `77.5040`). |
@@ -280,7 +276,7 @@ npm install
 
 ### 3. Run Test Suites
 ```bash
-# Execute Node unit & invariant test suite (47/47 tests across 10 suites pass)
+# Execute Node unit & invariant test suite (63/63 tests across 12 suites pass)
 npm test
 
 # TypeScript type check (Zero errors)
@@ -298,13 +294,12 @@ npm run dev
 ```
 Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-- **`/`**: **Emergency Operations Overview** (4 KPI metrics, live tactical map, active route summary, incident queue, `AMB-01` quick GPS, nearest hospitals).
-- **`/map`**: **Live Map** (full-bleed interactive map with desktop collapsible inspector drawer and mobile expandable bottom sheet).
+- **`/` & `/map`**: **Live Tactical Map** (2D OpenStreetMap dispatch view with 3D Ambulance & 3D Hospital landmarks, OSRM/Valhalla road corridor, collapsible inspector drawer, and incident blocker).
 - **`/incidents`**: **Emergency Incidents** (dispatch queue filter/sort, unit assignment, status workflow, and road blockage injection).
 - **`/fleet`**: **Ambulance Fleet** (`AMB-01` live origin/GPS telemetry alongside staging fleet units and incident assignment).
-- **`/hospitals`**: **Hospitals Directory** (multi-token search across 280 facilities, specialty & radius filters, hotlines, and bed capacity editor).
+- **`/hospitals`**: **State-Wise Hospitals Directory** (multi-token search & state-wise division across 5,000 facilities covering all 36 Indian States & UTs, specialty filters, hotlines, and bed capacity editor).
 - **`/routing`**: **Smart Route Optimization** (CAD corridor vs live OSRM/Valhalla road geometry vs Dijkstra/A\* baseline, alternates, weather, signal priority).
-- **`/analytics`**: **Analytics & Reports** (empirical Dijkstra vs A\* pruning audit, regional bed capacity breakdown, calibrated speed regression MAE benchmarks).
+- **`/analytics`**: **Analytics & Reports** (empirical Dijkstra vs A\* pruning audit, 6-zone & 36-state clinical intake breakdown, calibrated speed regression MAE benchmarks).
 - **`/settings`**: **Settings & Graph Governance** (active road graph switcher, embedded Graph Formula Explorer & System Architecture).
 
 ---

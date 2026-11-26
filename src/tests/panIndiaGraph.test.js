@@ -16,10 +16,10 @@ describe('Pan-India Healthcare Registry & Road Graph Invariants', () => {
   const fullGraph = getRealGreaterNoidaOsmGraph();
   const nodeMap = new Map(fullGraph.nodes.map((n) => [n.id, n]));
 
-  it('contains 360 verified apex hospitals covering all 36 Indian States and Union Territories', () => {
-    assert.strictEqual(PAN_INDIA_HOSPITALS.length, 360);
+  it('contains 5,000 verified apex and OSM referral hospitals covering all 36 Indian States and Union Territories', () => {
+    assert.strictEqual(PAN_INDIA_HOSPITALS.length, 5000);
     const uniqueIds = new Set(PAN_INDIA_HOSPITALS.map((h) => h.id));
-    assert.strictEqual(uniqueIds.size, 360, 'Every hospital must have a unique ID');
+    assert.strictEqual(uniqueIds.size, 5000, 'Every hospital must have a unique ID');
     const stateGroups = groupHospitalsByState(PAN_INDIA_HOSPITALS);
     assert.strictEqual(
       stateGroups.length,
@@ -80,6 +80,10 @@ describe('Pan-India Healthcare Registry & Road Graph Invariants', () => {
       { name: 'TRIHMS Naharlagun (Arunachal)', nodeId: 'n_ita_trhims_naharlagun' },
       { name: 'SNM Leh (Ladakh)', nodeId: 'n_leh_snm_skara' },
       { name: 'GB Pant Port Blair (A&N)', nodeId: 'n_pbl_gbpant_portblair' },
+      { name: 'Siliguri Corridor Hub (WB)', nodeId: 'n_slg_citycentre_neotia' },
+      { name: 'Kurnool Medical Hub (AP)', nodeId: 'n_hub_kurnool' },
+      { name: 'Silchar Medical Hub (Assam)', nodeId: 'n_hub_silchar' },
+      { name: 'Dimapur Medical Hub (Nagaland)', nodeId: 'n_hub_dimapur' },
     ];
 
     for (const target of testTargets) {

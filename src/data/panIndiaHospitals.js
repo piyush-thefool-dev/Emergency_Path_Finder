@@ -8,7 +8,7 @@
  * Calibrated against OpenStreetMap and Google Maps ground truth.
  */
 
-import { PAN_INDIA_EXPANSION_HOSPITALS } from './panIndiaExpansion.js';
+import { PAN_INDIA_OSM_HOSPITALS } from './panIndiaOsmHospitals.js';
 import { resolveHospitalState } from '../utils/hospitalState.js';
 
 const CORE_PAN_INDIA_HOSPITALS = [
@@ -9460,7 +9460,7 @@ const CORE_PAN_INDIA_HOSPITALS = [
 
 export const PAN_INDIA_HOSPITALS = [
   ...CORE_PAN_INDIA_HOSPITALS,
-  ...PAN_INDIA_EXPANSION_HOSPITALS,
+  ...PAN_INDIA_OSM_HOSPITALS,
 ].map((hosp) => (hosp.state ? hosp : { ...hosp, state: resolveHospitalState(hosp) }));
 
 export const NATIONAL_EMERGENCY_NUMBERS = [

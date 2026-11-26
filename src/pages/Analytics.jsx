@@ -15,7 +15,7 @@ import { useCalibration } from '../context/CalibrationContext.jsx';
 import { runAlgorithmBenchmark } from '../services/benchmark.js';
 import { getDefaultGraph } from '../services/graphLoader.js';
 import { computeGraphWeights } from '../services/edgeWeights.js';
-import { SAMPLE_HOSPITALS } from '../data/delhiNcrHospitals.js';
+import { PAN_INDIA_HOSPITALS } from '../data/panIndiaHospitals.js';
 
 export function Analytics() {
   const { dispatchIncidents, fleetUnits, routing } = useDispatch();
@@ -31,7 +31,7 @@ export function Analytics() {
   }, []);
 
   const benchmarkData = useMemo(() => {
-    return runAlgorithmBenchmark(weightedCityGraph, SAMPLE_HOSPITALS, pairCount);
+    return runAlgorithmBenchmark(weightedCityGraph, PAN_INDIA_HOSPITALS, pairCount);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [weightedCityGraph, pairCount, runIdx]);
 

@@ -12,7 +12,7 @@ import { createContext, useContext, useState, useMemo, useCallback } from 'react
 import { getDefaultGraph } from '../services/graphLoader.js';
 import { computeGraphWeights } from '../services/edgeWeights.js';
 import { runAlgorithmBenchmark } from '../services/benchmark.js';
-import { SAMPLE_HOSPITALS } from '../data/delhiNcrHospitals.js';
+import { PAN_INDIA_HOSPITALS } from '../data/panIndiaHospitals.js';
 
 const CalibrationContext = createContext(null);
 
@@ -61,7 +61,7 @@ export function CalibrationProvider({ children }) {
       timeOfDay: 'morning_peak',
       weather: 'clear',
     });
-    const bench = runAlgorithmBenchmark(weighted, SAMPLE_HOSPITALS, 25);
+    const bench = runAlgorithmBenchmark(weighted, PAN_INDIA_HOSPITALS, 25);
     const { summary } = bench;
 
     setCalibration((prev) => ({

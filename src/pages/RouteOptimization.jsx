@@ -25,6 +25,7 @@ import { dijkstra } from '../algorithms/dijkstra.js';
 import { astar } from '../algorithms/astar.js';
 import { fetchRoadRoute } from '../services/roadSnapService.js';
 import { buildIncidentList, extractLocalStreetSegment } from '../utils/incidents.js';
+import { ensureActiveHospitalInList } from '../services/hospitalRanking.js';
 import { haversineDistance, formatDistance } from '../utils/geo.js';
 import { formatDuration } from '../utils/time.js';
 import { isOffline } from '../utils/network.js';
@@ -63,15 +64,20 @@ export function RouteOptimization() {
   const timeMult = TIME_OF_DAY_FACTORS[timeOfDay]?.speedMultiplier || 1.0;
   const combinedSpeedMult = Math.max(0.2, weatherMult * timeMult);
 
-  // All registered hospitals sorted closest-first so Target Hospital dropdown covers all 280 facilities
+  // Nearest 120 hospitals (plus active target if outside) for crisp dropdown performance
   const sortedHospitals = useMemo(() => {
-    if (!ambulancePos?.lat || !availableHospitals?.length) return availableHospitals || [];
-    return [...availableHospitals].sort(
-      (a, b) =>
-        haversineDistance(ambulancePos.lat, ambulancePos.lon, a.lat, a.lon) -
-        haversineDistance(ambulancePos.lat, ambulancePos.lon, b.lat, b.lon)
-    );
-  }, [availableHospitals, ambulancePos?.lat, ambulancePos?.lon]);
+    if (!availableHospitals?.length) return [];
+    const ordered = ambulancePos?.lat
+      ? [...availableHospitals].sort(
+          (a, b) =>
+            haversineDistance(ambulancePos.lat, ambulancePos.lon, a.lat, a.lon) -
+            haversineDistance(ambulancePos.lat, ambulancePos.lon, b.lat, b.lon)
+        )
+      : availableHospitals;
+    const selectedTarget =
+      activeHospital || availableHospitals.find((h) => h.id === selectedHospitalId) || null;
+    return ensureActiveHospitalInList(ordered.slice(0, 120), selectedTarget);
+  }, [availableHospitals, ambulancePos?.lat, ambulancePos?.lon, activeHospital, selectedHospitalId]);
 
   // Real-time Dijkstra vs A* comparison for current source -> activeHospital
   const solverMetrics = useMemo(() => {
@@ -313,7 +319,7 @@ export function RouteOptimization() {
               <option value="">Auto Select Optimal Hospital</option>
               {sortedHospitals.map((h) => (
                 <option key={h.id} value={h.id}>
-                  {h.name} ({h.city || 'NCR'})
+                  {h.name} ({h.city || h.state || 'India'})
                 </option>
               ))}
             </select>

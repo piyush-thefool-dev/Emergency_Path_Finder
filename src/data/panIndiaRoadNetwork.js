@@ -5,6 +5,11 @@
  * and urban arterial corridors.
  */
 
+import {
+  PAN_INDIA_EXPANSION_NODES,
+  PAN_INDIA_EXPANSION_EDGES,
+} from './panIndiaRoadExpansion.js';
+
 export const PAN_INDIA_METADATA = {
   "id": "pan_india_national_highway_grid_v2",
   "name": "Pan-India Metropolitan & National Highway Emergency Corridor Grid",
@@ -1328,7 +1333,8 @@ export const PAN_INDIA_NODES = [
     "lat": 10.5669,
     "lon": 72.6417,
     "type": "healthcare_hub"
-  }
+  },
+  ...PAN_INDIA_EXPANSION_NODES
 ];
 
 export const PAN_INDIA_EDGES = [
@@ -7731,5 +7737,6 @@ export const PAN_INDIA_EDGES = [
     "closed": false,
     "isOneWay": false,
     "name": "Kochi-Kavaratti Lakshadweep Medevac Corridor (Reverse)"
-  }
+  },
+  ...PAN_INDIA_EXPANSION_EDGES
 ];

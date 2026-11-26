@@ -4,7 +4,7 @@
  */
 
 import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
-import { SAMPLE_HOSPITALS } from '../data/delhiNcrHospitals.js';
+import { PAN_INDIA_HOSPITALS } from '../data/panIndiaHospitals.js';
 import { OSM_GREATER_NOIDA_POIS } from '../data/osmRegionalPois.js';
 import { fetchWibHospitals, WIB_API_CONFIG } from '../services/wibHospitalService.js';
 import {
@@ -133,9 +133,9 @@ export function useRouting(weightedGraph, isFigure2Mode, options = {}) {
         if (stored) {
           const parsed = JSON.parse(stored);
           if (Array.isArray(parsed) && parsed.length > 0) {
-            // Always ensure the complete 280-hospital registry is loaded, merging any user bed edits
+            // Always ensure the complete 5,000-hospital registry is loaded, merging any user bed edits
             const customMap = new Map(parsed.map((h) => [h.id, h]));
-            return SAMPLE_HOSPITALS.map((base) => {
+            return PAN_INDIA_HOSPITALS.map((base) => {
               const custom = customMap.get(base.id);
               if (custom && custom.isUserEditedBedData) {
                 return {
@@ -157,13 +157,13 @@ export function useRouting(weightedGraph, isFigure2Mode, options = {}) {
         console.warn('Could not read custom hospitals:', e);
       }
     }
-    return SAMPLE_HOSPITALS;
+    return PAN_INDIA_HOSPITALS;
   });
 
   const [isSyncingWib, setIsSyncingWib] = useState(false);
   const [wibApiStatus, setWibApiStatus] = useState({
     isLive: false,
-    totalFetched: SAMPLE_HOSPITALS.length,
+    totalFetched: PAN_INDIA_HOSPITALS.length,
     source: `${WIB_API_CONFIG.sourceName} (Greater Noida)`,
     lastFetched: new Date().toISOString(),
   });
@@ -199,7 +199,7 @@ export function useRouting(weightedGraph, isFigure2Mode, options = {}) {
         console.warn('Could not remove custom hospitals:', e);
       }
     }
-    setWibHospitals(SAMPLE_HOSPITALS);
+    setWibHospitals(PAN_INDIA_HOSPITALS);
   }, []);
 
   // Fetch hospital directory metadata from the WIB endpoint when available.
@@ -324,7 +324,7 @@ export function useRouting(weightedGraph, isFigure2Mode, options = {}) {
         },
       ];
     }
-    return wibHospitals.length > 0 ? wibHospitals : SAMPLE_HOSPITALS;
+    return wibHospitals.length > 0 ? wibHospitals : PAN_INDIA_HOSPITALS;
   }, [isFigure2Mode, wibHospitals]);
 
   // All registered hospitals in the CAD directory for emergency search & registry

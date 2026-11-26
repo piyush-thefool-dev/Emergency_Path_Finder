@@ -178,7 +178,7 @@ export function DispatchProvider({ children }) {
       id: 'act-init-1',
       time: new Date().toISOString(),
       title: 'Dispatch console initialized',
-      detail: 'Loaded 360 Pan-India hospitals across all 36 States & UTs and OSM directed graph.',
+      detail: 'Loaded 5,000 Pan-India hospitals across all 36 States & UTs and 593-node OSM directed graph.',
       tone: 'primary',
     },
   ]);

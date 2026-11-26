@@ -43,7 +43,7 @@ export function AppRoutes() {
       <Route path="/more" element={<MorePage />} />
       <Route path="/incidents" element={<SubPage title="Emergency Incidents" subtitle="Queue, ambulance dispatch & road alerts"><Incidents /></SubPage>} />
       <Route path="/fleet" element={<SubPage title="Ambulance Fleet" subtitle="Live GPS telemetry & unit readiness"><AmbulanceFleet /></SubPage>} />
-      <Route path="/directory" element={<SubPage title="Hospitals" subtitle="State-wise 360 referral hospitals, ETA & beds"><Hospitals /></SubPage>} />
+      <Route path="/directory" element={<SubPage title="Hospitals" subtitle="State-wise 5,000 referral hospitals, ETA & beds"><Hospitals /></SubPage>} />
       <Route path="/routing" element={<SubPage title="Route Optimization" subtitle="Dijkstra vs A* & live road probe"><RouteOptimization /></SubPage>} />
       <Route path="/analytics" element={<SubPage title="Analytics & Reports" subtitle="Algorithm pruning & ICU capacity"><Analytics /></SubPage>} />
       <Route path="/settings" element={<SubPage title="Settings" subtitle="Road graph topology & licensing"><Settings /></SubPage>} />
