@@ -3,7 +3,7 @@
  *
  * Calibrated directly from live Overpass OSM centroids (`amenity=hospital` / `healthcare=centre`)
  * so every visible hospital point on the OpenStreetMap tile canvas receives an exact,
- * aligned 3D hospital marker without altering the 280-entry Pan-India core registry length.
+ * aligned 3D hospital marker without altering the 5,000-entry Pan-India hospital registry.
  */
 
 export const OSM_GREATER_NOIDA_POIS = [

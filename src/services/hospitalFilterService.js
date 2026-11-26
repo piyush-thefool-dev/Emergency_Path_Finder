@@ -189,7 +189,7 @@ export async function computeOsrmTableMetrics(userPos, candidateHospitals = [], 
 
   const { signal, timeoutMs = 4000 } = options;
 
-  // Cap OSRM single-table query size to avoid public OSRM URL length limits when "All (280)" is active
+  // Cap OSRM single-table query size to avoid public OSRM URL length limits when "All (5,000)" is active
   if (candidateHospitals.length > 60) {
     return computeLocalGeometricFallback(userPos, candidateHospitals);
   }
