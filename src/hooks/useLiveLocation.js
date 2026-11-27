@@ -50,6 +50,15 @@ class GpsKalmanFilter {
   }
 }
 
+export const GPS_TRACKING_CONFIG = {
+  fastLockTimeoutMs: 3500,
+  fastLockMaxAgeMs: 15000,
+  highAccuracyTimeoutMs: 7500,
+  highAccuracyMaxAgeMs: 2000,
+  fallbackTimeoutMs: 6000,
+  fallbackMaxAgeMs: 5000,
+};
+
 export function useLiveLocation({
   onLocationUpdate,
   activeRouteNodeIds = [],
@@ -143,6 +152,28 @@ export function useLiveLocation({
     };
 
     const handleError = (err) => {
+      // Automatically downgrade from high-accuracy satellite fix to responsive network/Wi-Fi tracking on timeout
+      if (err?.code === 3 && watchIdRef.current !== null) {
+        try {
+          navigator.geolocation.clearWatch(watchIdRef.current);
+          watchIdRef.current = navigator.geolocation.watchPosition(handleSuccess, (fallbackErr) => {
+            const msg =
+              fallbackErr.code === 1
+                ? 'Location permission denied. Please allow location access in your browser to enable live tracking.'
+                : fallbackErr.code === 2
+                ? 'Position unavailable. Check your device GPS signal.'
+                : 'Location request timed out. Retrying...';
+            setGpsError(msg);
+            setIsGpsActive(false);
+          }, {
+            enableHighAccuracy: false,
+            timeout: GPS_TRACKING_CONFIG.fallbackTimeoutMs,
+            maximumAge: GPS_TRACKING_CONFIG.fallbackMaxAgeMs,
+          });
+          return;
+        } catch {}
+      }
+
       let msg = 'Unable to retrieve your location.';
       if (err.code === 1) {
         msg = 'Location permission denied. Please allow location access in your browser to enable live tracking.';
@@ -156,10 +187,23 @@ export function useLiveLocation({
     };
 
     try {
+      // Fast initial pre-lock (< 3.5s) using cached/network positioning before high-accuracy stream refines it
+      if (typeof navigator.geolocation.getCurrentPosition === 'function') {
+        navigator.geolocation.getCurrentPosition(
+          handleSuccess,
+          () => {},
+          {
+            enableHighAccuracy: false,
+            timeout: GPS_TRACKING_CONFIG.fastLockTimeoutMs,
+            maximumAge: GPS_TRACKING_CONFIG.fastLockMaxAgeMs,
+          }
+        );
+      }
+
       watchIdRef.current = navigator.geolocation.watchPosition(handleSuccess, handleError, {
         enableHighAccuracy: true,
-        timeout: 12000,
-        maximumAge: 1000,
+        timeout: GPS_TRACKING_CONFIG.highAccuracyTimeoutMs,
+        maximumAge: GPS_TRACKING_CONFIG.highAccuracyMaxAgeMs,
       });
     } catch (e) {
       setGpsError(`Error initializing GPS tracker: ${e.message}`);

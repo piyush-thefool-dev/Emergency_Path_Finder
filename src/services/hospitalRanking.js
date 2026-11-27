@@ -13,7 +13,7 @@ import { EMERGENCY_CATEGORIES } from '../config/emergencyCategories.js';
 import { DATA_FRESHNESS_LIMITS } from '../config/constants.js';
 import { dijkstra } from '../algorithms/dijkstra.js';
 import { astar } from '../algorithms/astar.js';
-import { extractPathDetails } from '../algorithms/pathUtils.js';
+import { buildAdjacencyList, buildDirectedEdgeMap, extractPathDetails, reconstructPath } from '../algorithms/pathUtils.js';
 import { isDataStale, getMinutesElapsed } from '../utils/time.js';
 import { findNearestNode, haversineDistance } from '../utils/geo.js';
 import { OSM_GREATER_NOIDA_POIS } from '../data/osmRegionalPois.js';
@@ -161,8 +161,12 @@ export function rankHospitalsForEmergency(
   let unreachableCount = 0;
   const evaluatedHospitals = [];
 
-  // Single-source Dijkstra can compute costs to all reachable nodes in one pass if using dijkstra
-  const multiDijkstra = dijkstra(weightedGraph, sourceNodeId, null);
+  // Build shared graph indices once so 35,000+ hospital ranking completes in milliseconds (O(|E| + |V|log|V| + H)).
+  const nodeIdSet = new Set(weightedGraph.nodes.map((n) => n.id));
+  const sharedAdj = buildAdjacencyList(weightedGraph.edges);
+  const sharedEdgeMap = buildDirectedEdgeMap(weightedGraph.edges);
+  const multiDijkstra = dijkstra(weightedGraph, sourceNodeId, null, sharedAdj);
+  const pathCacheByNode = new Map();
 
   for (const hospital of hospitals) {
     // 1. Specialty Constraint Check
@@ -174,38 +178,40 @@ export function rankHospitalsForEmergency(
       continue;
     }
 
-    // 2. Target Node ID Resolution & Route Calculation
-    const hasNode = weightedGraph.nodes.some((n) => n.id === hospital.nodeId);
-    const targetNodeId = hasNode
+    // 2. Target Node ID Resolution & Cached Optimal Route Lookup
+    const targetNodeId = nodeIdSet.has(hospital.nodeId)
       ? hospital.nodeId
       : (findNearestNode(hospital.lat, hospital.lon, weightedGraph.nodes)?.id || hospital.nodeId);
 
-    let routeResult;
-    if (algorithm === 'astar') {
-      routeResult = astar(weightedGraph, sourceNodeId, targetNodeId);
-    } else {
-      // Use multiDijkstra result for fast lookup
+    let cachedRoute = pathCacheByNode.get(targetNodeId);
+    if (!cachedRoute) {
       const cost = multiDijkstra.costMap.get(targetNodeId);
       const isReached = cost !== undefined && cost < Infinity;
       const path = isReached
-        ? dijkstra(weightedGraph, sourceNodeId, targetNodeId).path
+        ? reconstructPath(multiDijkstra.predecessors, targetNodeId, sourceNodeId)
         : [];
-      routeResult = {
+      const details = path.length > 1
+        ? extractPathDetails(path, weightedGraph.edges, sharedEdgeMap)
+        : { pathEdges: [], totalDistanceM: 0 };
+
+      cachedRoute = {
         path,
         totalCost: isReached ? cost : Infinity,
         nodesExpanded: multiDijkstra.nodesExpanded,
         queryTimeMs: multiDijkstra.queryTimeMs,
         success: isReached && path.length > 0,
+        pathEdges: details.pathEdges,
+        totalDistanceM: details.totalDistanceM,
       };
+      pathCacheByNode.set(targetNodeId, cachedRoute);
     }
 
-    if (!routeResult.success || routeResult.totalCost === Infinity) {
+    if (!cachedRoute.success || cachedRoute.totalCost === Infinity) {
       unreachableCount++;
       continue;
     }
 
-    // 3. Extract physical route distance & edge details
-    const { pathEdges, totalDistanceM } = extractPathDetails(routeResult.path, weightedGraph.edges);
+    const { pathEdges, totalDistanceM } = cachedRoute;
 
     // 4. Data Freshness and Availability Validation
     const warnings = [];
@@ -235,18 +241,18 @@ export function rankHospitalsForEmergency(
 
     // Compute seat & bed intake readiness factor
     const seatFactor = calculateSeatIntakeFactor(availability, requiredSpecialty);
-    const compositeScore = Math.max(1, Number((routeResult.totalCost + seatFactor.seatPenaltySec).toFixed(1)));
+    const compositeScore = Math.max(1, Number((cachedRoute.totalCost + seatFactor.seatPenaltySec).toFixed(1)));
 
     evaluatedHospitals.push({
       ...hospital,
       targetNodeId,
-      travelTimeSec: routeResult.totalCost,
-      travelTimeMin: Number((routeResult.totalCost / 60).toFixed(1)),
+      travelTimeSec: cachedRoute.totalCost,
+      travelTimeMin: Number((cachedRoute.totalCost / 60).toFixed(1)),
       distanceM: totalDistanceM,
-      pathNodeIds: routeResult.path,
+      pathNodeIds: cachedRoute.path,
       pathEdges,
-      nodesExpanded: routeResult.nodesExpanded,
-      queryTimeMs: routeResult.queryTimeMs,
+      nodesExpanded: cachedRoute.nodesExpanded,
+      queryTimeMs: cachedRoute.queryTimeMs,
       seatPenaltySec: seatFactor.seatPenaltySec,
       seatReadinessLevel: seatFactor.seatReadinessLevel,
       seatReadinessLabel: seatFactor.seatReadinessLabel,
@@ -278,6 +284,16 @@ export function rankHospitalsForEmergency(
     // 5. Quaternary: Physical road distance
     return a.distanceM - b.distanceM;
   });
+
+  // Refine exact A* search telemetry on the winning recommendation when algorithm === 'astar'
+  if (algorithm === 'astar' && evaluatedHospitals.length > 0) {
+    const top = evaluatedHospitals[0];
+    const aRun = astar(weightedGraph, sourceNodeId, top.targetNodeId, sharedAdj);
+    if (aRun.success && Array.isArray(aRun.path) && aRun.path.length > 0) {
+      top.nodesExpanded = aRun.nodesExpanded;
+      top.queryTimeMs = aRun.queryTimeMs;
+    }
+  }
 
   const bestRecommendation = evaluatedHospitals.length > 0 ? evaluatedHospitals[0] : null;
   const alternateCandidates = evaluatedHospitals.length > 1 ? evaluatedHospitals.slice(1) : [];
@@ -359,10 +375,23 @@ export function buildMapHospitalMarkers({
 } = {}) {
   const hasBoundedRadius = Number.isFinite(radiusKm) && radiusKm > 0;
   const maxLocalRadiusM = hasBoundedRadius ? radiusKm * 1000 : Infinity;
+  const hasOrigin = Boolean(
+    hasBoundedRadius && ambulancePos && Number.isFinite(ambulancePos.lat) && Number.isFinite(ambulancePos.lon)
+  );
+  // Pre-filter with cheap rectangular degree bounds before invoking trigonometric Haversine across 35,000 rows
+  const maxDegLat = hasOrigin ? radiusKm / 110.5 : Infinity;
+  const maxDegLon = hasOrigin
+    ? radiusKm / Math.max(25, 111.32 * Math.cos((ambulancePos.lat * Math.PI) / 180))
+    : Infinity;
 
   const isInsideRadius = (hosp) => {
-    if (!hasBoundedRadius || !ambulancePos) return true;
-    if (!Number.isFinite(ambulancePos.lat) || !Number.isFinite(ambulancePos.lon)) return true;
+    if (!hasOrigin) return true;
+    if (
+      Math.abs(hosp.lat - ambulancePos.lat) > maxDegLat ||
+      Math.abs(hosp.lon - ambulancePos.lon) > maxDegLon
+    ) {
+      return false;
+    }
     return haversineDistance(ambulancePos.lat, ambulancePos.lon, hosp.lat, hosp.lon) <= maxLocalRadiusM;
   };
 

@@ -195,7 +195,12 @@ export function useRouteCorridor({
       timer.current = null;
     }
     if (timer.current) return;
-    const wait = incidentChanged ? 60 : Math.max(300, 1500 - (Date.now() - lastFired.current));
+    const isFirstRouteFetch = lastFired.current === 0;
+    const wait = isFirstRouteFetch
+      ? 0
+      : incidentChanged
+      ? 60
+      : Math.max(250, 700 - (Date.now() - lastFired.current));
     timer.current = setTimeout(() => {
       timer.current = null;
       lastFired.current = Date.now();

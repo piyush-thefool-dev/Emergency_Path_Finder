@@ -28,7 +28,29 @@ import { isOffline, markNetworkFailure } from '../utils/network.js';
 
 const CLOSURE_RADIUS_M = 35;
 const DETOUR_OFFSETS_M = [140, 280, 550, 950];
+const REMOTE_ROUTE_TIMEOUT_MS = 2500;
+export const ROAD_ROUTE_TIMEOUT_MS_FOR_TEST = REMOTE_ROUTE_TIMEOUT_MS;
 const cache = new Map();
+
+function createRequestSignal(callerSignal, timeoutMs = REMOTE_ROUTE_TIMEOUT_MS) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(new Error(`Routing request timed out after ${timeoutMs} ms`)), timeoutMs);
+  const onCallerAbort = () => controller.abort(callerSignal?.reason);
+  if (callerSignal) {
+    if (callerSignal.aborted) {
+      controller.abort(callerSignal.reason);
+    } else {
+      callerSignal.addEventListener('abort', onCallerAbort, { once: true });
+    }
+  }
+  return {
+    signal: controller.signal,
+    cleanup: () => {
+      clearTimeout(timeoutId);
+      if (callerSignal) callerSignal.removeEventListener('abort', onCallerAbort);
+    },
+  };
+}
 
 /** Extracts evenly spaced intermediate waypoints from a fallback graph path for OSRM detour routing. */
 export function extractWaypointsForRoadDetour(coords = [], maxVia = 4) {
@@ -216,12 +238,18 @@ async function valhallaRoutes(points, signal) {
         directions_options: { units: 'kilometers' },
       };
       const endpoint = base.includes('?') ? base : `${base}/route`;
-      const res = await fetch(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-        signal,
-      });
+      const req = createRequestSignal(signal, REMOTE_ROUTE_TIMEOUT_MS);
+      let res;
+      try {
+        res = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+          signal: req.signal,
+        });
+      } finally {
+        req.cleanup();
+      }
       if (!res.ok) continue;
       const data = await res.json();
       const trip = data.trip;
@@ -237,7 +265,7 @@ async function valhallaRoutes(points, signal) {
         }];
       }
     } catch (err) {
-      if (err?.name === 'AbortError') throw err;
+      if (err?.name === 'AbortError' && signal?.aborted) throw err;
       markNetworkFailure(err);
     }
   }
@@ -269,15 +297,21 @@ async function orsRoutes(points, closedSegments = [], signal) {
       }
     }
 
-    const res = await fetch(ORS_BASE, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: orsKey,
-      },
-      body: JSON.stringify(body),
-      signal,
-    });
+    const req = createRequestSignal(signal, REMOTE_ROUTE_TIMEOUT_MS);
+    let res;
+    try {
+      res = await fetch(ORS_BASE, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: orsKey,
+        },
+        body: JSON.stringify(body),
+        signal: req.signal,
+      });
+    } finally {
+      req.cleanup();
+    }
     if (!res.ok) return [];
     const data = await res.json();
     const route = data.routes?.[0];
@@ -290,7 +324,7 @@ async function orsRoutes(points, closedSegments = [], signal) {
       engine: 'OpenRouteService (avoid_polygons)',
     }];
   } catch (err) {
-    if (err?.name === 'AbortError') throw err;
+    if (err?.name === 'AbortError' && signal?.aborted) throw err;
     markNetworkFailure(err);
     return [];
   }
@@ -305,13 +339,19 @@ async function osrmJson(path, signal) {
   for (const base of OSRM_BASES) {
     if (isOffline()) break;
     try {
-      const res = await fetch(`${base}${path}`, { signal });
+      const req = createRequestSignal(signal, REMOTE_ROUTE_TIMEOUT_MS);
+      let res;
+      try {
+        res = await fetch(`${base}${path}`, { signal: req.signal });
+      } finally {
+        req.cleanup();
+      }
       if (!res.ok) throw new Error(`Routing HTTP ${res.status}`);
       const data = await res.json();
       if (data.code !== 'Ok') throw new Error(data.code || 'Routing error');
       return data;
     } catch (err) {
-      if (err?.name === 'AbortError') throw err;
+      if (err?.name === 'AbortError' && signal?.aborted) throw err;
       markNetworkFailure(err);
       lastError = err;
     }

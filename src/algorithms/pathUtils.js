@@ -54,26 +54,37 @@ export function buildAdjacencyList(edges) {
 }
 
 /**
- * Maps a sequence of node IDs to the corresponding edge objects and cumulative distance.
+ * Builds a fast directed edge lookup table keyed by `${from}->${to}` (picking lowest weight for parallel edges).
  *
- * @param {Array<string|number>} pathNodeIds Ordered list of node IDs
  * @param {Array<Object>} edges Edge list
- * @returns {{ pathEdges: Array<Object>, totalDistanceM: number }}
+ * @returns {Map<string, Object>}
  */
-export function extractPathDetails(pathNodeIds, edges) {
-  if (!Array.isArray(pathNodeIds) || pathNodeIds.length <= 1) {
-    return { pathEdges: [], totalDistanceM: 0 };
-  }
-
-  // Index directed edges by 'from->to'
+export function buildDirectedEdgeMap(edges) {
   const edgeMap = new Map();
+  if (!Array.isArray(edges)) return edgeMap;
   for (const e of edges) {
     const key = `${e.from}->${e.to}`;
-    // If multiple parallel edges exist, pick smallest weight
     if (!edgeMap.has(key) || (e.weight !== undefined && e.weight < edgeMap.get(key).weight)) {
       edgeMap.set(key, e);
     }
   }
+  return edgeMap;
+}
+
+/**
+ * Maps a sequence of node IDs to the corresponding edge objects and cumulative distance.
+ *
+ * @param {Array<string|number>} pathNodeIds Ordered list of node IDs
+ * @param {Array<Object>} edges Edge list
+ * @param {Map<string, Object>} [precomputedEdgeMap=null] Optional pre-indexed edge map for O(|path|) batch calls
+ * @returns {{ pathEdges: Array<Object>, totalDistanceM: number }}
+ */
+export function extractPathDetails(pathNodeIds, edges, precomputedEdgeMap = null) {
+  if (!Array.isArray(pathNodeIds) || pathNodeIds.length <= 1) {
+    return { pathEdges: [], totalDistanceM: 0 };
+  }
+
+  const edgeMap = precomputedEdgeMap || buildDirectedEdgeMap(edges);
 
   const pathEdges = [];
   let totalDistanceM = 0;

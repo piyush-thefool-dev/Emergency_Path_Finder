@@ -110,19 +110,44 @@ export function filterHospitalsByRadius(
     };
   }
 
-  // 1. Calculate Haversine distance for all hospitals
-  const withDistance = hospitals
-    .map((h) => {
-      if (h.lat == null || h.lon == null) return null;
+  // 1. Pre-filter with cheap rectangular degree bounds before Haversine across 35,000 hospitals
+  const maxFiniteTierKm = Math.max(...tiers.filter((t) => Number.isFinite(t)), fallbackRadiusKm || 20);
+  const hasBoundedMaxTier = Number.isFinite(maxFiniteTierKm) && !tiers.includes(Infinity);
+  const maxDegLat = hasBoundedMaxTier ? maxFiniteTierKm / 110.5 : Infinity;
+  const maxDegLon = hasBoundedMaxTier
+    ? maxFiniteTierKm / Math.max(25, 111.32 * Math.cos((userPos.lat * Math.PI) / 180))
+    : Infinity;
+
+  const computeWithDistance = (list) => {
+    const out = [];
+    for (const h of list) {
+      if (h.lat == null || h.lon == null) continue;
       const distM = haversineDistance(userPos.lat, userPos.lon, h.lat, h.lon);
       const distKm = distM / 1000;
-      return {
+      out.push({
         ...h,
         haversineM: distM,
         haversineKm: Number(distKm.toFixed(2)),
-      };
-    })
-    .filter(Boolean);
+      });
+    }
+    return out;
+  };
+
+  let withDistance;
+  if (hasBoundedMaxTier) {
+    const boundedPool = [];
+    for (const h of hospitals) {
+      if (h.lat == null || h.lon == null) continue;
+      if (Math.abs(h.lat - userPos.lat) <= maxDegLat && Math.abs(h.lon - userPos.lon) <= maxDegLon) {
+        boundedPool.push(h);
+      }
+    }
+    const localWithDist = computeWithDistance(boundedPool);
+    const localWithinMax = localWithDist.filter((h) => h.haversineKm <= maxFiniteTierKm);
+    withDistance = localWithinMax.length > 0 ? localWithDist : computeWithDistance(hospitals);
+  } else {
+    withDistance = computeWithDistance(hospitals);
+  }
 
   // 2. Cascade through automatic tiers: 5 km -> 10 km -> 20 km
   for (let i = 0; i < tiers.length; i++) {
@@ -187,9 +212,9 @@ export async function computeOsrmTableMetrics(userPos, candidateHospitals = [], 
     return computeLocalGeometricFallback(userPos, candidateHospitals);
   }
 
-  const { signal, timeoutMs = 4000 } = options;
+  const { signal, timeoutMs = 2200 } = options;
 
-  // Cap OSRM single-table query size to avoid public OSRM URL length limits when "All (5,000)" is active
+  // Cap OSRM single-table query size to avoid public OSRM URL length limits when "All (35,000)" is active
   if (candidateHospitals.length > 60) {
     return computeLocalGeometricFallback(userPos, candidateHospitals);
   }
