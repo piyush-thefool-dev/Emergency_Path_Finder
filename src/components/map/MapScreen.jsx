@@ -273,8 +273,6 @@ export function MapScreen() {
                 )}
               </button>
 
-              <CadBrandLogo className="w-7 h-7 rounded-lg border border-white/10" />
-
               <button
                 type="button"
                 onClick={() => {
@@ -282,10 +280,10 @@ export function MapScreen() {
                   setSearchModalOpen(true);
                 }}
                 aria-label="Search Registry"
-                title={`Search all ${availableHospitals?.length || 5000} registered hospitals`}
+                title={`Search all ${availableHospitals?.length || 35000} registered hospitals`}
                 className="flex-1 min-w-0 h-full text-left px-1 text-xs sm:text-sm font-sans text-slate-500 dark:text-slate-300 truncate cursor-pointer"
               >
-                Search {availableHospitals?.length || 5000} hospitals…
+                Search {availableHospitals?.length || 35000} hospitals…
               </button>
 
               <button
@@ -593,7 +591,7 @@ export function MapScreen() {
                   </button>
                   <span className="font-bold text-xs uppercase tracking-wider text-slate-900 dark:text-slate-100 font-mono flex items-center gap-1.5 truncate">
                     <Hospital className="w-3.5 h-3.5 text-[#D62828] shrink-0" />
-                    <span className="truncate">Hospital Registry ({availableHospitals?.length || 5000} Registered Facilities)</span>
+                    <span className="truncate">Hospital Registry ({availableHospitals?.length || 35000} Registered Facilities)</span>
                   </span>
                 </div>
                 <button
