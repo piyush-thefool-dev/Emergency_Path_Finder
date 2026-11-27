@@ -80,7 +80,7 @@ describe('Network Offline Utility & Fault Isolation', () => {
     assert.ok(weather.label.includes('Offline'));
   });
 
-  it('fetchWibHospitals returns bundled 5,000-hospital registry without throwing when offline', async () => {
+  it('fetchWibHospitals returns bundled 35,000-hospital registry without throwing when offline', async () => {
     forceOfflineStatus(true);
     const wib = await fetchWibHospitals();
     assert.strictEqual(wib.isLive, false);

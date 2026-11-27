@@ -1,6 +1,6 @@
 /**
  * Google Maps–inspired Full-Bleed Desktop Dispatch View (`/` and `/map`).
- * Preserves full routing, 5,000-hospital search, 4 triage categories, GPS tracking,
+ * Preserves full routing, 35,000-hospital search, 4 triage categories, GPS tracking,
  * Road Alerts inspector, Layers switcher (Default / Street / Satellite / Graph Nodes),
  * and zoom/locate controls — cleanly without any user account section.
  */

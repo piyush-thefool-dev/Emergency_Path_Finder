@@ -193,7 +193,7 @@ export function HospitalSearchBar({
     setQuery('');
   };
 
-  const totalHospitals = hospitals.length || enrichedHospitals.length || 5000;
+  const totalHospitals = hospitals.length || enrichedHospitals.length || 35000;
   const showList = embedded || isOpen;
   const hasAmbulancePos = ambulancePos?.lat != null && ambulancePos?.lon != null;
   const inputRightPadding = selectedHospitalId ? 'pr-44' : query ? 'pr-32' : 'pr-28';

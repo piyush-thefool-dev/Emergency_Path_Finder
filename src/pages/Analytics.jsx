@@ -1,7 +1,7 @@
 /**
  * Analytics & Reports Page (`/analytics`).
  * Displays genuine empirical algorithm benchmarks (Dijkstra vs A*), regional hospital capacity
- * breakdowns across all 5,000 Pan-India facilities (36 States & UTs), incident queue totals, and speed regression MAE metrics.
+ * breakdowns across all 35,000 Pan-India facilities (36 States & UTs), incident queue totals, and speed regression MAE metrics.
  */
 
 import { useState, useMemo } from 'react';

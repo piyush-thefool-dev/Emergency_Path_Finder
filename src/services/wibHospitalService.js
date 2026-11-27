@@ -235,7 +235,7 @@ export const REGIONAL_ANCHORS = [
 
 /**
  * Transforms raw WIB API hospital records into road-network mapped hospital objects.
- * Preserves all 5,000 referral & apex trauma facilities across all 36 Indian States & UTs.
+ * Preserves all 35,000 referral & apex trauma facilities across all 36 Indian States & UTs.
  *
  * @param {Array<Object>} rawList
  * @returns {Array<Object>}

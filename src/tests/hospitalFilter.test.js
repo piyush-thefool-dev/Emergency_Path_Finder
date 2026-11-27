@@ -191,13 +191,13 @@ describe('Two-Stage Hospital Distance & ETA Filtering', () => {
     const generalRes = await filterAndRankHospitalsByOsrmEta(userPos, PAN_INDIA_HOSPITALS, {
       radiusKm: 10,
     });
-    assert.strictEqual(generalRes.topHospitals.length, 16, 'Must return all 16 facilities within 10 km (including Felix Noida)');
+    assert.strictEqual(generalRes.topHospitals.length, 24, 'Must return all 24 facilities within 10 km (including Felix Noida)');
     assert.ok(generalRes.topHospitals.some((h) => h.id === 'hosp_felix_noida'), 'Must include Felix Hospital within 10 km');
 
     const traumaRes = await filterAndRankHospitalsByOsrmEta(userPos, PAN_INDIA_HOSPITALS, {
       radiusKm: 10,
       requiredSpecialty: 'trauma_center',
     });
-    assert.strictEqual(traumaRes.topHospitals.length, 11, 'Must return all 11 trauma facilities within 10 km');
+    assert.strictEqual(traumaRes.topHospitals.length, 15, 'Must return all 15 trauma facilities within 10 km');
   });
 });

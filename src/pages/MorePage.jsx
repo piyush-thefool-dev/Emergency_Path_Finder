@@ -25,7 +25,7 @@ import { useDispatch } from '../context/DispatchContext.jsx';
 const OPERATIONS_LINKS = [
   { to: '/incidents', icon: AlertTriangle, tint: 'text-[#D62828] dark:text-red-400 bg-red-500/10 border-red-500/20', title: 'Emergency Incidents', text: 'Active dispatch queue, severity & ambulance assignment', showCount: true },
   { to: '/fleet', icon: Truck, tint: 'text-blue-600 dark:text-blue-400 bg-blue-500/10 border-blue-500/20', title: 'Ambulance Fleet', text: 'Unit readiness, AMB-01 live telemetry & staging roster' },
-  { to: '/directory', icon: Building2, tint: 'text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border-emerald-500/20', title: 'Hospitals', text: 'All 5,000 facilities state-wise with Distance, ETA & beds' },
+  { to: '/directory', icon: Building2, tint: 'text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border-emerald-500/20', title: 'Hospitals', text: 'All 35,000 facilities state-wise with Distance, ETA & beds' },
   { to: '/routing', icon: Route, tint: 'text-indigo-600 dark:text-indigo-400 bg-indigo-500/10 border-indigo-500/20', title: 'Route Optimization', text: 'Dijkstra vs A* corridor planner, live road probe & weather' },
   { to: '/analytics', icon: BarChart3, tint: 'text-amber-600 dark:text-amber-400 bg-amber-500/10 border-amber-500/20', title: 'Analytics & Reports', text: 'Empirical speed benchmarks & regional ICU capacity' },
   { to: '/settings', icon: Settings, tint: 'text-slate-700 dark:text-slate-300 bg-slate-500/10 border-slate-500/20', title: 'Settings', text: 'Road network dataset switcher, formulas & governance' },

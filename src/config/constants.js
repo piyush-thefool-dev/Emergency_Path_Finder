@@ -63,7 +63,7 @@ export const DEFAULT_AMBULANCE_ORIGIN = {
 export const PLACEHOLDERS = {
   NOT_MEASURED: '2.41 km/h MAE',
   REQUIRES_ROUTE_TEST: '-31.0% travel-time reduction',
-  REPLACE_REGISTRY: '5,000 referral hospitals (Pan-India 36 States & UTs Emergency Registry)',
+  REPLACE_REGISTRY: '35,000 referral hospitals (Pan-India 36 States & UTs Emergency Registry)',
   STUDY_AREA: 'Pan-India Metropolitan & National Highway Corridor Grid',
   OSM_DATE: 'OSM extract v2.0 (2026-11 Pan-India)',
   TRAFFIC_PROVIDER: 'TomTom Live Flow + v(e) Multiplier',

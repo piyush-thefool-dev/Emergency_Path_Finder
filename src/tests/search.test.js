@@ -71,8 +71,8 @@ test('Smart Multi-Token Hospital Search Verification', async (t) => {
     assert.ok(!reachable.some((h) => (h.address || '').toLowerCase().includes('kolkata')), 'Kolkata hospitals (>1300 km) must be excluded from 100 km search');
   });
 
-  await t.test('All registered hospitals (5,000) are available and searchable by city and state', () => {
-    assert.equal(PAN_INDIA_HOSPITALS.length, 5000, 'Must have exactly 5,000 registered hospitals in registry');
+  await t.test('All registered hospitals (35,000) are available and searchable by city and state', () => {
+    assert.equal(PAN_INDIA_HOSPITALS.length, 35000, 'Must have exactly 35,000 registered hospitals in registry');
     
     // Check key regional hospitals across India exist in address/name and can be matched
     const citiesAndStates = ['Delhi', 'Noida', 'Mumbai', 'Bengaluru', 'Kolkata', 'Chennai', 'Hyderabad', 'Sikkim', 'Ladakh', 'Nagaland'];

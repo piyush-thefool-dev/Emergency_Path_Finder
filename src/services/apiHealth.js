@@ -133,7 +133,7 @@ async function checkWeather() {
 
 async function checkWib(ctx = {}) {
   if (isOffline()) {
-    return { state: 'ok', detail: 'Bundled Pan-India 5,000-Hospital Registry (Active)' };
+    return { state: 'ok', detail: 'Bundled Pan-India 35,000-Hospital Registry (Active)' };
   }
   const dataGovKey =
     ctx?.dataGovKey ||
