@@ -9,8 +9,6 @@ import {
   FlaskConical,
   Database,
   CheckCircle2,
-  ShieldCheck,
-  Zap,
 } from 'lucide-react';
 
 export function Evaluation() {

@@ -3,8 +3,8 @@
  */
 
 import { useState } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
-import { Radio, ChevronDown, ChevronUp, ShieldCheck, Sparkles } from 'lucide-react';
+import { motion } from 'motion/react';
+import { Radio, ChevronDown, ChevronUp, ShieldCheck } from 'lucide-react';
 
 export function DisclaimerBanner({ compact = false }) {
   const [expanded, setExpanded] = useState(false);

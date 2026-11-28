@@ -13,27 +13,17 @@ import CompareTable from '../components/panels/CompareTable.jsx';
 import { useDispatch } from '../context/DispatchContext.jsx';
 import { useCalibration } from '../context/CalibrationContext.jsx';
 import { runAlgorithmBenchmark } from '../services/benchmark.js';
-import { getDefaultGraph } from '../services/graphLoader.js';
-import { computeGraphWeights } from '../services/edgeWeights.js';
-import { PAN_INDIA_HOSPITALS } from '../data/panIndiaHospitals.js';
 
 export function Analytics() {
-  const { dispatchIncidents, fleetUnits, routing } = useDispatch();
+  const { dispatchIncidents, fleetUnits, routing, graph } = useDispatch();
   const { calibration } = useCalibration();
   const [pairCount, setPairCount] = useState(15);
   const [runIdx, setRunIdx] = useState(0);
 
-  const weightedCityGraph = useMemo(() => {
-    return computeGraphWeights(getDefaultGraph(), {
-      timeOfDay: 'morning_peak',
-      weather: 'clear',
-    });
-  }, []);
-
   const benchmarkData = useMemo(() => {
-    return runAlgorithmBenchmark(weightedCityGraph, PAN_INDIA_HOSPITALS, pairCount);
+    return runAlgorithmBenchmark(graph.weightedGraph, routing.availableHospitals, pairCount);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [weightedCityGraph, pairCount, runIdx]);
+  }, [graph.weightedGraph, routing.availableHospitals, pairCount, runIdx]);
 
   const { pairResults, summary } = benchmarkData;
   const totalEmergencies = dispatchIncidents.length;

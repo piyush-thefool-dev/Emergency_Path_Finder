@@ -3,12 +3,28 @@
  * Visualizes live clinical intake, trauma bay availability, and ICU readiness across 6 Indian macro-zones.
  */
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Bed, CheckCircle2 } from 'lucide-react';
-import { PAN_INDIA_HOSPITALS } from '../../data/panIndiaHospitals.js';
+import { loadPanIndiaHospitals, getCachedPanIndiaHospitals } from '../../services/hospitalDataService.js';
 import { getHospitalMacroZone, groupHospitalsByState } from '../../utils/hospitalState.js';
 
-export function RegionalBedCapacityGraph({ hospitals = PAN_INDIA_HOSPITALS, className = '' }) {
+export function RegionalBedCapacityGraph({ hospitals: propHospitals, className = '' }) {
+  const [loadedHospitals, setLoadedHospitals] = useState(() => getCachedPanIndiaHospitals());
+
+  useEffect(() => {
+    if (Array.isArray(propHospitals) && propHospitals.length > 0) return;
+    let cancelled = false;
+    loadPanIndiaHospitals()
+      .then((data) => {
+        if (!cancelled) setLoadedHospitals(data);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [propHospitals]);
+
+  const hospitals = Array.isArray(propHospitals) && propHospitals.length > 0 ? propHospitals : loadedHospitals;
   const [activeZone, setActiveZone] = useState('ALL');
   const [breakdownMode, setBreakdownMode] = useState('ZONES'); // 'ZONES' | 'STATES'
 
@@ -42,7 +58,6 @@ export function RegionalBedCapacityGraph({ hospitals = PAN_INDIA_HOSPITALS, clas
 
   return (
     <div className={`rounded-2xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200/90 dark:border-white/[0.08] p-4 sm:p-5 shadow-xs font-mono space-y-4 ${className}`}>
-      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 dark:border-white/[0.06] pb-3">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center border border-blue-500/20">
@@ -165,7 +180,6 @@ export function RegionalBedCapacityGraph({ hospitals = PAN_INDIA_HOSPITALS, clas
         </div>
       )}
 
-      {/* Footer Summary Strip */}
       <div className="pt-2 border-t border-slate-100 dark:border-white/[0.06] flex flex-wrap items-center justify-between gap-2 text-2xs text-slate-500 dark:text-slate-400">
         <span className="flex items-center gap-1">
           <CheckCircle2 className="w-3 h-3 text-emerald-500" />

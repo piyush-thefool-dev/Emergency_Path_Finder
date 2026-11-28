@@ -1,3 +1,5 @@
+import { haversineDistance } from './geo.js';
+
 /**
  * Hospital Search and Spatial Relevance Utilities.
  * Provides multi-token fuzzy matching, space-insensitive aliases,
@@ -187,4 +189,70 @@ export function getSearchRelevance(hosp, query) {
   if (allTokensInCombined) return 100;
 
   return 0;
+}
+
+export function enrichHospitalsWithDistance(hospitals, ambulancePos) {
+  return (hospitals || []).map((h) => {
+    const distM =
+      ambulancePos?.lat != null && ambulancePos?.lon != null && h.lat != null && h.lon != null
+        ? haversineDistance(ambulancePos.lat, ambulancePos.lon, h.lat, h.lon)
+        : null;
+    const region = getHospitalRegion(h);
+    const driveTime = estimateDrivingTime(distM);
+    return { ...h, _distM: distM, _region: region, _driveTime: driveTime };
+  });
+}
+
+export function computeHospitalFilterCounts(enrichedHospitals) {
+  const counts = {
+    all: enrichedHospitals.length,
+    nearby5: 0,
+    nearby15: 0,
+    ncr: 0,
+    trauma: 0,
+    cardiac: 0,
+    burn: 0,
+    icu: 0,
+  };
+
+  enrichedHospitals.forEach((h) => {
+    if (h._distM != null && h._distM <= 5000) counts.nearby5++;
+    if (h._distM != null && h._distM <= 15000) counts.nearby15++;
+    if (h._region === 'ncr') counts.ncr++;
+    if (Array.isArray(h.specialties)) {
+      if (h.specialties.includes('trauma_center')) counts.trauma++;
+      if (h.specialties.includes('cardiology')) counts.cardiac++;
+      if (h.specialties.includes('burn_unit')) counts.burn++;
+    }
+    if ((h.bedAvailability?.icuBedsFree ?? 0) > 0) counts.icu++;
+  });
+
+  return counts;
+}
+
+export function filterAndSortHospitals(enrichedHospitals, query, activeFilter, selectedHospitalId) {
+  const q = query.trim().toLowerCase();
+
+  return enrichedHospitals
+    .map((h) => ({ ...h, _relevance: getSearchRelevance(h, q) }))
+    .filter((h) => {
+      if (activeFilter === 'nearby5' && (h._distM == null || h._distM > 5000)) return false;
+      if (activeFilter === 'nearby15' && (h._distM == null || h._distM > 15000)) return false;
+      if (activeFilter === 'ncr' && h._region !== 'ncr') return false;
+      if (activeFilter === 'trauma' && !h.specialties?.includes('trauma_center')) return false;
+      if (activeFilter === 'cardiac' && !h.specialties?.includes('cardiology')) return false;
+      if (activeFilter === 'burn' && !h.specialties?.includes('burn_unit')) return false;
+      if (activeFilter === 'icu' && (h.bedAvailability?.icuBedsFree ?? 0) <= 0) return false;
+      if (q && h._relevance <= 0) return false;
+      return true;
+    })
+    .sort((a, b) => {
+      if (a.id === selectedHospitalId) return -1;
+      if (b.id === selectedHospitalId) return 1;
+      if (q && b._relevance !== a._relevance) return b._relevance - a._relevance;
+      if (a._distM != null && b._distM != null) return a._distM - b._distM;
+      if (a._distM != null) return -1;
+      if (b._distM != null) return 1;
+      return (a.shortName || a.name || '').localeCompare(b.shortName || b.name || '');
+    });
 }

@@ -6,14 +6,11 @@
 import { useState, useMemo } from 'react';
 import { useDispatch } from '../context/DispatchContext.jsx';
 import { runAlgorithmBenchmark } from '../services/benchmark.js';
-import { getDefaultGraph } from '../services/graphLoader.js';
-import { computeGraphWeights } from '../services/edgeWeights.js';
 import { dijkstra } from '../algorithms/dijkstra.js';
 import { astar } from '../algorithms/astar.js';
-import { PAN_INDIA_HOSPITALS } from '../data/panIndiaHospitals.js';
 import BenchmarkChart from '../components/charts/BenchmarkChart.jsx';
 import CompareTable from '../components/panels/CompareTable.jsx';
-import { Play, CheckCircle2, AlertOctagon, HelpCircle, Cpu, Zap, Activity } from 'lucide-react';
+import { Play, CheckCircle2, AlertOctagon, HelpCircle, Cpu } from 'lucide-react';
 
 export function Benchmark() {
   const { routing, graph } = useDispatch();
@@ -21,20 +18,13 @@ export function Benchmark() {
   const [pairCount, setPairCount] = useState(15);
   const [benchmarkRunIndex, setBenchmarkRunIndex] = useState(0);
 
-  // Weighted city graph for benchmark
-  const weightedGraph = useMemo(() => {
-    const raw = getDefaultGraph();
-    return computeGraphWeights(raw, {
-      timeOfDay: 'morning_peak',
-      weather: 'clear',
-    });
-  }, []);
+  const weightedGraph = graph.weightedGraph;
 
   // Compute benchmark results
   const benchmarkData = useMemo(() => {
-    return runAlgorithmBenchmark(weightedGraph, PAN_INDIA_HOSPITALS, pairCount);
+    return runAlgorithmBenchmark(weightedGraph, routing.availableHospitals, pairCount);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [weightedGraph, pairCount, benchmarkRunIndex]);
+  }, [weightedGraph, routing.availableHospitals, pairCount, benchmarkRunIndex]);
 
   const { pairResults, summary, allCostsMatched } = benchmarkData;
 

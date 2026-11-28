@@ -1,43 +1,55 @@
 /**
  * Graph Loader Service.
  *
- * Provides a decoupled ingestion interface for road network graphs.
- * Structured so that real OpenStreetMap graphs exported via OSMnx, NetworkX,
- * or Overpass JSON can be dropped in without changing any UI or algorithm code.
- *
- * Expected Graph JSON Schema:
- * {
- *   "id": "string",
- *   "name": "string",
- *   "disclaimer": "string",
- *   "bounds": { "minLat": number, "maxLat": number, "minLon": number, "maxLon": number },
- *   "nodes": [
- *     { "id": "string|number", "name": "string", "lat": number, "lon": number, "type"?: "string" }
- *   ],
- *   "edges": [
- *     {
- *       "id": "string",
- *       "from": "string|number",
- *       "to": "string|number",
- *       "lengthM": number,
- *       "roadType": "motorway"|"primary"|"secondary"|"tertiary"|"residential"|"unclassified",
- *       "speedLimitKph"?: number,
- *       "lanes"?: number,
- *       "hasSignal"?: boolean,
- *       "isNarrow"?: boolean,
- *       "hasSpeedBreaker"?: boolean,
- *       "inSchoolZone"?: boolean,
- *       "closed"?: boolean,
- *       "isOneWay"?: boolean
- *     }
- *   ]
- * }
+ * Lazily code-splits the Pan-India & Delhi-NCR road graph via dynamic import()
+ * so initial bundle startup stays small while full topology loads on demand.
  */
 
 import { SYNTHETIC_NODES, SYNTHETIC_EDGES, SYNTHETIC_GRAPH_METADATA } from '../data/syntheticCityGraph.js';
-import { getRealGreaterNoidaOsmGraph } from '../data/delhiNcrRoadGraph.js';
-import { FIGURE_2_DEMO_GRAPH } from '../data/demoGraphFigure2.js';
+import { FIGURE_2_DEMO_GRAPH } from '../data/sampleGraph.js';
 import { validateGraph, validateEdge } from '../utils/validators.js';
+
+let cachedMasterOsmGraph = null;
+let masterOsmPromise = null;
+
+function buildSyntheticGraph() {
+  return {
+    ...SYNTHETIC_GRAPH_METADATA,
+    nodes: [...SYNTHETIC_NODES],
+    edges: [...SYNTHETIC_EDGES],
+    unit: 'seconds',
+    isSchematic: false,
+  };
+}
+
+export async function loadRealOsmGraph() {
+  if (cachedMasterOsmGraph) {
+    return cachedMasterOsmGraph;
+  }
+  if (masterOsmPromise) {
+    return masterOsmPromise;
+  }
+
+  masterOsmPromise = import('../data/delhiNcrRoadGraph.js')
+    .then((mod) => {
+      cachedMasterOsmGraph = mod.getRealGreaterNoidaOsmGraph();
+      masterOsmPromise = null;
+      return cachedMasterOsmGraph;
+    })
+    .catch((err) => {
+      masterOsmPromise = null;
+      throw err;
+    });
+
+  return masterOsmPromise;
+}
+
+export async function loadDefaultGraph(preferRealOsm = true) {
+  if (preferRealOsm) {
+    return loadRealOsmGraph();
+  }
+  return buildSyntheticGraph();
+}
 
 export const GRAPH_JSON_SCHEMA_DEFINITION = {
   $schema: 'http://json-schema.org/draft-07/schema#',
@@ -58,6 +70,7 @@ export const GRAPH_JSON_SCHEMA_DEFINITION = {
           name: { type: 'string' },
           lat: { type: 'number' },
           lon: { type: 'number' },
+          type: { type: 'string' },
         },
       },
     },
@@ -102,7 +115,6 @@ export function loadGraph(rawData) {
     };
   }
 
-  // Filter out any individually invalid edges
   const validEdges = rawData.edges.filter((e) => validateEdge(e).isValid);
 
   return {
@@ -116,38 +128,25 @@ export function loadGraph(rawData) {
 }
 
 /**
- * Returns the verified real-world OpenStreetMap Greater Noida road network graph.
- *
- * @returns {Object}
+ * Returns the verified real-world OpenStreetMap Greater Noida road network graph
+ * once loaded, or the lightweight synthetic grid while loading.
  */
 export function getRealOsmGraph() {
-  return getRealGreaterNoidaOsmGraph();
+  return cachedMasterOsmGraph || buildSyntheticGraph();
 }
 
 /**
  * Returns the default road network graph.
- * Defaults to the real-world OpenStreetMap Greater Noida network.
- *
- * @param {boolean} [preferRealOsm=true]
- * @returns {Object}
  */
 export function getDefaultGraph(preferRealOsm = true) {
-  if (preferRealOsm) {
-    return getRealGreaterNoidaOsmGraph();
+  if (preferRealOsm && cachedMasterOsmGraph) {
+    return cachedMasterOsmGraph;
   }
-  return {
-    ...SYNTHETIC_GRAPH_METADATA,
-    nodes: [...SYNTHETIC_NODES],
-    edges: [...SYNTHETIC_EDGES],
-    unit: 'seconds',
-    isSchematic: false,
-  };
+  return buildSyntheticGraph();
 }
 
 /**
  * Returns the exact 6-node Figure 2 demo graph from the report.
- *
- * @returns {Object}
  */
 export function getFigure2Graph() {
   return {
@@ -160,7 +159,7 @@ export function getFigure2Graph() {
  * (Mumbai, Pune, Nashik, Aurangabad, Ahmedabad, Surat, Vadodara, Rajkot, Goa).
  */
 export function getWesternCorridorGraph() {
-  const master = getRealGreaterNoidaOsmGraph();
+  const master = getRealOsmGraph();
   const westPrefixes = ['n_mum', 'n_pun', 'n_nsk', 'n_abn', 'n_ahd', 'n_srt', 'n_vdr', 'n_rjt', 'n_goa'];
   const nodes = master.nodes.filter((n) => westPrefixes.some((p) => String(n.id).startsWith(p)));
   const nodeSet = new Set(nodes.map((n) => n.id));
@@ -181,11 +180,11 @@ export function getWesternCorridorGraph() {
  * (Bengaluru, Mysuru, Mangaluru, Chennai, Coimbatore, Madurai, Trichy, Hyderabad, Vizag, Vijayawada, Kochi, Trivandrum).
  */
 export function getSouthernCorridorGraph() {
-  const master = getRealGreaterNoidaOsmGraph();
+  const master = getRealOsmGraph();
   const southPrefixes = [
     'n_blr', 'n_mys', 'n_mng', 'n_hbl', 'n_chn', 'n_cbe', 'n_mdu', 'n_trc',
     'n_cok', 'n_trv', 'n_ccj', 'n_tsr', 'n_hyd', 'n_bbn', 'n_wgl', 'n_vzg',
-    'n_bza', 'n_gnt', 'n_tpt', 'n_pny'
+    'n_bza', 'n_gnt', 'n_tpt', 'n_pny',
   ];
   const nodes = master.nodes.filter((n) => southPrefixes.some((p) => String(n.id).startsWith(p)));
   const nodeSet = new Set(nodes.map((n) => n.id));
@@ -205,7 +204,7 @@ export function getSouthernCorridorGraph() {
  * Returns the High-Density Delhi-NCR Metropolitan Road Graph.
  */
 export function getDelhiNcrUrbanGraph() {
-  const master = getRealGreaterNoidaOsmGraph();
+  const master = getRealOsmGraph();
   const ncrNodes = master.nodes.filter(
     (n) =>
       !String(n.id).startsWith('n_') ||
@@ -229,9 +228,6 @@ export function getDelhiNcrUrbanGraph() {
   };
 }
 
-/**
- * Graph Mode catalog for multi-graph selection.
- */
 export const GRAPH_MODES_CATALOG = [
   {
     id: 'real_osm',
@@ -282,4 +278,3 @@ export const GRAPH_MODES_CATALOG = [
     badge: 'ACADEMIC',
   },
 ];
-

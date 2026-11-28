@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 import { useDispatch } from '../../context/DispatchContext.jsx';
 import { useBedManager } from '../../context/BedManagerContext.jsx';
-import { CadBrandLogo } from '../ui/ProfessionalLogos.jsx';
+import { CadBrandLogo } from '../ui/BrandLogos.jsx';
 import { getSearchRelevance } from '../../utils/hospitalSearch.js';
 import { isOffline, subscribeNetworkStatus } from '../../utils/network.js';
 

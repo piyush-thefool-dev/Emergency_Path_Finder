@@ -19,7 +19,7 @@ import {
   Settings,
 } from 'lucide-react';
 import MobilePageHeader from '../components/layout/MobilePageHeader.jsx';
-import { CadBrandLogo } from '../components/ui/ProfessionalLogos.jsx';
+import { CadBrandLogo } from '../components/ui/BrandLogos.jsx';
 import { useDispatch } from '../context/DispatchContext.jsx';
 
 const OPERATIONS_LINKS = [

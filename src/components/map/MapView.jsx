@@ -130,10 +130,13 @@ export function MapView({
   recenterKey = 0,
   onRoadResolved = null,
   showGraphNetwork = false,
+  roadReportMode = false,
   mapStyle = 'auto',
   onLocate = null,
   zoomExtraContent = null,
   zoomBottomClass = 'bottom-[5.25rem]',
+  zoomRightClass = 'right-3',
+  containerClassName = 'absolute inset-0 w-full h-full',
   effectiveRadiusKm = 10,
   isRadiusFallback = false,
 }) {
@@ -161,7 +164,7 @@ export function MapView({
   }, [gpsHeading, isMoving, routeCoords, ambulancePos, activeHospital]);
 
   return (
-    <div className={`absolute inset-0 w-full h-full map-${mapStyle}`}>
+    <div className={`${containerClassName} map-${mapStyle}`}>
       <MapContainer
         center={defaultCenter}
         zoom={14}
@@ -174,14 +177,14 @@ export function MapView({
         <MapZoomDock
           onLocate={onLocate}
           bottomClass={zoomBottomClass}
-          rightClass="right-3"
+          rightClass={zoomRightClass}
           extraTopContent={zoomExtraContent}
         />
 
         <SizeWatcher />
         <MapClickHandler
           onAmbulanceMove={onAmbulanceMove}
-          canDragPin={canDragPin}
+          canDragPin={canDragPin && !roadReportMode}
           isMoving={isMoving}
         />
         <CameraController
@@ -207,6 +210,7 @@ export function MapView({
           showAllNodes={showGraphNetwork}
           showGraphEdges={showGraphNetwork}
           canDragPin={canDragPin}
+          roadReportMode={roadReportMode}
         />
 
         <HospitalMarkers

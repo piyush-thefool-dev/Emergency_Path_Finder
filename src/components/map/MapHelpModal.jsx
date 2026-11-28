@@ -4,7 +4,7 @@
  */
 
 import { createPortal } from 'react-dom';
-import { X, Navigation, AlertOctagon, Flame, Hospital, Info, Check, Sparkles, Activity } from 'lucide-react';
+import { X, Navigation, Flame, Hospital, Info, Activity } from 'lucide-react';
 
 export function MapHelpModal({ isOpen, onClose }) {
   if (!isOpen) return null;
@@ -17,7 +17,6 @@ export function MapHelpModal({ isOpen, onClose }) {
       aria-labelledby="help-modal-title"
     >
       <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xl max-w-lg w-full overflow-hidden text-slate-900 dark:text-slate-100">
-        {/* Header */}
         <div className="bg-slate-900 dark:bg-slate-900 text-white p-4 flex items-center justify-between border-b border-slate-800">
           <div className="flex items-center gap-2.5">
             <span className="p-1 rounded-md bg-[#D62828] text-white">

@@ -13,19 +13,15 @@ import {
   CardiacTriageLogo,
   BurnTriageLogo,
   GeneralEmergencyLogo,
-} from '../ui/ProfessionalLogos.jsx';
+} from '../ui/BrandLogos.jsx';
 import {
   Sliders,
   ShieldAlert,
   CloudSun,
-  Radio,
   RefreshCw,
-  Download,
   Wind,
   Droplets,
   Eye,
-  Activity,
-  Network,
 } from 'lucide-react';
 
 export function ControlPanel({

@@ -13,7 +13,7 @@
 import { OVERPASS_MIRRORS } from './overpassService.js';
 import { OSRM_BASES } from './roadSnapService.js';
 import { WIB_API_CONFIG, getGeoapifyApiKey, buildGeoapifyPlacesUrl } from './wibHospitalService.js';
-import { isOffline, markNetworkFailure } from '../utils/network.js';
+import { isOffline } from '../utils/network.js';
 
 export const SLOW_MS = 3000;
 export const TIMEOUT_MS = 8000;

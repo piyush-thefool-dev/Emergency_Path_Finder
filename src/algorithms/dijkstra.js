@@ -53,7 +53,6 @@ export function dijkstra(graph, sourceId, targetId = null, customAdjacency = nul
     };
   }
 
-  // Handle trivial case where source is target
   if (targetId !== null && sourceId === targetId) {
     const elapsed = (typeof performance !== 'undefined' ? performance.now() : Date.now()) - startTime;
     return {
@@ -74,7 +73,6 @@ export function dijkstra(graph, sourceId, targetId = null, customAdjacency = nul
   const closedSet = new Set();
   let nodesExpanded = 0;
 
-  // Initialize
   gScore.set(sourceId, 0);
   minHeap.push(sourceId, 0);
 

@@ -5,7 +5,7 @@
 
 import { useMemo, useState } from 'react';
 import { motion } from 'motion/react';
-import { Flame, X, RefreshCw, LocateFixed, CheckCircle2, ShieldAlert } from 'lucide-react';
+import { Flame, X, RefreshCw, LocateFixed, CheckCircle2 } from 'lucide-react';
 import { TRAFFIC_LEVEL_LIST, REPORTERS } from '../../config/trafficLevels.js';
 import { buildIncidentList, edgeDisplayName, extractLocalStreetSegment, findNearestEdge, timeAgo } from '../../utils/incidents.js';
 import Badge from '../ui/Badge.jsx';

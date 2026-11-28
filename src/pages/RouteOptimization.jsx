@@ -7,10 +7,7 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  Navigation,
   RefreshCw,
-  CheckCircle2,
-  AlertTriangle,
   CloudSun,
   Wind,
   Zap,

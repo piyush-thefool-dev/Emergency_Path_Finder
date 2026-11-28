@@ -9,10 +9,10 @@
  */
 
 import { createContext, useContext, useState, useMemo, useCallback } from 'react';
-import { getDefaultGraph } from '../services/graphLoader.js';
+import { loadDefaultGraph } from '../services/graphLoader.js';
 import { computeGraphWeights } from '../services/edgeWeights.js';
 import { runAlgorithmBenchmark } from '../services/benchmark.js';
-import { PAN_INDIA_HOSPITALS } from '../data/panIndiaHospitals.js';
+import { loadPanIndiaHospitals } from '../services/hospitalDataService.js';
 
 const CalibrationContext = createContext(null);
 
@@ -55,13 +55,13 @@ export function CalibrationProvider({ children }) {
   const [calibration, setCalibration] = useState(INITIAL_CALIBRATION_STATE);
 
   // Run a local in-browser benchmark on the bundled Pan-India & Delhi-NCR graph
-  const runLiveBenchmarkCalibration = useCallback(() => {
-    const raw = getDefaultGraph();
+  const runLiveBenchmarkCalibration = useCallback(async () => {
+    const [raw, hospitals] = await Promise.all([loadDefaultGraph(), loadPanIndiaHospitals()]);
     const weighted = computeGraphWeights(raw, {
       timeOfDay: 'morning_peak',
       weather: 'clear',
     });
-    const bench = runAlgorithmBenchmark(weighted, PAN_INDIA_HOSPITALS, 25);
+    const bench = runAlgorithmBenchmark(weighted, hospitals, 25);
     const { summary } = bench;
 
     setCalibration((prev) => ({

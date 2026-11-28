@@ -66,7 +66,6 @@ export function astar(graph, sourceId, targetId, customAdjacency = null, customH
   const nodeMap = new Map(graph.nodes.map((n) => [n.id, n]));
   const targetNode = nodeMap.get(targetId);
 
-  // Setup heuristic
   let heuristicFn = customHeuristic;
   if (!heuristicFn) {
     const unit = graph.unit || 'seconds';

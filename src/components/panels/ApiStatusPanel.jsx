@@ -4,7 +4,7 @@
  */
 
 import { motion } from 'motion/react';
-import { RefreshCw, Activity, CheckCircle2, AlertCircle, Clock } from 'lucide-react';
+import { RefreshCw, Activity } from 'lucide-react';
 import { API_CHECKS } from '../../services/apiHealth.js';
 
 export const STATE_STYLE = {

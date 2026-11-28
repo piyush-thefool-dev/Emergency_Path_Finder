@@ -5,7 +5,7 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { ArrowLeft } from 'lucide-react';
-import { CadBrandLogo } from '../ui/ProfessionalLogos.jsx';
+import { CadBrandLogo } from '../ui/BrandLogos.jsx';
 
 export function MobilePageHeader({ title, subtitle, icon: Icon, backTo, right }) {
   const navigate = useNavigate();

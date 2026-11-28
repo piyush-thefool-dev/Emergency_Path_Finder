@@ -14,7 +14,6 @@ import {
   Plus,
   Minus,
   Save,
-  ShieldCheck,
   Search,
 } from 'lucide-react';
 import { getSearchRelevance } from '../../utils/hospitalSearch.js';

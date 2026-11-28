@@ -10,7 +10,10 @@
  * across the Greater Noida / Delhi-NCR operational corridor.
  */
 
-import { PAN_INDIA_HOSPITALS } from '../data/panIndiaHospitals.js';
+import {
+  loadPanIndiaHospitals,
+  getCachedPanIndiaHospitals,
+} from './hospitalDataService.js';
 import { isOffline, markNetworkFailure } from '../utils/network.js';
 
 export const WIB_API_CONFIG = {
@@ -240,11 +243,12 @@ export const REGIONAL_ANCHORS = [
  * @param {Array<Object>} rawList
  * @returns {Array<Object>}
  */
-export function processWibRecords(rawList = []) {
+export function processWibRecords(rawList = [], baseHospitals = null) {
   const list = Array.isArray(rawList) ? rawList : [];
+  const sourceHospitals = Array.isArray(baseHospitals) ? baseHospitals : getCachedPanIndiaHospitals();
   const now = new Date().toISOString();
 
-  return PAN_INDIA_HOSPITALS.map((base) => {
+  return sourceHospitals.map((base) => {
     const baseName = base.name.toLowerCase();
     const baseShort = base.shortName.toLowerCase();
     const match = list.find((h) => {
@@ -296,11 +300,13 @@ export function processWibRecords(rawList = []) {
  * @returns {Promise<{ hospitals: Array<Object>, isLive: boolean, totalFetched: number, source: string }>}
  */
 export async function fetchWibHospitals(options = {}) {
+  const baseHospitals = await loadPanIndiaHospitals();
+
   if (isOffline()) {
     return {
-      hospitals: processWibRecords([]),
+      hospitals: processWibRecords([], baseHospitals),
       isLive: false,
-      totalFetched: PAN_INDIA_HOSPITALS.length,
+      totalFetched: baseHospitals.length,
       source: `${WIB_API_CONFIG.sourceName} (Offline Reference Mode)`,
     };
   }
@@ -324,7 +330,7 @@ export async function fetchWibHospitals(options = {}) {
       throw new Error('Empty payload returned from WIB API');
     }
 
-    const mapped = processWibRecords(rawList);
+    const mapped = processWibRecords(rawList, baseHospitals);
 
     return {
       hospitals: mapped,
@@ -337,7 +343,7 @@ export async function fetchWibHospitals(options = {}) {
       console.warn('WIB API live fetch failed, attempting Geoapify Places / bundled reference data:', err.message);
       const geoHospitals = await fetchGeoapifyHospitals(DEFAULT_NCR_BBOX, options?.geoapifyApiKey, options);
       if (geoHospitals.length > 0) {
-        const mappedGeo = processWibRecords(geoHospitals);
+        const mappedGeo = processWibRecords(geoHospitals, baseHospitals);
         return {
           hospitals: mappedGeo,
           isLive: true,
@@ -347,12 +353,12 @@ export async function fetchWibHospitals(options = {}) {
       }
       markNetworkFailure(err);
     }
-    const mapped = processWibRecords([]);
+    const mapped = processWibRecords([], baseHospitals);
 
     return {
       hospitals: mapped,
       isLive: false,
-      totalFetched: PAN_INDIA_HOSPITALS.length,
+      totalFetched: baseHospitals.length,
       source: `${WIB_API_CONFIG.sourceName} (bundled reference data)`,
     };
   }

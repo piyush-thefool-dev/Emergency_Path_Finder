@@ -4,7 +4,7 @@
  */
 
 import { useMemo, useState } from 'react';
-import { X, MapPin, LocateFixed, Trash2, CheckCircle2, Siren, User, Flame } from 'lucide-react';
+import { X, LocateFixed, Trash2, CheckCircle2, Siren, User, Flame } from 'lucide-react';
 import { TRAFFIC_LEVEL_LIST, REPORTERS } from '../../config/trafficLevels.js';
 import { buildIncidentList, edgeDisplayName, extractLocalStreetSegment, findNearestEdge, timeAgo } from '../../utils/incidents.js';
 

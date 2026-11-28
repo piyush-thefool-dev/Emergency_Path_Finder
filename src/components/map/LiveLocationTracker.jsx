@@ -13,8 +13,6 @@ import {
   Eye,
   Lock,
   Unlock,
-  Radio,
-  Compass,
 } from 'lucide-react';
 import Badge from '../ui/Badge.jsx';
 import Button from '../ui/Button.jsx';

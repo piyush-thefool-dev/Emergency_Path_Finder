@@ -12,9 +12,12 @@ function expect(actual) {
 }
 import { dijkstra } from '../algorithms/dijkstra.js';
 import { astar } from '../algorithms/astar.js';
-import { getFigure2Graph, getDefaultGraph } from '../services/graphLoader.js';
+import { getFigure2Graph, loadDefaultGraph } from '../services/graphLoader.js';
 import { computeGraphWeights } from '../services/edgeWeights.js';
 import { rankHospitalsForEmergency, calculateSeatIntakeFactor } from '../services/hospitalRanking.js';
+
+const preloadedDefaultGraph = await loadDefaultGraph();
+const getDefaultGraph = () => preloadedDefaultGraph;
 
 describe('Routing Algorithms Verification', () => {
   const figure2 = getFigure2Graph();

@@ -9,7 +9,7 @@ import {
   subscribeNetworkStatus,
 } from '../utils/network.js';
 import { computeOsrmTableMetrics } from '../services/hospitalFilterService.js';
-import { fetchLiveWeather, getOfflineFallbackWeather } from '../services/weatherService.js';
+import { fetchLiveWeather } from '../services/weatherService.js';
 import {
   fetchWibHospitals,
   fetchOverpassHospitals,

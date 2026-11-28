@@ -5,17 +5,19 @@
 
 import { describe, it } from 'node:test';
 import assert from 'node:assert';
-import { PAN_INDIA_HOSPITALS } from '../data/panIndiaHospitals.js';
+import { loadPanIndiaHospitals } from '../services/hospitalDataService.js';
 import { INDIAN_STATES_AND_UTS, groupHospitalsByState } from '../utils/hospitalState.js';
-import { getRealGreaterNoidaOsmGraph } from '../data/delhiNcrRoadGraph.js';
+import { loadRealOsmGraph } from '../services/graphLoader.js';
 import { DEFAULT_AMBULANCE_ORIGIN } from '../config/constants.js';
 import { findNearestNode } from '../utils/geo.js';
 import { dijkstra } from '../algorithms/dijkstra.js';
 import { astar } from '../algorithms/astar.js';
 import { computeGraphWeights } from '../services/edgeWeights.js';
 
+const PAN_INDIA_HOSPITALS = await loadPanIndiaHospitals();
+const fullGraph = await loadRealOsmGraph();
+
 describe('Pan-India Healthcare Registry & Road Graph Invariants', () => {
-  const fullGraph = getRealGreaterNoidaOsmGraph();
   const nodeMap = new Map(fullGraph.nodes.map((n) => [n.id, n]));
 
   it('contains 35,000 verified apex and OSM referral hospitals covering all 36 Indian States and Union Territories', () => {

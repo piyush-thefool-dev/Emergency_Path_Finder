@@ -3,8 +3,8 @@
  * Implements Sections 3, 9, and 10 of the DTC B.Tech project report.
  */
 
-import { GitCommit, ArrowRight, Database, Cpu, Navigation, MapPin, ShieldCheck, Layers } from 'lucide-react';
-import { CadBrandLogo } from '../components/ui/ProfessionalLogos.jsx';
+import { GitCommit, Database, Cpu, Navigation, MapPin, ShieldCheck, Layers } from 'lucide-react';
+import { CadBrandLogo } from '../components/ui/BrandLogos.jsx';
 
 export function Architecture() {
   const pipelineStages = [

@@ -11,7 +11,7 @@ import {
   getWesternCorridorGraph,
   getSouthernCorridorGraph,
   getDelhiNcrUrbanGraph,
-  GRAPH_MODES_CATALOG,
+  loadRealOsmGraph,
 } from '../services/graphLoader.js';
 import { computeGraphWeights } from '../services/edgeWeights.js';
 import { fetchLiveWeather } from '../services/weatherService.js';
@@ -22,11 +22,25 @@ import { findPairedEdgeIds } from '../utils/incidents.js';
 import { isOffline, subscribeNetworkStatus } from '../utils/network.js';
 
 export function useGraph() {
-  // Graph Mode: 'real_osm' (Full Real OSM Grid) | 'synthetic' (46 nodes) | 'figure_2' (Report Demo)
   const [graphMode, setGraphMode] = useState('real_osm');
+  const [loadedOsmGraph, setLoadedOsmGraph] = useState(null);
   const [customOverpassGraph, setCustomOverpassGraph] = useState(null);
   const [isDownloadingOverpass, setIsDownloadingOverpass] = useState(false);
   const [overpassDownloadError, setOverpassDownloadError] = useState(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    loadRealOsmGraph()
+      .then((master) => {
+        if (!cancelled && master) setLoadedOsmGraph(master);
+      })
+      .catch((err) => {
+        console.warn('Failed to load Pan-India road graph JSON:', err);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const [timeOfDay, setTimeOfDay] = useState('morning_peak');
   const [weather, setWeather] = useState('clear');
@@ -119,9 +133,9 @@ export function useGraph() {
         return getDelhiNcrUrbanGraph();
       case 'real_osm':
       default:
-        return getRealOsmGraph();
+        return loadedOsmGraph || getRealOsmGraph();
     }
-  }, [graphMode, customOverpassGraph]);
+  }, [graphMode, customOverpassGraph, loadedOsmGraph]);
 
   // Dynamically weighted graph based on time, weather, signal priority, and incidents
   const weightedGraph = useMemo(() => {

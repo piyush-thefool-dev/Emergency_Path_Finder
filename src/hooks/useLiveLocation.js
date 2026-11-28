@@ -9,7 +9,6 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { haversineDistance } from '../utils/geo.js';
-import { matchGpsCoordinates } from '../services/roadSnapService.js';
 import { DEFAULT_AMBULANCE_ORIGIN } from '../config/constants.js';
 
 /**

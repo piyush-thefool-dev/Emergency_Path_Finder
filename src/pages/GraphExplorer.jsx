@@ -3,15 +3,30 @@
  * Interactive live derivation of the t(e) travel-time formula and edge attribute inspection.
  */
 
-import { useState } from 'react';
-import { getDefaultGraph } from '../services/graphLoader.js';
+import { useState, useEffect } from 'react';
+import { getDefaultGraph, loadDefaultGraph } from '../services/graphLoader.js';
 import { kphToMps } from '../utils/geo.js';
-import { Network, Calculator, Layers, Search, Filter, ShieldCheck, Zap } from 'lucide-react';
+import { Network, Calculator, Layers, Search } from 'lucide-react';
 import NetworkTopologyGraph from '../components/charts/NetworkTopologyGraph.jsx';
 
 export function GraphExplorer() {
-  const defaultGraph = getDefaultGraph();
-  const [selectedEdgeId, setSelectedEdgeId] = useState(defaultGraph.edges[0]?.id || '');
+  const [defaultGraph, setDefaultGraph] = useState(() => getDefaultGraph());
+  const [selectedEdgeId, setSelectedEdgeId] = useState(() => getDefaultGraph().edges[0]?.id || '');
+
+  useEffect(() => {
+    let cancelled = false;
+    loadDefaultGraph()
+      .then((loaded) => {
+        if (!cancelled && loaded) {
+          setDefaultGraph(loaded);
+          setSelectedEdgeId((prev) => prev || loaded.edges[0]?.id || '');
+        }
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
   const [searchTerm, setSearchTerm] = useState('');
 
   // Interactive Live Formula Calculator State

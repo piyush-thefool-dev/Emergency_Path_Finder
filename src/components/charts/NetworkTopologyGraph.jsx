@@ -4,7 +4,7 @@
  */
 
 import { useState, useMemo } from 'react';
-import { Network, Share2, Layers, ZoomIn, ZoomOut, RotateCcw } from 'lucide-react';
+import { Network, ZoomIn, ZoomOut, RotateCcw } from 'lucide-react';
 
 export function NetworkTopologyGraph({ graph, activePath = [], className = '' }) {
   const [hoveredNode, setHoveredNode] = useState(null);

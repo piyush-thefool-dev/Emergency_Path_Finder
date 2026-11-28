@@ -6,7 +6,6 @@
  */
 
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
-import HospitalsPage from '../pages/HospitalsPage.jsx';
 import BedsPage from '../pages/BedsPage.jsx';
 import ControlsPage from '../pages/ControlsPage.jsx';
 import MorePage from '../pages/MorePage.jsx';
@@ -37,7 +36,7 @@ export function AppRoutes() {
     <Routes location={location}>
       <Route path="/" element={null} />
       <Route path="/map" element={null} />
-      <Route path="/hospitals" element={<HospitalsPage />} />
+      <Route path="/hospitals" element={<SubPage title="Receiving Facilities" subtitle="Active triage recommendation & all hospitals"><Hospitals showActiveRecommendation /></SubPage>} />
       <Route path="/beds" element={<BedsPage />} />
       <Route path="/controls" element={<ControlsPage />} />
       <Route path="/more" element={<MorePage />} />

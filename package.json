@@ -8,7 +8,6 @@
     "build": "vite build",
     "preview": "vite preview",
     "clean": "node -e \"import('node:fs').then(f=>f.rmSync('dist',{recursive:true,force:true}))\"",
-    "lint": "tsc --noEmit",
     "test": "node --test src/tests/*.test.js"
   },
   "dependencies": {

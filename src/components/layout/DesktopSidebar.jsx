@@ -19,7 +19,7 @@ import {
   X,
 } from 'lucide-react';
 import { useDispatch } from '../../context/DispatchContext.jsx';
-import { CadBrandLogo } from '../ui/ProfessionalLogos.jsx';
+import { CadBrandLogo } from '../ui/BrandLogos.jsx';
 
 export const DESKTOP_NAV_ITEMS = [
   { to: '/', label: 'Live Map', shortLabel: 'Map', icon: MapIcon, end: true },

@@ -1,40 +1,16 @@
-/**
- * Emergency Incidents Management Page (`/incidents`).
- * Supports search, severity & status filtering, sorting, structured side detail drawer,
- * ambulance assignment, map focus, and road-segment blockage tracking.
- */
-
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {
-  Search,
-  Plus,
-  MapPin,
-  Truck,
-  CheckCircle2,
-  X,
-  AlertTriangle,
-  ArrowUpDown,
-} from 'lucide-react';
+import { AlertTriangle, ArrowUpDown, Plus, Search, X } from 'lucide-react';
 import PageHeader from '../components/common/PageHeader.jsx';
 import StatusBadge from '../components/common/StatusBadge.jsx';
 import EmptyState from '../components/common/EmptyState.jsx';
 import IncidentTool from '../components/map/IncidentTool.jsx';
+import IncidentCreateForm from '../components/incidents/IncidentCreateForm.jsx';
+import IncidentDetailPanel, {
+  severityTone,
+  statusTone,
+} from '../components/incidents/IncidentDetailPanel.jsx';
 import { useDispatch } from '../context/DispatchContext.jsx';
-import { EMERGENCY_CATEGORIES } from '../config/emergencyCategories.js';
-
-function severityTone(sev) {
-  if (sev === 'CRITICAL') return 'critical';
-  if (sev === 'HIGH') return 'warning';
-  return 'neutral';
-}
-
-function statusTone(st) {
-  if (st === 'OPEN') return 'critical';
-  if (st === 'IN_PROGRESS' || st === 'DISPATCHED') return 'progress';
-  if (st === 'RESOLVED') return 'resolved';
-  return 'neutral';
-}
 
 function formatTimeAgo(iso) {
   if (!iso) return '--';
@@ -62,11 +38,8 @@ export function Incidents({ onOpenNewEmergency }) {
   const [query, setQuery] = useState('');
   const [severityFilter, setSeverityFilter] = useState('ALL');
   const [statusFilter, setStatusFilter] = useState('ALL');
-  const [sortBy, setSortBy] = useState('newest'); // 'newest' | 'severity'
+  const [sortBy, setSortBy] = useState('newest');
   const [inlineFormOpen, setInlineFormOpen] = useState(false);
-  const [inlineLocName, setInlineLocName] = useState('');
-  const [inlineType, setInlineType] = useState('TRAUMA');
-  const [inlineSeverity, setInlineSeverity] = useState('CRITICAL');
 
   const filteredIncidents = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -94,8 +67,12 @@ export function Incidents({ onOpenNewEmergency }) {
 
   const activeDetail =
     dispatchIncidents.find((i) => i.id === selectedIncidentId) || filteredIncidents[0] || null;
-
   const assignableUnits = fleetUnits.filter((u) => u.status !== 'OUT_OF_SERVICE');
+
+  const handleLocateOnMap = (inc) => {
+    focusIncidentOnMap(inc);
+    navigate('/map');
+  };
 
   return (
     <div className="space-y-5">
@@ -118,63 +95,12 @@ export function Incidents({ onOpenNewEmergency }) {
       />
 
       {inlineFormOpen && (
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            createIncident({
-              locationName: inlineLocName.trim() || 'Active Dispatch Sector',
-              type: inlineType,
-              typeLabel: EMERGENCY_CATEGORIES[inlineType]?.label || inlineType,
-              severity: inlineSeverity,
-              assignedUnitId: 'AMB-01',
-              focusMap: false,
-            });
-            setInlineLocName('');
-            setInlineFormOpen(false);
-          }}
-          className="rounded-2xl bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border border-[#D62828]/40 p-4 space-y-3 text-xs"
-        >
-          <div className="font-bold text-slate-900 dark:text-slate-100">Log Emergency Incident</div>
-          <input
-            type="text"
-            required
-            value={inlineLocName}
-            onChange={(e) => setInlineLocName(e.target.value)}
-            placeholder="Pickup Location / Sector (e.g. Pari Chowk)"
-            className="w-full h-9 px-3 rounded-xl border border-slate-200 dark:border-white/[0.08] bg-slate-50 dark:bg-slate-950/60 text-slate-900 dark:text-slate-100"
-          />
-          <div className="grid grid-cols-2 gap-2">
-            <select
-              aria-label="New incident category"
-              value={inlineType}
-              onChange={(e) => setInlineType(e.target.value)}
-              className="h-9 px-2.5 rounded-xl border border-slate-200 dark:border-white/[0.08] bg-slate-50 dark:bg-slate-950/60 text-slate-900 dark:text-slate-100"
-            >
-              {Object.values(EMERGENCY_CATEGORIES).map((c) => (
-                <option key={c.id} value={c.id}>{c.shortLabel}</option>
-              ))}
-            </select>
-            <select
-              aria-label="New incident severity"
-              value={inlineSeverity}
-              onChange={(e) => setInlineSeverity(e.target.value)}
-              className="h-9 px-2.5 rounded-xl border border-slate-200 dark:border-white/[0.08] bg-slate-50 dark:bg-slate-950/60 text-slate-900 dark:text-slate-100"
-            >
-              <option value="CRITICAL">Critical</option>
-              <option value="HIGH">High Priority</option>
-              <option value="MODERATE">Moderate</option>
-            </select>
-          </div>
-          <button
-            type="submit"
-            className="w-full h-9 rounded-xl bg-[#D62828] hover:bg-red-700 text-white font-semibold cursor-pointer"
-          >
-            Log &amp; Dispatch AMB-01
-          </button>
-        </form>
+        <IncidentCreateForm
+          onCreate={createIncident}
+          onDone={() => setInlineFormOpen(false)}
+        />
       )}
 
-      {/* Filter & Search Bar */}
       <div className="rounded-2xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200/90 dark:border-white/[0.08] shadow-xs p-3 flex flex-col md:flex-row md:items-center justify-between gap-3">
         <div className="relative flex-1 max-w-md">
           <Search className="w-4 h-4 text-slate-500 dark:text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
@@ -234,7 +160,6 @@ export function Incidents({ onOpenNewEmergency }) {
         </div>
       </div>
 
-      {/* Main Content Split: Queue Table/Cards + Detail Inspector */}
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-5 items-start">
         <div className="xl:col-span-8">
           {filteredIncidents.length === 0 ? (
@@ -258,7 +183,6 @@ export function Incidents({ onOpenNewEmergency }) {
             />
           ) : (
             <>
-              {/* Desktop Table */}
               <div className="hidden md:block rounded-2xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200/90 dark:border-white/[0.08] shadow-xs overflow-hidden">
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-xs">
@@ -309,8 +233,7 @@ export function Incidents({ onOpenNewEmergency }) {
                                 type="button"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  focusIncidentOnMap(inc);
-                                  navigate('/map');
+                                  handleLocateOnMap(inc);
                                 }}
                                 className="px-2.5 py-1 rounded-md border border-slate-200/90 dark:border-white/[0.08] bg-slate-50/80 dark:bg-slate-950/60 hover:bg-slate-100 dark:hover:bg-slate-800 text-[#D62828] dark:text-red-400 font-medium cursor-pointer"
                               >
@@ -325,7 +248,6 @@ export function Incidents({ onOpenNewEmergency }) {
                 </div>
               </div>
 
-              {/* Mobile Cards */}
               <div className="md:hidden space-y-3">
                 {filteredIncidents.map((inc) => (
                   <div
@@ -356,8 +278,7 @@ export function Incidents({ onOpenNewEmergency }) {
                         type="button"
                         onClick={(e) => {
                           e.stopPropagation();
-                          focusIncidentOnMap(inc);
-                          navigate('/map');
+                          handleLocateOnMap(inc);
                         }}
                         className="px-3 py-1.5 rounded-lg bg-[#D62828] text-white font-medium cursor-pointer"
                       >
@@ -371,113 +292,15 @@ export function Incidents({ onOpenNewEmergency }) {
           )}
         </div>
 
-        {/* Right Column: Structured Incident Detail Panel */}
         <div className="xl:col-span-4 space-y-4">
-          {activeDetail && (
-            <div className="rounded-2xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200/90 dark:border-white/[0.08] shadow-xs p-4 sm:p-5 space-y-4">
-              <div className="flex items-start justify-between gap-2 pb-3 border-b border-slate-200/80 dark:border-white/[0.08]">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="font-mono text-sm font-bold text-slate-900 dark:text-slate-100">{activeDetail.id}</span>
-                    <StatusBadge tone={severityTone(activeDetail.severity)}>
-                      {activeDetail.severity}
-                    </StatusBadge>
-                  </div>
-                  <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100 mt-1">
-                    {activeDetail.typeLabel}
-                  </h2>
-                </div>
-                <StatusBadge tone={statusTone(activeDetail.status)} dot>
-                  {activeDetail.status.replace('_', ' ')}
-                </StatusBadge>
-              </div>
+          <IncidentDetailPanel
+            incident={activeDetail}
+            assignableUnits={assignableUnits}
+            onAssignUnit={assignUnitToIncident}
+            onUpdateStatus={updateIncidentStatus}
+            onShowOnMap={handleLocateOnMap}
+          />
 
-              <div className="space-y-2 text-xs">
-                <div className="flex justify-between gap-2">
-                  <span className="text-slate-500 dark:text-slate-400">Location</span>
-                  <span className="font-medium text-slate-900 dark:text-slate-100 text-right">{activeDetail.locationName}</span>
-                </div>
-                <div className="flex justify-between gap-2">
-                  <span className="text-slate-500 dark:text-slate-400">Coordinates</span>
-                  <span className="font-mono text-slate-900 dark:text-slate-100 tabular-nums">
-                    {activeDetail.lat.toFixed(4)}, {activeDetail.lon.toFixed(4)}
-                  </span>
-                </div>
-                <div className="flex justify-between gap-2">
-                  <span className="text-slate-500 dark:text-slate-400">Data Origin</span>
-                  <span className="text-slate-500 dark:text-slate-400">
-                    {activeDetail.isDemoScenario ? 'Sample Dispatch Scenario' : 'Operator Logged'}
-                  </span>
-                </div>
-              </div>
-
-              {activeDetail.notes && (
-                <div className="p-3 rounded-lg bg-slate-50/80 dark:bg-slate-950/60 border border-slate-200/90 dark:border-white/[0.08] text-xs text-slate-900 dark:text-slate-100">
-                  {activeDetail.notes}
-                </div>
-              )}
-
-              {/* Ambulance Assignment Workflow */}
-              <div className="space-y-2 pt-2 border-t border-slate-200/80 dark:border-white/[0.08]">
-                <label className="block text-xs font-medium text-slate-900 dark:text-slate-100">
-                  Assign / Switch Ambulance
-                </label>
-                <div className="flex gap-2">
-                  <select
-                    aria-label="Assign ambulance unit"
-                    value={activeDetail.assignedUnitId || ''}
-                    onChange={(e) => {
-                      if (e.target.value) assignUnitToIncident(activeDetail.id, e.target.value);
-                    }}
-                    className="flex-1 h-9 px-2.5 rounded-lg border border-slate-200/90 dark:border-white/[0.08] bg-slate-50/80 dark:bg-slate-950/60 text-xs text-slate-900 dark:text-slate-100"
-                  >
-                    <option value="">Select ambulance unit…</option>
-                    {assignableUnits.map((u) => (
-                      <option key={u.id} value={u.id}>
-                        {u.id} — {u.unitType} ({u.status})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              {/* Operational Status Actions */}
-              <div className="grid grid-cols-2 gap-2 pt-1">
-                <button
-                  type="button"
-                  onClick={() => {
-                    focusIncidentOnMap(activeDetail);
-                    navigate('/map');
-                  }}
-                  className="h-9 px-3 rounded-lg bg-[#D62828] hover:bg-red-700 text-white text-xs font-medium inline-flex items-center justify-center gap-1.5 cursor-pointer"
-                >
-                  <MapPin className="w-3.5 h-3.5" />
-                  <span>Show on Map</span>
-                </button>
-
-                {activeDetail.status !== 'RESOLVED' ? (
-                  <button
-                    type="button"
-                    onClick={() => updateIncidentStatus(activeDetail.id, 'RESOLVED')}
-                    className="h-9 px-3 rounded-lg border border-emerald-200 dark:border-emerald-800/60 bg-emerald-50 dark:bg-emerald-950/50 hover:bg-emerald-100 dark:hover:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 text-xs font-medium inline-flex items-center justify-center gap-1.5 cursor-pointer"
-                  >
-                    <CheckCircle2 className="w-3.5 h-3.5" />
-                    <span>Mark Resolved</span>
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => updateIncidentStatus(activeDetail.id, 'OPEN')}
-                    className="h-9 px-3 rounded-lg border border-slate-200/90 dark:border-white/[0.08] bg-slate-50/80 dark:bg-slate-950/60 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-900 dark:text-slate-100 text-xs font-medium cursor-pointer"
-                  >
-                    Reopen Case
-                  </button>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Road Congestion & Corridor Segment Obstructions Tool */}
           <IncidentTool
             edges={graph.weightedGraph.edges}
             nodes={graph.weightedGraph.nodes}

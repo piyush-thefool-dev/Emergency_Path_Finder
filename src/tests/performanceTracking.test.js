@@ -1,7 +1,7 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert';
-import { PAN_INDIA_HOSPITALS } from '../data/panIndiaHospitals.js';
-import { getRealOsmGraph } from '../services/graphLoader.js';
+import { loadPanIndiaHospitals } from '../services/hospitalDataService.js';
+import { loadRealOsmGraph } from '../services/graphLoader.js';
 import { computeGraphWeights } from '../services/edgeWeights.js';
 import {
   rankHospitalsForEmergency,
@@ -12,9 +12,11 @@ import { findNearestNode } from '../utils/geo.js';
 import { GPS_TRACKING_CONFIG } from '../hooks/useLiveLocation.js';
 import { ROAD_ROUTE_TIMEOUT_MS_FOR_TEST, fetchRoadRoute } from '../services/roadSnapService.js';
 
+const PAN_INDIA_HOSPITALS = await loadPanIndiaHospitals();
+const baseGraph = await loadRealOsmGraph();
+
 describe('Real-Time Vehicle Tracking & Sub-10s Startup Performance SLA', () => {
   const origin = { lat: 28.4625, lon: 77.4930 };
-  const baseGraph = getRealOsmGraph();
   const weightedGraph = computeGraphWeights(baseGraph, {
     timeOfDay: 'morning_peak',
     weather: 'clear',

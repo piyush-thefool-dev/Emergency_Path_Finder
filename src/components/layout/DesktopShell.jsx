@@ -11,7 +11,7 @@ import { X } from 'lucide-react';
 import DesktopSidebar from './DesktopSidebar.jsx';
 import DesktopTopBar from './DesktopTopBar.jsx';
 import HospitalBedManagerModal from '../panels/HospitalBedManagerModal.jsx';
-import DesktopLiveMap from '../../pages/DesktopLiveMap.jsx';
+import MapScreen from '../map/MapScreen.jsx';
 import Incidents from '../../pages/Incidents.jsx';
 import AmbulanceFleet from '../../pages/AmbulanceFleet.jsx';
 import Hospitals from '../../pages/Hospitals.jsx';
@@ -69,8 +69,8 @@ export function DesktopShell() {
         <main className={isFullBleedMap ? 'flex-1 min-h-0 overflow-hidden relative' : 'flex-1 min-h-0 overflow-y-auto px-6 py-5'}>
           <div className={isFullBleedMap ? 'h-full w-full' : 'max-w-[1440px] mx-auto'}>
             <Routes>
-              <Route path="/" element={<DesktopLiveMap fullBleed onOpenNewEmergency={() => setQuickModalOpen(true)} />} />
-              <Route path="/map" element={<DesktopLiveMap fullBleed onOpenNewEmergency={() => setQuickModalOpen(true)} />} />
+              <Route path="/" element={<MapScreen variant="desktop" fullBleed onOpenNewEmergency={() => setQuickModalOpen(true)} />} />
+              <Route path="/map" element={<MapScreen variant="desktop" fullBleed onOpenNewEmergency={() => setQuickModalOpen(true)} />} />
               <Route path="/incidents" element={<Incidents onOpenNewEmergency={() => setQuickModalOpen(true)} />} />
               <Route path="/fleet" element={<AmbulanceFleet />} />
               <Route path="/hospitals" element={<Hospitals />} />

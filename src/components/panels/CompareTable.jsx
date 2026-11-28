@@ -3,7 +3,7 @@
  * Evaluates optimality agreement, node expansion efficiency, and computational latency.
  */
 
-import { CheckCircle2, AlertOctagon, Cpu, Zap, Activity } from 'lucide-react';
+import { CheckCircle2, AlertOctagon, Cpu, Zap } from 'lucide-react';
 import Badge from '../ui/Badge.jsx';
 
 export function CompareTable({ comparisonData }) {

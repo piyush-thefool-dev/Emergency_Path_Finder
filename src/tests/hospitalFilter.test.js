@@ -3,14 +3,11 @@ import assert from 'node:assert';
 import {
   filterHospitalsByRadius,
   filterAndRankHospitalsByOsrmEta,
-  DEFAULT_RADIUS_KM,
-  FALLBACK_RADIUS_KM,
-  MIN_HOSPITALS_THRESHOLD,
-  DEFAULT_ROAD_DISTANCE_CUTOFF_KM,
-  TOP_HOSPITALS_CAP,
 } from '../services/hospitalFilterService.js';
 import { EMERGENCY_CATEGORIES } from '../config/emergencyCategories.js';
-import { PAN_INDIA_HOSPITALS } from '../data/panIndiaHospitals.js';
+import { loadPanIndiaHospitals } from '../services/hospitalDataService.js';
+
+const PAN_INDIA_HOSPITALS = await loadPanIndiaHospitals();
 
 describe('Two-Stage Hospital Distance & ETA Filtering', () => {
   const userPos = { lat: 28.4625, lon: 77.4930 }; // Near DTC Knowledge Park III, Greater Noida

@@ -2,7 +2,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { getSearchRelevance } from '../utils/hospitalSearch.js';
 import { haversineDistance } from '../utils/geo.js';
-import { PAN_INDIA_HOSPITALS } from '../data/panIndiaHospitals.js';
+import { loadPanIndiaHospitals } from '../services/hospitalDataService.js';
+
+const PAN_INDIA_HOSPITALS = await loadPanIndiaHospitals();
 
 test('Smart Multi-Token Hospital Search Verification', async (t) => {
   await t.test('"aiims delhi" matches "AIIMS New Delhi" with top relevance', () => {
